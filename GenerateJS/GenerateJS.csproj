@@ -6,6 +6,20 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
 
+	  <PackageId>BetaAnalytics.GenerateJS</PackageId>
+	  <RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+	  <AssemblyName>BetaAnalytics.GenerateJS</AssemblyName>
+
+	  <!-- Remove pastas net-windows e similares -->
+	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+
+	  <!-- Saída direta em bin\Debug / bin\Release -->
+	  <OutputPath>bin\$(Configuration)\</OutputPath>
+	  <AssemblyVersion>1.0.0.1</AssemblyVersion>
+	  <FileVersion>1.0.0.1</FileVersion>
+	  <Version>1.0</Version>
+	  <AssemblyInformationalVersion>1.0</AssemblyInformationalVersion>
+  </PropertyGroup>
 </Project>
