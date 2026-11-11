@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="GenerateJS/GenerateJS.csproj" />
+  <Project Path="ReferenciaFactory/ReferenciaFactory.csproj" Id="6ab600fe-7ee7-42e6-adc6-b9e9a6e448dd" />
+</Solution>
