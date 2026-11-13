@@ -3,7 +3,8 @@ using System.Data;
 using System.Data.Common;
 
 namespace ReferenciaFactory
-{ #pragma warning disable
+{ 
+    #pragma warning disable
     public class DatabaseConnection : IDisposable
     {
         private DbConnection ConnectionFactory;

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -6,20 +6,26 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-
-	  <PackageId>BetaAnalytics.GenerateJS</PackageId>
-	  <RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
-	  <AssemblyName>BetaAnalytics.GenerateJS</AssemblyName>
-
-	  <!-- Remove pastas net-windows e similares -->
-	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-	  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-
-	  <!-- Saída direta em bin\Debug / bin\Release -->
-	  <OutputPath>bin\$(Configuration)\</OutputPath>
-	  <AssemblyVersion>1.0.0.1</AssemblyVersion>
-	  <FileVersion>1.0.0.1</FileVersion>
-	  <Version>1.0</Version>
-	  <AssemblyInformationalVersion>1.0</AssemblyInformationalVersion>
+    <RootNamespace>GenerateJS</RootNamespace>
+    <AssemblyName>BetaJsonIntegrator</AssemblyName>
+    <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BetaJsonIntegrator.Core\BetaJsonIntegrator.Core.csproj" />
+    <ProjectReference Include="..\BetaJsonIntegrator.Data\BetaJsonIntegrator.Data.csproj" />
+    <ProjectReference Include="..\ReferenciaFactory\ReferenciaFactory.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Drivers de banco: ficam apenas no App; o Data recebe o DbProviderFactory -->
+    <PackageReference Include="MySqlConnector" Version="2.4.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Layouts/Output/Logs acompanham o executável -->
+    <Content Include="..\Configurations\**\*" LinkBase="Configurations" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

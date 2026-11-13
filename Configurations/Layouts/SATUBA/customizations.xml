@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Customizations layout="NOV2025009" version="1">
+  <field name="naturezaTitulo" type="string" value="2" mode="fixed" />
+</Customizations>

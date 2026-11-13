@@ -1,0 +1,23 @@
+using System.Text;
+using BetaJsonIntegrator.App.Forms;
+
+namespace BetaJsonIntegrator.App
+{
+    internal static class Program
+    {
+        /// <summary>
+        ///  The main entry point for the application.
+        /// </summary>
+        [STAThread]
+        static void Main()
+        {
+            // Habilita Windows-1252 e outros code pages para CSVs legados.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // To customize application configuration such as set high DPI settings or default font,
+            // see https://aka.ms/applicationconfiguration.
+            ApplicationConfiguration.Initialize();
+            Application.Run(new frmPrincipal());
+        }
+    }
+}

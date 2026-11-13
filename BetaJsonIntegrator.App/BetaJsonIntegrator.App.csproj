@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>BetaJsonIntegrator.App</RootNamespace>
+    <AssemblyName>BetaJsonIntegrator</AssemblyName>
+    <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BetaJsonIntegrator.Core\BetaJsonIntegrator.Core.csproj" />
+    <ProjectReference Include="..\BetaJsonIntegrator.Data\BetaJsonIntegrator.Data.csproj" />
+    <ProjectReference Include="..\ReferenciaFactory\ReferenciaFactory.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Drivers de banco: ficam apenas no App; o Data recebe o DbProviderFactory -->
+    <PackageReference Include="MySqlConnector" Version="2.4.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Layouts/Output/Logs acompanham o executável -->
+    <Content Include="..\Configurations\**\*" LinkBase="Configurations" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

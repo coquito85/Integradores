@@ -1,4 +1,15 @@
 <Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="BetaJsonIntegrator.App/BetaJsonIntegrator.App.csproj" />
+  <Project Path="BetaJsonIntegrator.Core/BetaJsonIntegrator.Core.csproj" />
+  <Project Path="BetaJsonIntegrator.Data/BetaJsonIntegrator.Data.csproj" />
+  <Project Path="BetaJsonIntegrator.Orm/BetaJsonIntegrator.Orm.csproj" />
+  <Project Path="BetaJsonIntegrator.Tests/BetaJsonIntegrator.Tests.csproj" />
+  <Project Path="BetaJsonIntegrator.Tools/BetaJsonIntegrator.Tools.csproj" />
   <Project Path="GenerateJS/GenerateJS.csproj" />
   <Project Path="ReferenciaFactory/ReferenciaFactory.csproj" Id="6ab600fe-7ee7-42e6-adc6-b9e9a6e448dd" />
 </Solution>

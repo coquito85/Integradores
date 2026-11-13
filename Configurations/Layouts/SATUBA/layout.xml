@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  LAYOUT DE EXEMPLO baseado na especificação (seções 5 e 6).
+  Substitua pelo XML integral do SATUBA: o motor não depende de nenhuma regra deste arquivo.
+-->
+<Layout name="CART. SATUBA" identifier="NOV2025009">
+  <generate name="SATUBA 2026">
+
+    <table name="ComunicaoPrefeitura" alias="TAB_SATUBA">
+      <selection>
+        <Column name="TpdeServico" type="string" orderby="true" description="TIPO DE SERVIÇO" />
+        <Column name="DtAto" type="datetime" formate="yyyy-MM-dd" description="DATA DO ATO" />
+        <Column name="NrMatricula" type="string" description="NÚMERO DA MATRÍCULA" />
+        <Column name="CpfAlienante" type="string" description="CPF/CNPJ DO ALIENANTE" />
+        <Column name="CpfAdquirente" type="string" description="CPF/CNPJ DO ADQUIRENTE" />
+      </selection>
+    </table>
+
+    <Jsonfields name="CART. SATUBA 2025/NOV">
+      <Refealias name="TAB_SATUBA">
+        <field name="declaracoes" type="array">
+
+          <field name="adquirentes" type="array">
+            <field name="indicadorEspolio" type="bool" value="false"/>
+            <field name="indicadorNiIdentificado" type="bool" value="true"/>
+            <!-- XML legado: value com nome de coluna (o motor reconhece e avisa) -->
+            <field name="ni" type="string" value="CpfAdquirente"/>
+            <field name="representantes" type="array" empty="true"/>
+            <field name="participacao" type="decimal" value="100"/>
+          </field>
+
+          <field name="alienantes" type="array">
+            <!-- Forma recomendada: source= para coluna, value= só para literal -->
+            <field name="ni" type="string" source="CpfAlienante"/>
+            <field name="participacao" type="decimal" value="100"/>
+          </field>
+
+          <field name="dataLavraturaRegistroAverbacao" type="datetime" formate="yyyy-MM-dd" Columnrefe="DtAto"/>
+          <field name="matricula" type="string" Columnrefe="NrMatricula"/>
+          <field name="tipoServico" type="string" Columnrefe="TpdeServico"/>
+          <field name="codigoIbge" type="string" value="2708907"/>
+
+          <!-- Campo que exige personalização (sem valor, sem coluna, sem padrão) -->
+          <field name="naturezaTitulo" type="string" required="true" configurable="true"
+                 description="NATUREZA DO TÍTULO"/>
+        </field>
+      </Refealias>
+    </Jsonfields>
+
+  </generate>
+</Layout>

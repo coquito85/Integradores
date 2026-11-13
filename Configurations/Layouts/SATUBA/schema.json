@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EXEMPLO - NAO E O SCHEMA OFICIAL DA DOI",
+  "type": "object",
+  "required": [ "declaracoes" ],
+  "additionalProperties": false,
+  "properties": {
+    "declaracoes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/DeclaracaoDadosBasicosDTO" }
+    }
+  },
+  "definitions": {
+    "DeclaracaoDadosBasicosDTO": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [ "adquirentes", "alienantes", "dataLavraturaRegistroAverbacao", "matricula", "tipoServico", "codigoIbge", "naturezaTitulo" ],
+      "properties": {
+        "adquirentes": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/AdquirenteDTO" } },
+        "alienantes": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/AlienanteDTO" } },
+        "dataLavraturaRegistroAverbacao": { "type": "string", "format": "date" },
+        "matricula": { "type": "string", "minLength": 1, "maxLength": 20 },
+        "tipoServico": { "type": "string", "minLength": 1 },
+        "codigoIbge": { "type": "string", "pattern": "^[0-9]{7}$" },
+        "naturezaTitulo": {
+          "oneOf": [
+            { "const": "1", "title": "Opção 1" },
+            { "const": "2", "title": "Opção 2" },
+            { "const": "3", "title": "Opção 3" }
+          ]
+        }
+      }
+    },
+    "AdquirenteDTO": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [ "indicadorEspolio", "indicadorNiIdentificado", "ni", "participacao" ],
+      "properties": {
+        "indicadorEspolio": { "type": "boolean" },
+        "indicadorNiIdentificado": { "type": "boolean" },
+        "ni": { "type": "string", "pattern": "^([0-9]{11}|[0-9]{14})$" },
+        "representantes": { "type": "array", "items": { "type": "object" } },
+        "participacao": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "AlienanteDTO": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [ "ni", "participacao" ],
+      "properties": {
+        "ni": { "type": "string", "pattern": "^([0-9]{11}|[0-9]{14})$" },
+        "participacao": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    }
+  }
+}

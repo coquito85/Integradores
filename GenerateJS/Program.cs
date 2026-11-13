@@ -1,3 +1,6 @@
+using System.Text;
+using GenerateJS.Forms;
+
 namespace GenerateJS
 {
     internal static class Program
@@ -8,10 +11,13 @@ namespace GenerateJS
         [STAThread]
         static void Main()
         {
+            // Habilita Windows-1252 e outros code pages para CSVs legados.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new Form1());
+            Application.Run(new frmPrincipal());
         }
     }
 }
