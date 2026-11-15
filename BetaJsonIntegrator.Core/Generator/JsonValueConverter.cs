@@ -2,160 +2,246 @@ using System.Globalization;
 using System.Text.Json.Nodes;
 using BetaJsonIntegrator.Core.Configuration;
 
-namespace BetaJsonIntegrator.Core.Generator
-{
-    public readonly struct ConversionResult
-    {
-        public JsonNode? Node { get; init; }
-        /// <summary>Valor ausente (null/DBNull/vazio): o campo é omitido (ou erro, se obrigatório).</summary>
-        public bool IsNull { get; init; }
-        /// <summary>Mensagem de erro SEM o valor original (evita vazar dados pessoais).</summary>
-        public string? Error { get; init; }
+namespace BetaJsonIntegrator.Core.Generator;
 
-        public static ConversionResult Null() => new() { IsNull = true };
-        public static ConversionResult Ok(JsonNode? n) => new() { Node = n };
-        public static ConversionResult Fail(string e) => new() { Error = e };
+/// <summary>
+/// Conversão de valores de origem para o tipo JSON do campo (spec. seção 9).
+/// Números usam cultura invariável (ponto decimal) e saem como número JSON, nunca como texto.
+/// As mensagens de erro nunca incluem o valor convertido (dados pessoais).
+/// </summary>
+public static class JsonValueConverter
+{
+    private static readonly CultureInfo PtBr = CreatePtBr();
+
+    private static readonly string[] DateFormats =
+    {
+        "yyyy-MM-dd", "yyyy-MM-ddTHH:mm:ss", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-ddTHH:mm:ss.fff", "yyyy-MM-ddTHH:mm:ss.fffffff",
+        "dd/MM/yyyy", "dd/MM/yyyy HH:mm:ss", "dd/MM/yyyy HH:mm", "dd-MM-yyyy", "yyyyMMdd"
+    };
+
+    /// <summary>
+    /// Converte <paramref name="value"/>. Valor nulo/DBNull resulta em JSON null (node = null, retorno true).
+    /// Retorna false quando a conversão não é possível (node = null e <paramref name="error"/> preenchido).
+    /// </summary>
+    public static bool TryConvert(string? type, object? value, string? format, string? cultureName,
+        out JsonNode? node, out string? error)
+    {
+        node = null;
+        error = null;
+
+        if (value is null or DBNull) return true;
+        if (value is string blank && type != FieldTypes.String && string.IsNullOrWhiteSpace(blank)) return true;
+
+        CultureInfo? culture = null;
+        if (!string.IsNullOrWhiteSpace(cultureName))
+        {
+            try { culture = CultureInfo.GetCultureInfo(cultureName); }
+            catch (CultureNotFoundException)
+            {
+                error = $"Cultura '{cultureName}' desconhecida.";
+                return false;
+            }
+        }
+
+        switch (type)
+        {
+            case FieldTypes.String:
+                node = JsonValue.Create(ToText(value, format));
+                return true;
+
+            case FieldTypes.Bool:
+                if (TryToBool(value, out var b)) { node = JsonValue.Create(b); return true; }
+                error = "Valor não convertível para booleano.";
+                return false;
+
+            case FieldTypes.Decimal:
+                if (TryToDecimal(value, culture, out var d)) { node = JsonValue.Create(d); return true; }
+                error = "Valor não convertível para número decimal.";
+                return false;
+
+            case FieldTypes.Integer:
+                if (!TryToDecimal(value, culture, out var i))
+                {
+                    error = "Valor não convertível para número inteiro.";
+                    return false;
+                }
+                if (i != decimal.Truncate(i))
+                {
+                    error = "O valor não é inteiro.";
+                    return false;
+                }
+                if (i < long.MinValue || i > long.MaxValue)
+                {
+                    error = "O valor está fora da faixa de inteiros.";
+                    return false;
+                }
+                node = JsonValue.Create((long)i);
+                return true;
+
+            case FieldTypes.DateTime:
+                if (TryToDateTime(value, culture, out var dt)) { node = JsonValue.Create(FormatDate(dt, format)); return true; }
+                error = "Valor não convertível para data.";
+                return false;
+
+            default:
+                error = $"Tipo '{type}' não pode ser convertido a partir de um valor simples.";
+                return false;
+        }
     }
 
-    /// <summary>Conversão de tipos XML → JSON usando sempre cultura invariável.</summary>
-    public static class JsonValueConverter
+    // ------------------------------------------------------------------ texto
+    private static string ToText(object value, string? format)
     {
-        public const string DefaultDateFormat = "yyyy-MM-dd";
-
-        private static readonly string[] DateInputFormats =
+        switch (value)
         {
-            "yyyy-MM-dd", "yyyy-MM-ddTHH:mm:ss", "yyyy-MM-ddTHH:mm:ss.fff", "yyyy-MM-dd HH:mm:ss",
-            "dd/MM/yyyy", "dd/MM/yyyy HH:mm:ss", "dd-MM-yyyy", "yyyyMMdd", "ddMMyyyy"
-        };
+            case string s: return s;
+            case DateTime dt: return FormatDate(dt, format);
+            case DateOnly d: return FormatDate(d.ToDateTime(TimeOnly.MinValue), format);
+            case DateTimeOffset dto: return FormatDate(dto.DateTime, format);
+            case bool b: return b ? "true" : "false";
+            case IFormattable f: return f.ToString(null, CultureInfo.InvariantCulture);
+            default: return Convert.ToString(value, CultureInfo.InvariantCulture) ?? "";
+        }
+    }
 
-        public static ConversionResult Convert(object? raw, string type, string? outputFormat, string? sourceFormat = null)
+    private static string FormatDate(DateTime dt, string? format)
+    {
+        var pattern = string.IsNullOrWhiteSpace(format)
+            ? (dt.TimeOfDay == TimeSpan.Zero ? "yyyy-MM-dd" : "yyyy-MM-ddTHH:mm:ss")
+            : format;
+        return dt.ToString(pattern, CultureInfo.InvariantCulture);
+    }
+
+    // ------------------------------------------------------------------ booleano
+    private static bool TryToBool(object value, out bool result)
+    {
+        result = false;
+        switch (value)
         {
-            if (raw == null || raw is DBNull) return ConversionResult.Null();
-            if (raw is string s0 && s0.Trim().Length == 0) return ConversionResult.Null();
+            case bool b:
+                result = b;
+                return true;
 
-            try
-            {
-                switch (type)
+            case string s:
+                switch (s.Trim().ToLowerInvariant())
                 {
-                    case FieldTypes.String: return ToStringValue(raw, outputFormat);
-                    case FieldTypes.Bool: return ToBool(raw);
-                    case FieldTypes.Decimal: return ToDecimal(raw);
-                    case FieldTypes.Integer: return ToInteger(raw);
-                    case FieldTypes.DateTime: return ToDate(raw, outputFormat, sourceFormat);
-                    default: return ConversionResult.Fail($"Tipo '{type}' não é um tipo de valor.");
+                    case "true": case "1": case "s": case "sim": case "y": case "yes":
+                        result = true;
+                        return true;
+                    case "false": case "0": case "n": case "nao": case "não": case "no":
+                        result = false;
+                        return true;
+                    default:
+                        return false;
                 }
-            }
-            catch (Exception ex) when (ex is FormatException or InvalidCastException or OverflowException)
-            {
-                return ConversionResult.Fail($"Valor não pôde ser convertido para {type}.");
-            }
-        }
 
-        private static ConversionResult ToStringValue(object raw, string? format)
+            default:
+                if (TryToDecimal(value, null, out var d) && (d == 0m || d == 1m))
+                {
+                    result = d == 1m;
+                    return true;
+                }
+                return false;
+        }
+    }
+
+    // ------------------------------------------------------------------ número
+    private static bool TryToDecimal(object value, CultureInfo? culture, out decimal result)
+    {
+        result = 0m;
+        switch (value)
         {
-            switch (raw)
-            {
-                case string s: return ConversionResult.Ok(JsonValue.Create(s.Trim()));
-                case DateTime dt: return ConversionResult.Ok(JsonValue.Create(dt.ToString(format ?? "s", CultureInfo.InvariantCulture)));
-                case DateTimeOffset dto: return ConversionResult.Ok(JsonValue.Create(dto.ToString(format ?? "s", CultureInfo.InvariantCulture)));
-                case bool b: return ConversionResult.Ok(JsonValue.Create(b ? "true" : "false"));
-                case IFormattable f: return ConversionResult.Ok(JsonValue.Create(f.ToString(null, CultureInfo.InvariantCulture)));
-                default: return ConversionResult.Ok(JsonValue.Create(raw.ToString()));
-            }
-        }
+            case decimal m:
+                result = m;
+                return true;
 
-        private static ConversionResult ToBool(object raw)
+            case string s:
+                return TryParseDecimal(s, culture, out result);
+
+            case bool:
+            case DateTime:
+            case DateOnly:
+            case DateTimeOffset:
+                return false;
+
+            case IConvertible c:
+                try
+                {
+                    result = c.ToDecimal(CultureInfo.InvariantCulture);
+                    return true;
+                }
+                catch (Exception ex) when (ex is FormatException or OverflowException or InvalidCastException)
+                {
+                    return false;
+                }
+
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// Sem cultura informada: o último separador (',' ou '.') é o decimal; quando só há um tipo de separador,
+    /// vírgula única = decimal (pt-BR) e ponto único = decimal (invariante); vários pontos = milhar.
+    /// "1.234" é lido como 1,234 — informe culture="pt-BR" no campo para tratá-lo como milhar.
+    /// </summary>
+    internal static bool TryParseDecimal(string text, CultureInfo? culture, out decimal result)
+    {
+        var s = text.Replace("R$", "").Trim();
+
+        if (culture != null)
+            return decimal.TryParse(s, NumberStyles.Number, culture, out result);
+
+        int lastDot = s.LastIndexOf('.');
+        int lastComma = s.LastIndexOf(',');
+
+        if (lastDot >= 0 && lastComma >= 0)
         {
-            switch (raw)
-            {
-                case bool b: return ConversionResult.Ok(JsonValue.Create(b));
-                case string s:
-                    switch (s.Trim().ToLowerInvariant())
-                    {
-                        case "true": case "1": case "s": case "sim": case "t": case "y": case "yes": case "verdadeiro":
-                            return ConversionResult.Ok(JsonValue.Create(true));
-                        case "false": case "0": case "n": case "nao": case "não": case "f": case "no": case "falso":
-                            return ConversionResult.Ok(JsonValue.Create(false));
-                        default:
-                            return ConversionResult.Fail("Valor não reconhecido como booleano.");
-                    }
-                default:
-                    var d = System.Convert.ToDecimal(raw, CultureInfo.InvariantCulture);
-                    return ConversionResult.Ok(JsonValue.Create(d != 0));
-            }
+            s = lastComma > lastDot
+                ? s.Replace(".", "").Replace(',', '.')
+                : s.Replace(",", "");
         }
-
-        private static ConversionResult ToDecimal(object raw)
+        else if (lastComma >= 0)
         {
-            decimal d;
-            if (raw is string s)
-            {
-                if (!TryParseDecimal(s, out d)) return ConversionResult.Fail("Valor não reconhecido como número decimal.");
-            }
-            else d = System.Convert.ToDecimal(raw, CultureInfo.InvariantCulture);
-            return ConversionResult.Ok(JsonValue.Create(Normalize(d)));
+            s = s.IndexOf(',') == lastComma ? s.Replace(',', '.') : s.Replace(",", "");
         }
-
-        private static ConversionResult ToInteger(object raw)
+        else if (lastDot >= 0 && s.IndexOf('.') != lastDot)
         {
-            long l;
-            if (raw is string s)
-            {
-                if (!TryParseDecimal(s, out var d)) return ConversionResult.Fail("Valor não reconhecido como inteiro.");
-                if (d != decimal.Truncate(d)) return ConversionResult.Fail("Valor não é inteiro.");
-                l = (long)d;
-            }
-            else
-            {
-                var d = System.Convert.ToDecimal(raw, CultureInfo.InvariantCulture);
-                if (d != decimal.Truncate(d)) return ConversionResult.Fail("Valor não é inteiro.");
-                l = (long)d;
-            }
-            return ConversionResult.Ok(JsonValue.Create(l));
+            s = s.Replace(".", "");
         }
 
-        private static ConversionResult ToDate(object raw, string? outputFormat, string? sourceFormat)
+        return decimal.TryParse(s, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint,
+            CultureInfo.InvariantCulture, out result);
+    }
+
+    // ------------------------------------------------------------------ data
+    private static bool TryToDateTime(object value, CultureInfo? culture, out DateTime result)
+    {
+        result = default;
+        switch (value)
         {
-            var fmt = outputFormat ?? DefaultDateFormat;
-            DateTime dt;
-            switch (raw)
-            {
-                case DateTime d: dt = d; break;
-                case DateTimeOffset dto: dt = dto.DateTime; break;
-                case string s:
-                    var formats = new List<string>();
-                    if (!string.IsNullOrWhiteSpace(sourceFormat)) formats.Add(sourceFormat);
-                    formats.AddRange(DateInputFormats);
-                    if (!DateTime.TryParseExact(s.Trim(), formats.ToArray(), CultureInfo.InvariantCulture,
-                            DateTimeStyles.None, out dt))
-                        return ConversionResult.Fail("Valor não reconhecido como data.");
-                    break;
-                default:
-                    return ConversionResult.Fail("Valor não reconhecido como data.");
-            }
-            return ConversionResult.Ok(JsonValue.Create(dt.ToString(fmt, CultureInfo.InvariantCulture)));
+            case DateTime dt:
+                result = dt;
+                return true;
+            case DateOnly d:
+                result = d.ToDateTime(TimeOnly.MinValue);
+                return true;
+            case DateTimeOffset dto:
+                result = dto.DateTime;
+                return true;
+            case string s:
+                var text = s.Trim();
+                if (DateTime.TryParseExact(text, DateFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out result))
+                    return true;
+                return DateTime.TryParse(text, culture ?? PtBr, DateTimeStyles.None, out result);
+            default:
+                return false;
         }
+    }
 
-        /// <summary>
-        /// Aceita "1234.56", "1234,56", "1.234,56" e "1,234.56". O último separador é o decimal.
-        /// </summary>
-        public static bool TryParseDecimal(string input, out decimal value)
-        {
-            var s = input.Trim().Replace(" ", "").Replace("R$", "");
-            int lastComma = s.LastIndexOf(','), lastDot = s.LastIndexOf('.');
-            if (lastComma >= 0 && lastDot >= 0)
-            {
-                if (lastComma > lastDot) s = s.Replace(".", "").Replace(',', '.');
-                else s = s.Replace(",", "");
-            }
-            else if (lastComma >= 0)
-            {
-                s = s.Replace(',', '.');
-            }
-            return decimal.TryParse(s, NumberStyles.Number | NumberStyles.AllowLeadingSign,
-                CultureInfo.InvariantCulture, out value);
-        }
-
-        public static decimal Normalize(decimal d) => d / 1.0000000000000000000000000000m;
+    private static CultureInfo CreatePtBr()
+    {
+        try { return CultureInfo.GetCultureInfo("pt-BR"); }
+        catch (CultureNotFoundException) { return CultureInfo.InvariantCulture; }
     }
 }

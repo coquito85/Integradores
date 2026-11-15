@@ -1,143 +1,127 @@
-namespace BetaJsonIntegrator.Core.Configuration
+namespace BetaJsonIntegrator.Core.Configuration;
+
+/// <summary>Nomes canônicos de tipo (spec. seção 9).</summary>
+public static class FieldTypes
 {
-    /// <summary>Tipos suportados no XML (já normalizados).</summary>
-    public static class FieldTypes
+    public const string String = "string";
+    public const string Bool = "bool";
+    public const string Decimal = "decimal";
+    public const string Integer = "integer";
+    public const string DateTime = "datetime";
+    public const string Array = "array";
+    public const string Object = "object";
+
+    /// <summary>Tipo de campo do JSON. Retorna null se desconhecido.</summary>
+    public static string? NormalizeField(string? raw) => raw?.Trim().ToLowerInvariant() switch
     {
-        public const string String = "string";
-        public const string Bool = "bool";
-        public const string Decimal = "decimal";
-        public const string Integer = "integer";
-        public const string DateTime = "datetime";
-        public const string Array = "array";
-        public const string Object = "object";
+        "string" or "text" => String,
+        "bool" or "boolean" => Bool,
+        "decimal" or "number" => Decimal,
+        "integer" or "int" => Integer,
+        "datetime" or "date" => DateTime,
+        "array" => Array,
+        "object" => Object,
+        _ => null
+    };
 
-        public static string? Normalize(string? type)
-        {
-            if (string.IsNullOrWhiteSpace(type)) return String;
-            switch (type.Trim().ToLowerInvariant())
-            {
-                case "string":
-                case "text":
-                case "varchar":
-                    return String;
-                case "bool":
-                case "boolean":
-                    return Bool;
-                case "decimal":
-                case "number":
-                case "double":
-                case "float":
-                case "numeric":
-                    return Decimal;
-                case "integer":
-                case "int":
-                case "int32":
-                case "int64":
-                case "long":
-                    return Integer;
-                case "datetime":
-                case "date":
-                case "timestamp":
-                    return DateTime;
-                case "array":
-                case "list":
-                    return Array;
-                case "object":
-                    return Object;
-                default:
-                    return null;
-            }
-        }
-    }
-
-    public sealed class LayoutConfiguration
+    /// <summary>Tipo de coluna de origem; aceita os nomes do XML legado (int, long, money, varchar...).</summary>
+    public static string? NormalizeColumn(string? raw) => raw?.Trim().ToLowerInvariant() switch
     {
-        public string Name { get; set; } = "";
-        public string Identifier { get; set; } = "";
-        public List<GenerateConfig> Generates { get; } = new();
-    }
+        null or "" => String,
+        "string" or "text" or "varchar" => String,
+        "bool" or "boolean" => Bool,
+        "decimal" or "double" or "float" or "money" or "currency" or "number" => Decimal,
+        "int" or "integer" or "long" or "byte" => Integer,
+        "datetime" or "date" or "time" => DateTime,
+        _ => null
+    };
+}
 
-    /// <summary>Elemento &lt;generate&gt;: tabelas de origem + definições de JSON.</summary>
-    public sealed class GenerateConfig
-    {
-        public string Name { get; set; } = "";
-        public List<TableConfig> Tables { get; } = new();
-        public List<JsonFieldsConfig> JsonDefinitions { get; } = new();
+public sealed class LayoutConfiguration
+{
+    public string Name { get; set; } = "";
+    public string Identifier { get; set; } = "";
+    public List<GenerateConfig> Generates { get; } = new();
+}
 
-        public TableConfig? FindTable(string? alias) =>
-            Tables.FirstOrDefault(t => string.Equals(t.Alias, alias, StringComparison.OrdinalIgnoreCase));
-    }
+public sealed class GenerateConfig
+{
+    public string Name { get; set; } = "";
+    public List<TableConfig> Tables { get; } = new();
 
-    public sealed class TableConfig
-    {
-        public string Name { get; set; } = "";
-        public string Alias { get; set; } = "";
-        public List<ColumnConfig> Columns { get; } = new();
+    /// <summary>Estruturas <c>Jsonfields</c> associadas a este generate (pelo alias da tabela).</summary>
+    public List<JsonDefinition> JsonDefinitions { get; } = new();
+}
 
-        public ColumnConfig? FindColumn(string? name) =>
-            Columns.FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
-    }
+public sealed class TableConfig
+{
+    public string Name { get; set; } = "";
+    public string Alias { get; set; } = "";
+    public List<ColumnConfig> Columns { get; } = new();
+}
 
-    public sealed class ColumnConfig
-    {
-        public string Name { get; set; } = "";
-        public string Type { get; set; } = FieldTypes.String;
-        public string? Description { get; set; }
-        /// <summary>Atributo "formate" da coluna (dica de formato da origem / saída padrão).</summary>
-        public string? Format { get; set; }
-        public bool OrderBy { get; set; }
-    }
+public sealed class ColumnConfig
+{
+    public string Name { get; set; } = "";
+    public string? RawType { get; set; }
 
-    public sealed class JsonFieldsConfig
-    {
-        public string Name { get; set; } = "";
-        public List<AliasConfig> Aliases { get; } = new();
-    }
+    /// <summary>Tipo canônico (sempre preenchido; desconhecido vira string com aviso).</summary>
+    public string Type { get; set; } = FieldTypes.String;
 
-    /// <summary>Elemento &lt;Refealias&gt;: vincula a estrutura JSON a um alias de origem.</summary>
-    public sealed class AliasConfig
-    {
-        public string Name { get; set; } = "";
-        public List<FieldConfig> Fields { get; } = new();
-    }
+    public bool OrderBy { get; set; }
+    public string? Format { get; set; }
+    public string? Culture { get; set; }
+    public string Description { get; set; } = "";
+    public int Line { get; set; }
+}
 
-    public sealed class FieldConfig
-    {
-        public string Name { get; set; } = "";
-        /// <summary>Tipo normalizado; null quando o tipo declarado é desconhecido.</summary>
-        public string? Type { get; set; } = FieldTypes.String;
-        public string RawType { get; set; } = "";
+public sealed class JsonDefinition
+{
+    public string Name { get; set; } = "";
+    public List<AliasConfig> Aliases { get; } = new();
+}
 
-        /// <summary>Atributo value (literal; no XML legado também pode ser nome de coluna).</summary>
-        public string? Value { get; set; }
-        /// <summary>Atributo source (novo) ou Columnrefe (legado).</summary>
-        public string? Source { get; set; }
-        public string? Default { get; set; }
-        public string? Format { get; set; }
-        public string? Description { get; set; }
-        public bool Required { get; set; }
-        public bool Configurable { get; set; }
+/// <summary><c>Refealias</c>: vincula uma estrutura JSON a um alias de tabela.</summary>
+public sealed class AliasConfig
+{
+    public string Name { get; set; } = "";
+    public int Line { get; set; }
+    public List<FieldConfig> Fields { get; } = new();
+}
 
-        /// <summary>Arrays: alias de outra tabela que origina os elementos (junção).</summary>
-        public string? ChildAlias { get; set; }
-        /// <summary>Arrays com ChildAlias: coluna da tabela filha.</summary>
-        public string? Key { get; set; }
-        /// <summary>Arrays com ChildAlias: coluna da tabela pai (padrão = Key).</summary>
-        public string? ParentKey { get; set; }
-        /// <summary>Arrays de topo: colunas de agrupamento (várias linhas → um elemento).</summary>
-        public string[] GroupBy { get; set; } = Array.Empty<string>();
-        /// <summary>empty="true": array vazio declarado de forma explícita.</summary>
-        public bool EmptyDeclared { get; set; }
+/// <summary>
+/// Campo da estrutura JSON. A resolução (literal, coluna, padrão, pendente) NÃO é guardada aqui:
+/// fica no <c>MappingPlan</c>, para que o layout e as personalizações permaneçam separados.
+/// </summary>
+public sealed class FieldConfig
+{
+    public string Name { get; set; } = "";
+    public string? RawType { get; set; }
 
-        public int Line { get; set; }
-        public FieldConfig? Parent { get; set; }
-        public List<FieldConfig> Children { get; } = new();
+    /// <summary>Tipo canônico ou null se o tipo do XML for desconhecido.</summary>
+    public string? Type { get; set; }
 
-        public bool IsArray => Type == FieldTypes.Array;
-        public bool IsObject => Type == FieldTypes.Object;
-        public bool IsContainer => IsArray || IsObject;
+    public string? Value { get; set; }
 
-        /// <summary>Caminho lógico sem índices, ex.: declaracoes.adquirentes.ni</summary>
-        public string Path => Parent == null ? Name : Parent.Path + "." + Name;
-    }
+    /// <summary>Coluna de origem: atributo <c>source</c> ou, no XML legado, <c>Columnrefe</c>.</summary>
+    public string? Source { get; set; }
+
+    public bool UsesLegacyColumnAttribute { get; set; }
+    public string? Default { get; set; }
+    public string? Format { get; set; }
+    public string? Culture { get; set; }
+    public string Description { get; set; } = "";
+    public bool Required { get; set; }
+    public bool Configurable { get; set; }
+    public int Line { get; set; }
+
+    public FieldConfig? Parent { get; set; }
+
+    /// <summary>Caminho no layout, sem o alias: <c>declaracoes.adquirentes.ni</c>.</summary>
+    public string Path { get; set; } = "";
+
+    public List<FieldConfig> Children { get; } = new();
+
+    public bool HasChildren => Children.Count > 0;
+    public bool IsContainer => Type is FieldTypes.Array or FieldTypes.Object;
 }

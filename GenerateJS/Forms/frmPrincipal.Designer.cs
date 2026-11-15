@@ -27,27 +27,8 @@ namespace GenerateJS.Forms
             btnVerValidacao = new Button();
             btnVerJson = new Button();
             btnGerar = new Button();
-            chkPrevia = new CheckBox();
-            cboGenerate = new ComboBox();
-            lblGenerate = new Label();
-            grpFonte = new GroupBox();
-            pnlBanco = new Panel();
-            lblConexaoAviso = new Label();
-            btnTestarConexao = new Button();
-            chkMostrarConexao = new CheckBox();
-            txtConexao = new TextBox();
-            lblConexao = new Label();
-            pnlCsv = new Panel();
-            chkCabecalho = new CheckBox();
-            cboEncoding = new ComboBox();
-            lblEncoding = new Label();
-            cboDelimitador = new ComboBox();
-            lblDelimitador = new Label();
-            btnProcurar = new Button();
-            txtArquivo = new TextBox();
-            lblArquivo = new Label();
-            cboFonte = new ComboBox();
-            lblFonte = new Label();
+            lblConfigResumo = new Label();
+            btnConfigurar = new Button();
             pnlLayoutAtivo = new Panel();
             lblLayoutDetalhe = new Label();
             lblLayoutAtivo = new Label();
@@ -64,9 +45,6 @@ namespace GenerateJS.Forms
             lblStatus = new ToolStripStatusLabel();
             pnlConteudo.SuspendLayout();
             grpExecucao.SuspendLayout();
-            grpFonte.SuspendLayout();
-            pnlBanco.SuspendLayout();
-            pnlCsv.SuspendLayout();
             pnlLayoutAtivo.SuspendLayout();
             pnlMensagens.SuspendLayout();
             pnlNav.SuspendLayout();
@@ -77,204 +55,12 @@ namespace GenerateJS.Forms
             //
             pnlConteudo.AutoScroll = true;
             pnlConteudo.Controls.Add(grpExecucao);
-            pnlConteudo.Controls.Add(grpFonte);
             pnlConteudo.Dock = DockStyle.Fill;
             pnlConteudo.Location = new Point(210, 64);
             pnlConteudo.Name = "pnlConteudo";
             pnlConteudo.Padding = new Padding(16);
             pnlConteudo.Size = new Size(890, 434);
             pnlConteudo.TabIndex = 0;
-            //
-            // grpFonte
-            //
-            grpFonte.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            grpFonte.Controls.Add(pnlBanco);
-            grpFonte.Controls.Add(pnlCsv);
-            grpFonte.Controls.Add(cboFonte);
-            grpFonte.Controls.Add(lblFonte);
-            grpFonte.Location = new Point(16, 16);
-            grpFonte.Name = "grpFonte";
-            grpFonte.Size = new Size(850, 170);
-            grpFonte.TabIndex = 0;
-            grpFonte.TabStop = false;
-            grpFonte.Text = "Fonte de dados";
-            //
-            // lblFonte
-            //
-            lblFonte.AutoSize = true;
-            lblFonte.Location = new Point(16, 31);
-            lblFonte.Name = "lblFonte";
-            lblFonte.Size = new Size(43, 15);
-            lblFonte.TabIndex = 0;
-            lblFonte.Text = "Origem:";
-            //
-            // cboFonte
-            //
-            cboFonte.DropDownStyle = ComboBoxStyle.DropDownList;
-            cboFonte.FormattingEnabled = true;
-            cboFonte.Items.AddRange(new object[] { "Arquivo CSV", "MariaDB", "SQL Server" });
-            cboFonte.Location = new Point(80, 28);
-            cboFonte.Name = "cboFonte";
-            cboFonte.Size = new Size(200, 23);
-            cboFonte.TabIndex = 1;
-            cboFonte.SelectedIndexChanged += cboFonte_SelectedIndexChanged;
-            //
-            // pnlCsv
-            //
-            pnlCsv.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            pnlCsv.Controls.Add(chkCabecalho);
-            pnlCsv.Controls.Add(cboEncoding);
-            pnlCsv.Controls.Add(lblEncoding);
-            pnlCsv.Controls.Add(cboDelimitador);
-            pnlCsv.Controls.Add(lblDelimitador);
-            pnlCsv.Controls.Add(btnProcurar);
-            pnlCsv.Controls.Add(txtArquivo);
-            pnlCsv.Controls.Add(lblArquivo);
-            pnlCsv.Location = new Point(10, 62);
-            pnlCsv.Name = "pnlCsv";
-            pnlCsv.Size = new Size(830, 96);
-            pnlCsv.TabIndex = 2;
-            //
-            // lblArquivo
-            //
-            lblArquivo.AutoSize = true;
-            lblArquivo.Location = new Point(6, 12);
-            lblArquivo.Name = "lblArquivo";
-            lblArquivo.Size = new Size(47, 15);
-            lblArquivo.TabIndex = 0;
-            lblArquivo.Text = "Arquivo:";
-            //
-            // txtArquivo
-            //
-            txtArquivo.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            txtArquivo.Location = new Point(70, 9);
-            txtArquivo.Name = "txtArquivo";
-            txtArquivo.Size = new Size(690, 23);
-            txtArquivo.TabIndex = 1;
-            //
-            // btnProcurar
-            //
-            btnProcurar.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnProcurar.Location = new Point(766, 7);
-            btnProcurar.Name = "btnProcurar";
-            btnProcurar.Size = new Size(54, 27);
-            btnProcurar.TabIndex = 2;
-            btnProcurar.Text = "...";
-            btnProcurar.UseVisualStyleBackColor = true;
-            btnProcurar.Click += btnProcurar_Click;
-            //
-            // lblDelimitador
-            //
-            lblDelimitador.AutoSize = true;
-            lblDelimitador.Location = new Point(6, 52);
-            lblDelimitador.Name = "lblDelimitador";
-            lblDelimitador.Size = new Size(66, 15);
-            lblDelimitador.TabIndex = 3;
-            lblDelimitador.Text = "Delimitador:";
-            //
-            // cboDelimitador
-            //
-            cboDelimitador.DropDownStyle = ComboBoxStyle.DropDownList;
-            cboDelimitador.FormattingEnabled = true;
-            cboDelimitador.Items.AddRange(new object[] { "; (ponto e vírgula)", ", (vírgula)", "| (barra vertical)", "Tab" });
-            cboDelimitador.Location = new Point(80, 49);
-            cboDelimitador.Name = "cboDelimitador";
-            cboDelimitador.Size = new Size(150, 23);
-            cboDelimitador.TabIndex = 4;
-            //
-            // lblEncoding
-            //
-            lblEncoding.AutoSize = true;
-            lblEncoding.Location = new Point(250, 52);
-            lblEncoding.Name = "lblEncoding";
-            lblEncoding.Size = new Size(61, 15);
-            lblEncoding.TabIndex = 5;
-            lblEncoding.Text = "Codificação:";
-            //
-            // cboEncoding
-            //
-            cboEncoding.DropDownStyle = ComboBoxStyle.DropDownList;
-            cboEncoding.FormattingEnabled = true;
-            cboEncoding.Items.AddRange(new object[] { "UTF-8", "Windows-1252 (ANSI)", "ISO-8859-1" });
-            cboEncoding.Location = new Point(330, 49);
-            cboEncoding.Name = "cboEncoding";
-            cboEncoding.Size = new Size(170, 23);
-            cboEncoding.TabIndex = 6;
-            //
-            // chkCabecalho
-            //
-            chkCabecalho.AutoSize = true;
-            chkCabecalho.Checked = true;
-            chkCabecalho.CheckState = CheckState.Checked;
-            chkCabecalho.Location = new Point(530, 51);
-            chkCabecalho.Name = "chkCabecalho";
-            chkCabecalho.Size = new Size(200, 19);
-            chkCabecalho.TabIndex = 7;
-            chkCabecalho.Text = "Primeira linha é o cabeçalho";
-            chkCabecalho.UseVisualStyleBackColor = true;
-            //
-            // pnlBanco
-            //
-            pnlBanco.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            pnlBanco.Controls.Add(lblConexaoAviso);
-            pnlBanco.Controls.Add(btnTestarConexao);
-            pnlBanco.Controls.Add(chkMostrarConexao);
-            pnlBanco.Controls.Add(txtConexao);
-            pnlBanco.Controls.Add(lblConexao);
-            pnlBanco.Location = new Point(10, 62);
-            pnlBanco.Name = "pnlBanco";
-            pnlBanco.Size = new Size(830, 96);
-            pnlBanco.TabIndex = 3;
-            pnlBanco.Visible = false;
-            //
-            // lblConexao
-            //
-            lblConexao.AutoSize = true;
-            lblConexao.Location = new Point(6, 12);
-            lblConexao.Name = "lblConexao";
-            lblConexao.Size = new Size(98, 15);
-            lblConexao.TabIndex = 0;
-            lblConexao.Text = "String de conexão:";
-            //
-            // txtConexao
-            //
-            txtConexao.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            txtConexao.Location = new Point(110, 9);
-            txtConexao.Name = "txtConexao";
-            txtConexao.Size = new Size(710, 23);
-            txtConexao.TabIndex = 1;
-            txtConexao.UseSystemPasswordChar = true;
-            //
-            // chkMostrarConexao
-            //
-            chkMostrarConexao.AutoSize = true;
-            chkMostrarConexao.Location = new Point(110, 44);
-            chkMostrarConexao.Name = "chkMostrarConexao";
-            chkMostrarConexao.Size = new Size(70, 19);
-            chkMostrarConexao.TabIndex = 2;
-            chkMostrarConexao.Text = "Mostrar";
-            chkMostrarConexao.UseVisualStyleBackColor = true;
-            chkMostrarConexao.CheckedChanged += chkMostrarConexao_CheckedChanged;
-            //
-            // btnTestarConexao
-            //
-            btnTestarConexao.Location = new Point(200, 40);
-            btnTestarConexao.Name = "btnTestarConexao";
-            btnTestarConexao.Size = new Size(140, 28);
-            btnTestarConexao.TabIndex = 3;
-            btnTestarConexao.Text = "Testar conexão";
-            btnTestarConexao.UseVisualStyleBackColor = true;
-            btnTestarConexao.Click += btnTestarConexao_Click;
-            //
-            // lblConexaoAviso
-            //
-            lblConexaoAviso.AutoSize = true;
-            lblConexaoAviso.ForeColor = SystemColors.GrayText;
-            lblConexaoAviso.Location = new Point(110, 74);
-            lblConexaoAviso.Name = "lblConexaoAviso";
-            lblConexaoAviso.Size = new Size(330, 15);
-            lblConexaoAviso.TabIndex = 4;
-            lblConexaoAviso.Text = "A string de conexão não é gravada em arquivo (somente em memória).";
             //
             // grpExecucao
             //
@@ -285,81 +71,74 @@ namespace GenerateJS.Forms
             grpExecucao.Controls.Add(btnVerValidacao);
             grpExecucao.Controls.Add(btnVerJson);
             grpExecucao.Controls.Add(btnGerar);
-            grpExecucao.Controls.Add(chkPrevia);
-            grpExecucao.Controls.Add(cboGenerate);
-            grpExecucao.Controls.Add(lblGenerate);
-            grpExecucao.Location = new Point(16, 200);
+            grpExecucao.Controls.Add(lblConfigResumo);
+            grpExecucao.Controls.Add(btnConfigurar);
+            grpExecucao.Location = new Point(16, 16);
             grpExecucao.Name = "grpExecucao";
             grpExecucao.Size = new Size(850, 190);
-            grpExecucao.TabIndex = 1;
+            grpExecucao.TabIndex = 0;
             grpExecucao.TabStop = false;
-            grpExecucao.Text = "Geração";
+            grpExecucao.Text = "Execução";
             //
-            // lblGenerate
+            // btnConfigurar
             //
-            lblGenerate.AutoSize = true;
-            lblGenerate.Location = new Point(16, 31);
-            lblGenerate.Name = "lblGenerate";
-            lblGenerate.Size = new Size(64, 15);
-            lblGenerate.TabIndex = 0;
-            lblGenerate.Text = "Configuração:";
+            btnConfigurar.Location = new Point(16, 26);
+            btnConfigurar.Name = "btnConfigurar";
+            btnConfigurar.Size = new Size(170, 32);
+            btnConfigurar.TabIndex = 0;
+            btnConfigurar.Text = "Configurações...";
+            btnConfigurar.UseVisualStyleBackColor = true;
+            btnConfigurar.Click += btnConfigurar_Click;
             //
-            // cboGenerate
+            // lblConfigResumo
             //
-            cboGenerate.DropDownStyle = ComboBoxStyle.DropDownList;
-            cboGenerate.FormattingEnabled = true;
-            cboGenerate.Location = new Point(100, 28);
-            cboGenerate.Name = "cboGenerate";
-            cboGenerate.Size = new Size(300, 23);
-            cboGenerate.TabIndex = 1;
-            //
-            // chkPrevia
-            //
-            chkPrevia.AutoSize = true;
-            chkPrevia.Location = new Point(100, 62);
-            chkPrevia.Name = "chkPrevia";
-            chkPrevia.Size = new Size(380, 19);
-            chkPrevia.TabIndex = 2;
-            chkPrevia.Text = "Gerar prévia mesmo com pendências (campos pendentes não são preenchidos)";
-            chkPrevia.UseVisualStyleBackColor = true;
+            lblConfigResumo.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            lblConfigResumo.AutoEllipsis = true;
+            lblConfigResumo.ForeColor = SystemColors.GrayText;
+            lblConfigResumo.Location = new Point(196, 26);
+            lblConfigResumo.Name = "lblConfigResumo";
+            lblConfigResumo.Size = new Size(638, 32);
+            lblConfigResumo.TabIndex = 1;
+            lblConfigResumo.Text = "Configure a origem dos dados e a geração.";
+            lblConfigResumo.TextAlign = ContentAlignment.MiddleLeft;
             //
             // btnGerar
             //
             btnGerar.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnGerar.Location = new Point(16, 98);
+            btnGerar.Location = new Point(16, 78);
             btnGerar.Name = "btnGerar";
             btnGerar.Size = new Size(140, 34);
-            btnGerar.TabIndex = 3;
+            btnGerar.TabIndex = 2;
             btnGerar.Text = "Gerar JSON";
             btnGerar.UseVisualStyleBackColor = true;
             btnGerar.Click += btnGerar_Click;
             //
             // btnVerJson
             //
-            btnVerJson.Location = new Point(166, 98);
+            btnVerJson.Location = new Point(166, 78);
             btnVerJson.Name = "btnVerJson";
             btnVerJson.Size = new Size(130, 34);
-            btnVerJson.TabIndex = 4;
+            btnVerJson.TabIndex = 3;
             btnVerJson.Text = "Ver JSON";
             btnVerJson.UseVisualStyleBackColor = true;
             btnVerJson.Click += btnVerJson_Click;
             //
             // btnVerValidacao
             //
-            btnVerValidacao.Location = new Point(306, 98);
+            btnVerValidacao.Location = new Point(306, 78);
             btnVerValidacao.Name = "btnVerValidacao";
             btnVerValidacao.Size = new Size(130, 34);
-            btnVerValidacao.TabIndex = 5;
+            btnVerValidacao.TabIndex = 4;
             btnVerValidacao.Text = "Ver validação";
             btnVerValidacao.UseVisualStyleBackColor = true;
             btnVerValidacao.Click += btnVerValidacao_Click;
             //
             // btnExportar
             //
-            btnExportar.Location = new Point(446, 98);
+            btnExportar.Location = new Point(446, 78);
             btnExportar.Name = "btnExportar";
             btnExportar.Size = new Size(130, 34);
-            btnExportar.TabIndex = 6;
+            btnExportar.TabIndex = 5;
             btnExportar.Text = "Exportar";
             btnExportar.UseVisualStyleBackColor = true;
             btnExportar.Click += btnExportar_Click;
@@ -367,22 +146,22 @@ namespace GenerateJS.Forms
             // prgExecucao
             //
             prgExecucao.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            prgExecucao.Location = new Point(16, 146);
+            prgExecucao.Location = new Point(16, 128);
             prgExecucao.MarqueeAnimationSpeed = 30;
             prgExecucao.Name = "prgExecucao";
             prgExecucao.Size = new Size(818, 8);
             prgExecucao.Style = ProgressBarStyle.Marquee;
-            prgExecucao.TabIndex = 7;
+            prgExecucao.TabIndex = 6;
             prgExecucao.Visible = false;
             //
             // lblResumo
             //
             lblResumo.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             lblResumo.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblResumo.Location = new Point(16, 160);
+            lblResumo.Location = new Point(16, 146);
             lblResumo.Name = "lblResumo";
             lblResumo.Size = new Size(818, 20);
-            lblResumo.TabIndex = 8;
+            lblResumo.TabIndex = 7;
             //
             // pnlLayoutAtivo
             //
@@ -570,12 +349,6 @@ namespace GenerateJS.Forms
             pnlConteudo.ResumeLayout(false);
             grpExecucao.ResumeLayout(false);
             grpExecucao.PerformLayout();
-            grpFonte.ResumeLayout(false);
-            grpFonte.PerformLayout();
-            pnlBanco.ResumeLayout(false);
-            pnlBanco.PerformLayout();
-            pnlCsv.ResumeLayout(false);
-            pnlCsv.PerformLayout();
             pnlLayoutAtivo.ResumeLayout(false);
             pnlLayoutAtivo.PerformLayout();
             pnlMensagens.ResumeLayout(false);
@@ -596,27 +369,8 @@ namespace GenerateJS.Forms
         private Button btnVerValidacao;
         private Button btnVerJson;
         private Button btnGerar;
-        private CheckBox chkPrevia;
-        private ComboBox cboGenerate;
-        private Label lblGenerate;
-        private GroupBox grpFonte;
-        private Panel pnlBanco;
-        private Label lblConexaoAviso;
-        private Button btnTestarConexao;
-        private CheckBox chkMostrarConexao;
-        private TextBox txtConexao;
-        private Label lblConexao;
-        private Panel pnlCsv;
-        private CheckBox chkCabecalho;
-        private ComboBox cboEncoding;
-        private Label lblEncoding;
-        private ComboBox cboDelimitador;
-        private Label lblDelimitador;
-        private Button btnProcurar;
-        private TextBox txtArquivo;
-        private Label lblArquivo;
-        private ComboBox cboFonte;
-        private Label lblFonte;
+        private Label lblConfigResumo;
+        private Button btnConfigurar;
         private Panel pnlLayoutAtivo;
         private Label lblLayoutDetalhe;
         private Label lblLayoutAtivo;

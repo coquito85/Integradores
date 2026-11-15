@@ -7,8 +7,7 @@
     <RootNamespace>BetaJsonIntegrator.Data</RootNamespace>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\BetaJsonIntegrator.Core\BetaJsonIntegrator.Core.csproj" />
-  </ItemGroup>
+  <!-- Sem pacotes NuGet: os drivers (MySqlConnector / Microsoft.Data.SqlClient) ficam no App,
+       que entrega o DbProviderFactory aos provedores. -->
 
 </Project>

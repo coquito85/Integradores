@@ -1,29 +1,27 @@
 using System.Data;
-using BetaJsonIntegrator.Core;
-using BetaJsonIntegrator.Core.Configuration;
 
-namespace BetaJsonIntegrator.Data
+namespace BetaJsonIntegrator.Data.Providers;
+
+/// <summary>
+/// Provedor em memória: serve um <see cref="DataTable"/> já existente. Permite o primeiro marco
+/// (spec. seção 15.1) sem banco de dados e é a base dos testes automatizados.
+/// </summary>
+public sealed class DataTableProvider : IDataProvider
 {
-    /// <summary>
-    /// Provedor em memória (DataTable por alias). Usado no primeiro marco funcional
-    /// (protótipo sem banco) e nos testes.
-    /// </summary>
-    public sealed class DataTableProvider : IDataProvider
+    private readonly DataTable _table;
+
+    public DataTableProvider(DataTable table, string name = "Memória")
     {
-        private readonly Dictionary<string, DataTable> _tables = new(StringComparer.OrdinalIgnoreCase);
+        _table = table ?? throw new ArgumentNullException(nameof(table));
+        Name = name;
+    }
 
-        public string DisplayName => "Memória";
+    public string Name { get; }
 
-        public DataTableProvider Add(string alias, DataTable table)
-        {
-            _tables[alias] = table;
-            return this;
-        }
-
-        public DataTable Load(TableConfig table)
-        {
-            if (_tables.TryGetValue(table.Alias, out var dt)) return dt;
-            throw new KeyNotFoundException($"Nenhum DataTable registrado para o alias '{table.Alias}'.");
-        }
+    public DataTable Load(DataRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var filtered = DataOrdering.Filter(_table, request.Filters);
+        return DataOrdering.Apply(filtered, request.Columns);
     }
 }

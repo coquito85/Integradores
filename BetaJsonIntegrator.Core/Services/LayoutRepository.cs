@@ -1,261 +1,252 @@
+using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using BetaJsonIntegrator.Core.Configuration;
 using BetaJsonIntegrator.Core.Mapping;
 using BetaJsonIntegrator.Core.Validation;
 
-namespace BetaJsonIntegrator.Core.Services
+namespace BetaJsonIntegrator.Core.Services;
+
+/// <summary>
+/// Gerencia <c>Configurations/Layouts/&lt;pasta&gt;/</c>: layout.xml, schema.json, customizations.xml,
+/// metadata.json e history/v&lt;n&gt; (versionamento). Cadastrar um novo layout não exige recompilação.
+/// </summary>
+public sealed class LayoutRepository
 {
-    public sealed class LayoutMetadata
+    public const string LayoutFile = "layout.xml";
+    public const string SchemaFile = "schema.json";
+    public const string CustomizationsFile = "customizations.xml";
+    public const string MetadataFile = "metadata.json";
+    public const string HistoryFolder = "history";
+
+    private static readonly Regex FolderRegex = new(@"^[A-Za-z0-9][A-Za-z0-9_.\-]*$", RegexOptions.Compiled);
+    private static readonly UTF8Encoding Utf8NoBom = new(false);
+
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
-        public string FriendlyName { get; set; } = "";
-        public string Identifier { get; set; } = "";
-        public int LayoutVersion { get; set; } = 1;
-        public string SchemaVersion { get; set; } = "";
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
-        public string Notes { get; set; } = "";
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
+    private static readonly JsonDocumentOptions SchemaParseOptions = new()
+    {
+        CommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true
+    };
+
+    public LayoutRepository(string root)
+    {
+        if (string.IsNullOrWhiteSpace(root))
+            throw new ArgumentException("Informe a pasta raiz dos layouts.", nameof(root));
+        Root = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
     }
 
-    public sealed class LayoutInfo
+    public string Root { get; }
+
+    // ------------------------------------------------------------------ consulta
+    public IReadOnlyList<LayoutSummary> List()
     {
-        public string FolderName { get; init; } = "";
-        public LayoutMetadata Metadata { get; init; } = new();
-        public bool HasSchema { get; init; }
-    }
+        var result = new List<LayoutSummary>();
+        if (!Directory.Exists(Root)) return result;
 
-    /// <summary>Layout carregado: XML interpretado + personalizações + schema + metadados.</summary>
-    public sealed class LayoutBundle
-    {
-        public string FolderName { get; init; } = "";
-        public string FolderPath { get; init; } = "";
-        public string LayoutXmlText { get; init; } = "";
-        public LayoutConfiguration? Layout { get; init; }
-        public List<ValidationIssue> ParseIssues { get; init; } = new();
-        public CustomizationSet Customizations { get; init; } = new();
-        public string? SchemaText { get; init; }
-        public LayoutMetadata Metadata { get; init; } = new();
-
-        public string LayoutXmlPath => Path.Combine(FolderPath, LayoutRepository.LayoutFile);
-        public string CustomizationsPath => Path.Combine(FolderPath, LayoutRepository.CustomizationsFile);
-        public string SchemaPath => Path.Combine(FolderPath, LayoutRepository.SchemaFile);
-        public bool IsUsable => Layout != null && ParseIssues.All(i => i.Severity != IssueSeverity.Error);
-        public string DisplayName => string.IsNullOrWhiteSpace(Metadata.FriendlyName) ? (Layout?.Name ?? FolderName) : Metadata.FriendlyName;
-    }
-
-    /// <summary>
-    /// Gerencia Configurations/Layouts/&lt;Pasta&gt;/{layout.xml, schema.json, customizations.xml, metadata.json}.
-    /// Cada alteração do XML/Schema pode arquivar a versão anterior em history/v{n}.
-    /// </summary>
-    public sealed class LayoutRepository
-    {
-        public const string LayoutFile = "layout.xml";
-        public const string SchemaFile = "schema.json";
-        public const string CustomizationsFile = "customizations.xml";
-        public const string MetadataFile = "metadata.json";
-        private static readonly Regex SafeName = new(@"^[A-Za-z0-9_\-]{1,64}$", RegexOptions.Compiled);
-        private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
-
-        public string RootFolder { get; }
-
-        public LayoutRepository(string rootFolder)
+        foreach (var dir in Directory.EnumerateDirectories(Root).OrderBy(d => d, StringComparer.OrdinalIgnoreCase))
         {
-            RootFolder = rootFolder;
-            Directory.CreateDirectory(rootFolder);
+            var name = Path.GetFileName(dir);
+            var layoutPath = Path.Combine(dir, LayoutFile);
+            if (!FolderRegex.IsMatch(name) || !File.Exists(layoutPath)) continue;
+
+            var parse = XmlLayoutParser.ParseText(File.ReadAllText(layoutPath));
+            var meta = ReadMetadata(dir, parse.Layout);
+            result.Add(new LayoutSummary(name, meta, File.Exists(Path.Combine(dir, SchemaFile))));
         }
+        return result;
+    }
 
-        public IReadOnlyList<LayoutInfo> List()
+    /// <summary>Localiza pelo identificador do XML (ex.: NOV2025009), equivalente ao "código do layout" do modelo.</summary>
+    public LayoutSummary? FindByIdentifier(string identifier) =>
+        List().FirstOrDefault(l => string.Equals(l.Metadata.Identifier, identifier, StringComparison.OrdinalIgnoreCase));
+
+    public LayoutBundle Load(string folderName)
+    {
+        var dir = ResolveFolder(folderName);
+        if (!Directory.Exists(dir))
+            throw new DirectoryNotFoundException($"Layout '{folderName}' não encontrado em {Root}.");
+
+        var layoutPath = Path.Combine(dir, LayoutFile);
+        if (!File.Exists(layoutPath))
+            throw new FileNotFoundException($"O layout '{folderName}' não possui o arquivo {LayoutFile}.", layoutPath);
+
+        var xml = File.ReadAllText(layoutPath);
+        var parse = XmlLayoutParser.ParseText(xml);
+        var meta = ReadMetadata(dir, parse.Layout);
+        var issues = new List<ValidationIssue>(parse.Issues);
+
+        var customizations = new CustomizationSet { LayoutIdentifier = meta.Identifier, Version = meta.LayoutVersion };
+        var customPath = Path.Combine(dir, CustomizationsFile);
+        if (File.Exists(customPath))
         {
-            var list = new List<LayoutInfo>();
-            foreach (var dir in Directory.GetDirectories(RootFolder).OrderBy(d => d, StringComparer.OrdinalIgnoreCase))
-            {
-                if (!File.Exists(Path.Combine(dir, LayoutFile))) continue;
-                list.Add(new LayoutInfo
-                {
-                    FolderName = Path.GetFileName(dir),
-                    Metadata = ReadMetadata(dir),
-                    HasSchema = File.Exists(Path.Combine(dir, SchemaFile))
-                });
-            }
-            return list;
-        }
-
-        public LayoutBundle Load(string folderName)
-        {
-            var path = ResolveFolder(folderName);
-            var xmlPath = Path.Combine(path, LayoutFile);
-            if (!File.Exists(xmlPath)) throw new FileNotFoundException("layout.xml não encontrado.", xmlPath);
-
-            var xmlText = File.ReadAllText(xmlPath);
-            var parse = XmlLayoutParser.ParseText(xmlText);
-            var meta = ReadMetadata(path);
-
-            if (parse.Layout != null)
-            {
-                if (string.IsNullOrWhiteSpace(meta.Identifier)) meta.Identifier = parse.Layout.Identifier;
-                if (string.IsNullOrWhiteSpace(meta.FriendlyName)) meta.FriendlyName = parse.Layout.Name;
-            }
-
-            var cust = new CustomizationSet { LayoutIdentifier = meta.Identifier, Version = meta.LayoutVersion };
-            var custPath = Path.Combine(path, CustomizationsFile);
-            var issues = parse.Issues.ToList();
             try
             {
-                var loaded = CustomizationSet.Load(custPath);
-                cust = loaded;
-                if (File.Exists(custPath))
-                {
-                    if (!string.IsNullOrEmpty(loaded.LayoutIdentifier) &&
-                        !string.Equals(loaded.LayoutIdentifier, meta.Identifier, StringComparison.OrdinalIgnoreCase))
-                        issues.Add(ValidationIssue.Warning("CUSTOMIZATION_LAYOUT_MISMATCH", "",
-                            $"customizations.xml pertence ao layout '{loaded.LayoutIdentifier}', e não a '{meta.Identifier}'."));
-                    else if (loaded.Version != meta.LayoutVersion)
-                        issues.Add(ValidationIssue.Warning("CUSTOMIZATION_VERSION_MISMATCH", "",
-                            $"customizations.xml é da versão {loaded.Version} do layout; a versão atual é {meta.LayoutVersion}. Revise as personalizações."));
-                }
-                else
-                {
-                    cust.LayoutIdentifier = meta.Identifier;
-                    cust.Version = meta.LayoutVersion;
-                }
+                customizations = CustomizationSet.Parse(File.ReadAllText(customPath));
+                if (customizations.Version != meta.LayoutVersion)
+                    issues.Add(ValidationIssue.Info("CUSTOM_VERSION", CustomizationsFile,
+                        $"As personalizações foram salvas para a versão {customizations.Version} do layout; a versão atual é {meta.LayoutVersion}."));
             }
-            catch (System.Xml.XmlException ex)
+            catch (InvalidDataException ex)
             {
-                issues.Add(ValidationIssue.Error("CUSTOMIZATION_INVALID", CustomizationsFile, "customizations.xml inválido: " + ex.Message));
-            }
-
-            var schemaPath = Path.Combine(path, SchemaFile);
-            return new LayoutBundle
-            {
-                FolderName = Path.GetFileName(path),
-                FolderPath = path,
-                LayoutXmlText = xmlText,
-                Layout = parse.Layout,
-                ParseIssues = issues,
-                Customizations = cust,
-                SchemaText = File.Exists(schemaPath) ? File.ReadAllText(schemaPath) : null,
-                Metadata = meta
-            };
-        }
-
-        /// <summary>Cria um novo layout a partir de arquivos existentes.</summary>
-        public LayoutBundle Create(string folderName, string layoutXmlPath, string? schemaPath, string? notes = null, string? schemaVersion = null)
-        {
-            var path = ResolveFolder(folderName);
-            if (Directory.Exists(path)) throw new IOException($"Já existe um layout na pasta '{folderName}'.");
-
-            var xml = File.ReadAllText(layoutXmlPath);
-            var parse = XmlLayoutParser.ParseText(xml);
-            if (parse.Layout == null || parse.Issues.Any(i => i.Severity == IssueSeverity.Error))
-                throw new InvalidDataException("O XML informado é inválido: " +
-                    string.Join(" | ", parse.Issues.Where(i => i.Severity == IssueSeverity.Error).Select(i => i.Message)));
-
-            Directory.CreateDirectory(path);
-            File.WriteAllText(Path.Combine(path, LayoutFile), xml);
-            if (!string.IsNullOrWhiteSpace(schemaPath))
-            {
-                var schemaText = File.ReadAllText(schemaPath);
-                using (JsonSchemaValidator.FromText(schemaText)) { } // valida que é JSON
-                File.WriteAllText(Path.Combine(path, SchemaFile), schemaText);
-            }
-
-            WriteMetadata(path, new LayoutMetadata
-            {
-                FriendlyName = parse.Layout.Name,
-                Identifier = parse.Layout.Identifier,
-                LayoutVersion = 1,
-                SchemaVersion = schemaVersion ?? "",
-                UpdatedAt = DateTime.Now,
-                Notes = notes ?? ""
-            });
-            return Load(folderName);
-        }
-
-        /// <summary>
-        /// Salva um novo texto de XML. Se createVersion, arquiva os arquivos atuais em history/v{n}
-        /// e incrementa LayoutVersion (as personalizações antigas passam a gerar aviso até revisão).
-        /// </summary>
-        public LayoutBundle SaveLayoutXml(string folderName, string xmlText, bool createVersion)
-        {
-            var parse = XmlLayoutParser.ParseText(xmlText);
-            if (parse.Layout == null || parse.Issues.Any(i => i.Severity == IssueSeverity.Error))
-                throw new InvalidDataException("XML inválido, nada foi salvo: " +
-                    string.Join(" | ", parse.Issues.Where(i => i.Severity == IssueSeverity.Error).Select(i => i.Message)));
-
-            var path = ResolveFolder(folderName);
-            var meta = ReadMetadata(path);
-            if (createVersion)
-            {
-                Archive(path, meta.LayoutVersion);
-                meta.LayoutVersion++;
-            }
-            File.WriteAllText(Path.Combine(path, LayoutFile), xmlText);
-            meta.Identifier = parse.Layout.Identifier;
-            meta.FriendlyName = parse.Layout.Name;
-            meta.UpdatedAt = DateTime.Now;
-            WriteMetadata(path, meta);
-
-            if (createVersion)
-            {
-                var cust = CustomizationSet.Load(Path.Combine(path, CustomizationsFile));
-                cust.LayoutIdentifier = meta.Identifier;
-                cust.Version = meta.LayoutVersion;
-                if (File.Exists(Path.Combine(path, CustomizationsFile)))
-                    cust.Save(Path.Combine(path, CustomizationsFile));
-            }
-            return Load(folderName);
-        }
-
-        public LayoutBundle SaveSchema(string folderName, string schemaText, string? schemaVersion = null)
-        {
-            using (JsonSchemaValidator.FromText(schemaText)) { }
-            var path = ResolveFolder(folderName);
-            File.WriteAllText(Path.Combine(path, SchemaFile), schemaText);
-            var meta = ReadMetadata(path);
-            if (schemaVersion != null) meta.SchemaVersion = schemaVersion;
-            meta.UpdatedAt = DateTime.Now;
-            WriteMetadata(path, meta);
-            return Load(folderName);
-        }
-
-        public void SaveCustomizations(LayoutBundle bundle)
-        {
-            bundle.Customizations.LayoutIdentifier = bundle.Metadata.Identifier;
-            bundle.Customizations.Version = bundle.Metadata.LayoutVersion;
-            bundle.Customizations.Save(bundle.CustomizationsPath);
-        }
-
-        // ---------------- internos ----------------
-        private string ResolveFolder(string folderName)
-        {
-            if (!SafeName.IsMatch(folderName))
-                throw new ArgumentException("Nome de pasta inválido. Use letras, números, '_' e '-'.", nameof(folderName));
-            var full = Path.GetFullPath(Path.Combine(RootFolder, folderName));
-            var root = Path.GetFullPath(RootFolder);
-            if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException("Caminho fora da pasta de layouts.", nameof(folderName));
-            return full;
-        }
-
-        private static void Archive(string path, int version)
-        {
-            var dest = Path.Combine(path, "history", $"v{version}");
-            Directory.CreateDirectory(dest);
-            foreach (var f in new[] { LayoutFile, SchemaFile, CustomizationsFile, MetadataFile })
-            {
-                var src = Path.Combine(path, f);
-                if (File.Exists(src)) File.Copy(src, Path.Combine(dest, f), true);
+                issues.Add(ValidationIssue.Error("CUSTOM_INVALID", CustomizationsFile, ex.Message));
             }
         }
 
-        private static LayoutMetadata ReadMetadata(string folderPath)
-        {
-            var file = Path.Combine(folderPath, MetadataFile);
-            if (!File.Exists(file)) return new LayoutMetadata { UpdatedAt = File.GetLastWriteTime(Path.Combine(folderPath, LayoutFile)) };
-            try { return JsonSerializer.Deserialize<LayoutMetadata>(File.ReadAllText(file)) ?? new LayoutMetadata(); }
-            catch (JsonException) { return new LayoutMetadata(); }
-        }
+        var schemaPath = Path.Combine(dir, SchemaFile);
 
-        private static void WriteMetadata(string folderPath, LayoutMetadata meta) =>
-            File.WriteAllText(Path.Combine(folderPath, MetadataFile), JsonSerializer.Serialize(meta, JsonOpts));
+        return new LayoutBundle
+        {
+            FolderName = folderName,
+            FolderPath = dir,
+            LayoutXmlText = xml,
+            Metadata = meta,
+            Customizations = customizations,
+            Layout = parse.Layout,
+            ParseIssues = issues,
+            SchemaText = File.Exists(schemaPath) ? File.ReadAllText(schemaPath) : null
+        };
     }
+
+    // ------------------------------------------------------------------ cadastro
+    public LayoutBundle Create(string folderName, string xmlPath, string? schemaPath, string notes)
+    {
+        var dir = ResolveFolder(folderName);
+        if (Directory.Exists(dir))
+            throw new IOException($"Já existe um layout na pasta '{folderName}'.");
+
+        var xml = File.ReadAllText(xmlPath);
+        var parse = XmlLayoutParser.ParseText(xml);
+        if (parse.Layout == null)
+            throw new InvalidDataException(FirstError(parse.Issues));
+
+        string? schema = null;
+        if (!string.IsNullOrWhiteSpace(schemaPath))
+        {
+            schema = File.ReadAllText(schemaPath);
+            using (JsonDocument.Parse(schema, SchemaParseOptions)) { } // JsonException se inválido
+        }
+
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, LayoutFile), xml, Utf8NoBom);
+        if (schema != null) File.WriteAllText(Path.Combine(dir, SchemaFile), schema, Utf8NoBom);
+
+        WriteMetadata(dir, new LayoutMetadata
+        {
+            FriendlyName = parse.Layout.Name,
+            Identifier = parse.Layout.Identifier,
+            LayoutVersion = 1,
+            SchemaVersion = schema == null ? "" : ExtractSchemaVersion(schema),
+            UpdatedAt = DateTime.Now,
+            Notes = notes ?? ""
+        });
+
+        return Load(folderName);
+    }
+
+    // ------------------------------------------------------------------ edição e versionamento
+    /// <summary>
+    /// Salva o XML. Só exige XML bem formado: erros de configuração continuam visíveis na validação.
+    /// Com <paramref name="createVersion"/>, os arquivos atuais vão para history\v&lt;n&gt; e a versão é incrementada.
+    /// </summary>
+    public LayoutBundle SaveLayoutXml(string folderName, string xmlText, bool createVersion)
+    {
+        var dir = ResolveFolder(folderName);
+        if (!Directory.Exists(dir))
+            throw new DirectoryNotFoundException($"Layout '{folderName}' não encontrado.");
+
+        var parse = XmlLayoutParser.ParseText(xmlText);
+        if (parse.Layout == null)
+            throw new InvalidDataException(FirstError(parse.Issues));
+
+        var meta = ReadMetadata(dir, parse.Layout);
+
+        if (createVersion)
+        {
+            Archive(dir, meta.LayoutVersion);
+            meta.LayoutVersion++;
+        }
+
+        if (!string.IsNullOrWhiteSpace(parse.Layout.Identifier)) meta.Identifier = parse.Layout.Identifier;
+        meta.UpdatedAt = DateTime.Now;
+
+        File.WriteAllText(Path.Combine(dir, LayoutFile), xmlText, Utf8NoBom);
+        WriteMetadata(dir, meta);
+        return Load(folderName);
+    }
+
+    /// <summary>Grava customizations.xml (arquivo separado do layout), associado ao identificador e à versão.</summary>
+    public void SaveCustomizations(LayoutBundle bundle)
+    {
+        var dir = ResolveFolder(bundle.FolderName);
+        bundle.Customizations.LayoutIdentifier = bundle.Metadata.Identifier;
+        bundle.Customizations.Version = bundle.Metadata.LayoutVersion;
+        File.WriteAllText(Path.Combine(dir, CustomizationsFile), bundle.Customizations.ToXml(), Utf8NoBom);
+    }
+
+    // ------------------------------------------------------------------ internos
+    private string ResolveFolder(string folderName)
+    {
+        if (string.IsNullOrWhiteSpace(folderName) || !FolderRegex.IsMatch(folderName) || folderName.Contains(".."))
+            throw new ArgumentException($"Nome de pasta de layout inválido: '{folderName}'.", nameof(folderName));
+
+        var full = Path.GetFullPath(Path.Combine(Root, folderName));
+        if (!full.StartsWith(Root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException($"Nome de pasta de layout inválido: '{folderName}'.", nameof(folderName));
+        return full;
+    }
+
+    private static LayoutMetadata ReadMetadata(string dir, LayoutConfiguration? layout)
+    {
+        LayoutMetadata? meta = null;
+        var path = Path.Combine(dir, MetadataFile);
+        if (File.Exists(path))
+        {
+            try { meta = JsonSerializer.Deserialize<LayoutMetadata>(File.ReadAllText(path), JsonOptions); }
+            catch (JsonException) { meta = null; }
+        }
+
+        meta ??= new LayoutMetadata();
+        if (string.IsNullOrWhiteSpace(meta.FriendlyName)) meta.FriendlyName = layout?.Name ?? Path.GetFileName(dir);
+        if (string.IsNullOrWhiteSpace(meta.Identifier)) meta.Identifier = layout?.Identifier ?? "";
+        if (meta.LayoutVersion < 1) meta.LayoutVersion = 1;
+        if (meta.UpdatedAt == default) meta.UpdatedAt = File.GetLastWriteTime(Path.Combine(dir, LayoutFile));
+        return meta;
+    }
+
+    private static void WriteMetadata(string dir, LayoutMetadata meta) =>
+        File.WriteAllText(Path.Combine(dir, MetadataFile), JsonSerializer.Serialize(meta, JsonOptions), Utf8NoBom);
+
+    private static void Archive(string dir, int version)
+    {
+        var target = Path.Combine(dir, HistoryFolder, "v" + version);
+        if (Directory.Exists(target)) target += "_" + DateTime.Now.ToString("yyyyMMddHHmmss");
+        Directory.CreateDirectory(target);
+
+        foreach (var file in new[] { LayoutFile, SchemaFile, CustomizationsFile, MetadataFile })
+        {
+            var source = Path.Combine(dir, file);
+            if (File.Exists(source)) File.Copy(source, Path.Combine(target, file));
+        }
+    }
+
+    /// <summary>Versão do Schema guardada junto ao layout: "version" se existir; senão "$id".</summary>
+    private static string ExtractSchemaVersion(string schemaText)
+    {
+        using var doc = JsonDocument.Parse(schemaText, SchemaParseOptions);
+        if (doc.RootElement.ValueKind != JsonValueKind.Object) return "";
+        foreach (var key in new[] { "version", "$id" })
+            if (doc.RootElement.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String)
+                return v.GetString() ?? "";
+        return "";
+    }
+
+    private static string FirstError(IReadOnlyList<ValidationIssue> issues) =>
+        issues.FirstOrDefault(i => i.Severity == IssueSeverity.Error)?.Message ?? "XML de layout inválido.";
 }

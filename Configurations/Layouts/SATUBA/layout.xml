@@ -1,51 +1,122 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
-  LAYOUT DE EXEMPLO baseado na especificação (seções 5 e 6).
-  Substitua pelo XML integral do SATUBA: o motor não depende de nenhuma regra deste arquivo.
--->
-<Layout name="CART. SATUBA" identifier="NOV2025009">
-  <generate name="SATUBA 2026">
+﻿<Layout name="CART. SATUBA" identifier="NOV2025009">
 
-    <table name="ComunicaoPrefeitura" alias="TAB_SATUBA">
-      <selection>
-        <Column name="TpdeServico" type="string" orderby="true" description="TIPO DE SERVIÇO" />
-        <Column name="DtAto" type="datetime" formate="yyyy-MM-dd" description="DATA DO ATO" />
-        <Column name="NrMatricula" type="string" description="NÚMERO DA MATRÍCULA" />
-        <Column name="CpfAlienante" type="string" description="CPF/CNPJ DO ALIENANTE" />
-        <Column name="CpfAdquirente" type="string" description="CPF/CNPJ DO ADQUIRENTE" />
-      </selection>
-    </table>
+	<generate name="SATUBA 2026">
+		<table name ="ComunicaoPrefeitura"  alias="TAB_SATUBA">
+			<!--REGISTRO_IMOBILIARIO-->
+			<selection>
+				<Column name="TpdeServico" orderby="true"  type="string" description="TIPO DE SERVÇIO" />
+				<Column name="DtAto"  type="datetime" formate="yyyy-mm-dd"  description="DATA DO ATO"/>
+				<Column name="TipoAto"  type="string" description="TIPO DO ATO"/>
+				<Column name="TipoLivro"   type="string" description="TIPO DO LIVRO" />
+				<Column name="Folha"  type="string" description="FOLHA"/>
+				<Column name="NrMatricula"  type="string" description="NUMERO DA MATRICULA"/>
+				<Column name="Cnm"  type="string" description="CODIGO NACIONAL  FDE MATRICULA - CNM"/>
+				<Column name="TPOp"  type="string" description="TIPO OPERAÇÃO IMOBILIARIA"/>
+				<Column name="DtJur"  type="datetime" formate="yyyy-mm-dd" description="DATA NEGOCIO JURIDICO"/>
+				<Column name="PtTrans"  type="string" description="PARTE TRANSACIONADA"/>
+				<Column name="FormPgto"  type="string" description="FORMA PAGAMENTO"/>
+				<Column name="VlrOp"  type="string" description="VALOR OPERAÇÃO"/>
+				<Column name="VlrBase"  type="string" description="VALOR DE CALCUO/ITBI"/>
+				<Column name="AreaTerreno"  type="string" description="(AREA TERRENO(M2)"/>
+				<Column name="municipio"  type="string" description="MUNICIPIO/UF/BAIRRO"/>
+				<Column name="Cep"  type="string" description="CEP"/>
+				<Column name="TpLogradouro"  type="string" description="TIPO DE LOGRADOURO"/>
+				<Column name="Logradouro"  type="string" description="LOGRADOURO"/>
+				<Column name="TpImovel"  type="string" description="TIPO DO IMOVEL"/>
+				<Column name="Numero"  type="string" description="NUMERO"/>
+				<Column name="CpfAlienante"  type="string" description="CPF/CNPJ DO ALIENANTE"/>
+				<Column name="PossueConjuge"  type="string" description="O ALIENANTE POSSUI CONJUGE?"/>
+				<Column name="CpfConjuge"  type="string" description="O ALIENANTE POSSUI CONJUGE?"/>
+				<Column name="RegimedeBens"  type="string" description="REGIME DE BENS"/>
+				<Column name="conjugeParticiop"  type="string" description="O CONJUGE E PARTICIPANTE NA OPERACÃO"/>
+				<Column name="repAssProAsqCpf"  type="string" description="REPRESENTANTE/ASSISTENTE/PROCURADOR DO ADQUIRENTE((CPF/CNPJ)"/>
+				<Column name="cpfcnpjAdquirente"  type="string" description="CPF/CNPJ/ADQUIRENTE"/>
+				<Column name="PercPart"  type="string" description="PERCENTUAL PARTTICIPANTE"/>
+				<Column name="Adqpossuiconjuge"  type="string" description="PERCENTUAL PARTTICIPANTE"/>
+				<Column name="numeroLivro"  type="string"/>
+			</selection>
+		</table>
+	</generate>
 
-    <Jsonfields name="CART. SATUBA 2025/NOV">
-      <Refealias name="TAB_SATUBA">
-        <field name="declaracoes" type="array">
 
-          <field name="adquirentes" type="array">
-            <field name="indicadorEspolio" type="bool" value="false"/>
-            <field name="indicadorNiIdentificado" type="bool" value="true"/>
-            <!-- XML legado: value com nome de coluna (o motor reconhece e avisa) -->
-            <field name="ni" type="string" value="CpfAdquirente"/>
-            <field name="representantes" type="array" empty="true"/>
-            <field name="participacao" type="decimal" value="100"/>
-          </field>
 
-          <field name="alienantes" type="array">
-            <!-- Forma recomendada: source= para coluna, value= só para literal -->
-            <field name="ni" type="string" source="CpfAlienante"/>
-            <field name="participacao" type="decimal" value="100"/>
-          </field>
+	<Jsonfields name="CART. SATUBA 2025/NOV">
 
-          <field name="dataLavraturaRegistroAverbacao" type="datetime" formate="yyyy-MM-dd" Columnrefe="DtAto"/>
-          <field name="matricula" type="string" Columnrefe="NrMatricula"/>
-          <field name="tipoServico" type="string" Columnrefe="TpdeServico"/>
-          <field name="codigoIbge" type="string" value="2708907"/>
+		<Refealias name="TAB_SATUBA">
 
-          <!-- Campo que exige personalização (sem valor, sem coluna, sem padrão) -->
-          <field name="naturezaTitulo" type="string" required="true" configurable="true"
-                 description="NATUREZA DO TÍTULO"/>
-        </field>
-      </Refealias>
-    </Jsonfields>
+			<field name="declaracoes" type="array">
 
-  </generate>
+				<!-- ALIENANTES -->
+				<field name="adquirentes" type="array">
+					<field name="indicadorEspolio" type="bool" value="false"/>
+					<field name="indicadorEstrangeiro" type="bool" value="false"/>
+					<field name="indicadorNaoConstaParticipacaoOperacao" type="bool" value="false"/>
+					<field name="indicadorNiIdentificado" type="bool" value="true"/>
+					<field name="indicadorRepresentante" type="bool" value="false"/>
+					<field name="ni" type="string" value="cpfcnpjAdquirente"/>
+					<field name="representantes" type="array"/>
+					<field name="indicadorConjuge" type="bool" value="false"/>
+					<field name="Participacao" type="decimal" value="100"/>
+				</field>
+
+				<!-- ADQUIRENTES -->
+				<field name="alienantes" type="array">
+					<field name="indicadorEspolio" type="bool" value="false"/>
+					<field name="indicadorEstrangeiro" type="bool" value="false"/>
+					<field name="indicadorNaoConstaParticipacaoOperacao" type="bool" value="false"/>
+					<field name="indicadorNiIdentificado" type="bool" value="true"/>
+					<field name="IndicadorRepresentante" type="bool" value="false"/>
+					<field name="ni" type="string" value="CpfAlienante"/>
+					<field name="representantes" type="array"/>
+					<field name="indicadorConjuge" type="bool" value="false"/>
+					<field name="participacao" type="decimal" value="100"/>
+				</field>
+
+				<!-- CAMPOS PRINCIPAIS -->
+				<field name="dataLavraturaRegistroAverbacao" type="datetime" formate="yyyy-mm-dd" Columnrefe="DtAto"/>
+				<field name="dataNegocioJuridico"  type="datetime" formate="yyyy-mm-dd" Columnrefe="DtJur"/>
+				<field name="destinacao" type="string" value="1"/>
+				<field name="formaPagamento"  type="string" Columnrefe="FormPgto"/>
+				<field name="matricula" type="string" Columnrefe="NrMatricula"/>
+				<!--<field name="matriculaNotarialEletronica"  type="string" Columnrefe="NrMatricula"/> -->
+
+				<field name="tipoAto"  type="string" Columnrefe="TipoAto"/>
+				<field name="tipoDeclaracao" type="string" value="0"/>
+				<field name="tipoOperacaoImobiliaria"  type="string" Columnrefe="TPOp"/>
+				<field name="tipoParteTransacionada"  type="decimal" value="100"/>
+				<field name="tipoServico" type="string" Columnrefe="TpdeServico"/>
+				<!--<field name="transcricao"  type="string" Columnrefe="PtTrans"/> -->
+				<field name="valorParteTransacionada" type="decimal" value="100"/>
+				<field name="indicadorNaoConstaValorBaseCalculoItbiItcmd" type="bool" value="true"/>
+				<field name="indicadorNaoConstaValorOperacaoImobiliaria" type="bool" value="true"/>
+				<field name="indicadorPermutaBens" type="bool" value="false"/>
+				<field name="indicadorPagamentoDinheiro" type="bool" value="false"/>
+				<field name="indicadorImovelPublicoUniao" type="bool" value="false"/>
+				<field name="folha" type="string" Columnrefe="Folha"/>
+				<field name="numeroLivro"  type="string" Columnrefe="numeroLivro" />
+				<field name="inscricaoMunicipal"  type="string" value="N/C"/>
+				<field name="codigoIbge"  type="string" value="2708907"/>
+				<field name="indicadorAreaLoteNaoConsta" type="bool" value="true"/>
+				<field name="indicadorAreaConstruidaNaoConsta" type="bool" value="true"/>
+				<field name="tipoImovel"  type="string" Columnrefe="TpImovel" />
+				<field name="tipoLogradouro"  type="string" Columnrefe="TpLogradouro" />
+				<field name="nomeLogradouro"  type="string" Columnrefe="Logradouro" />
+				<field name="numeroImovel"  type="string" Columnrefe="Numero" />
+				<field name="bairro" type="string" Columnrefe="municipio" />
+				<field name="cep" type="string" Columnrefe="Cep" />
+				<!--<field name="tipoLivro"  type="string" Columnrefe="TipoLivro" /> -->
+
+			</field>
+		</Refealias>
+
+	</Jsonfields>
+
+
+
+
+
 </Layout>
+
+
+
+

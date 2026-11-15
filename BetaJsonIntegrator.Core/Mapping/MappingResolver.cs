@@ -1,252 +1,173 @@
-using System.Text.RegularExpressions;
 using BetaJsonIntegrator.Core.Configuration;
 using BetaJsonIntegrator.Core.Validation;
 
-namespace BetaJsonIntegrator.Core.Mapping
+namespace BetaJsonIntegrator.Core.Mapping;
+
+/// <summary>
+/// Resolve cada campo do JSON de forma determinística (spec. seção 6):
+/// 1) value literal; 2) coluna (source / Columnrefe); 3) default; 4) sem configuração → pendente.
+/// Personalizações preenchem campos pendentes e, com <c>override</c>, substituem o definido no XML.
+/// O motor nunca inventa valores: o que não tem origem fica Pending.
+/// </summary>
+public sealed class MappingResolver
 {
-    /// <summary>
-    /// Resolve cada campo do XML de forma determinística.
-    /// Precedência: 1) value literal  2) Columnrefe/source  3) default  4) pendente.
-    /// Personalizações preenchem campos pendentes (ou substituem, se Override = true).
-    /// Compatibilidade legado: value sem source cujo conteúdo é o nome de uma coluna da origem
-    /// é tratado como referência de coluna.
-    /// </summary>
-    public sealed class MappingResolver
+    public const string PendingCode = "FIELD_PENDING";
+
+    public MappingPlan Resolve(GenerateConfig generate, CustomizationSet customizations, List<ValidationIssue> issues)
     {
-        private static readonly Regex IdentifierRegex = new(@"^[A-Za-z_][A-Za-z0-9_]*$", RegexOptions.Compiled);
+        var plan = new MappingPlan();
+        var columns = new Dictionary<string, ColumnConfig>(StringComparer.OrdinalIgnoreCase);
+        foreach (var table in generate.Tables)
+            foreach (var column in table.Columns)
+                if (column.Name.Length > 0) columns.TryAdd(column.Name, column);
 
-        public MappingPlan Analyze(GenerateConfig gen, CustomizationSet? customizations)
+        var usedCustomizations = new HashSet<Customization>();
+
+        foreach (var def in generate.JsonDefinitions)
+            foreach (var alias in def.Aliases)
+                foreach (var field in alias.Fields)
+                    ResolveField(field, columns, customizations, usedCustomizations, plan, issues);
+
+        foreach (var c in customizations.Items.Where(item => !usedCustomizations.Contains(item)))
+            issues.Add(ValidationIssue.Warning("CUSTOM_UNUSED", c.Key,
+                "A personalização não corresponde a nenhum campo do layout."));
+
+        return plan;
+    }
+
+    private static void ResolveField(
+        FieldConfig field,
+        Dictionary<string, ColumnConfig> columns,
+        CustomizationSet customizations,
+        HashSet<Customization> used,
+        MappingPlan plan,
+        List<ValidationIssue> issues)
+    {
+        var custom = customizations.Find(field);
+        if (custom != null) used.Add(custom);
+
+        if (field.HasChildren)
         {
-            var plan = new MappingPlan();
-
-            foreach (var json in gen.JsonDefinitions)
-            {
-                foreach (var alias in json.Aliases)
-                {
-                    var table = gen.FindTable(alias.Name);
-                    if (table == null)
-                    {
-                        plan.Issues.Add(ValidationIssue.Error("ALIAS_NOT_FOUND", alias.Name,
-                            $"Refealias '{alias.Name}' não corresponde a nenhuma tabela/alias declarado em <generate>."));
-                        continue;
-                    }
-                    foreach (var field in alias.Fields)
-                        Resolve(field, table, gen, customizations, plan);
-                }
-            }
-            return plan;
-        }
-
-        private void Resolve(FieldConfig field, TableConfig table, GenerateConfig gen,
-            CustomizationSet? customizations, MappingPlan plan)
-        {
-            var rf = new ResolvedField { Field = field, Alias = table.Alias };
-            plan.Fields[field] = rf;
-            var path = field.Path;
-
-            if (field.Type == null)
-            {
-                plan.Issues.Add(ValidationIssue.Error("UNKNOWN_TYPE", path,
-                    $"Tipo '{field.RawType}' desconhecido (linha {field.Line})."));
-                rf.Kind = FieldKind.Pending;
-                return;
-            }
-
-            // ---- contêineres ----
-            if (field.IsContainer)
-            {
-                ResolveContainer(field, rf, table, gen, customizations, plan);
-                return;
-            }
-
-            // ---- folhas ----
-            var cust = customizations?.Find(field);
-            bool configuredInXml = field.Value != null || field.Source != null || field.Default != null;
-
-            if (cust != null && (cust.Override || !configuredInXml))
-            {
-                ApplyCustomization(field, rf, table, cust, plan);
-                return;
-            }
-
-            if (field.Value != null)
-            {
-                if (field.Source != null)
-                    plan.Issues.Add(ValidationIssue.Warning("VALUE_AND_SOURCE", path,
-                        "Campo possui value e source; o valor literal tem precedência."));
-
-                if (field.Source == null && IsLegacyReferenceCandidate(field))
-                {
-                    var col = table.FindColumn(field.Value);
-                    if (col != null)
-                    {
-                        rf.Kind = FieldKind.Column;
-                        rf.Column = col.Name;
-                        plan.Issues.Add(ValidationIssue.Info("LEGACY_VALUE_AS_COLUMN", path,
-                            $"value=\"{field.Value}\" interpretado como referência à coluna '{col.Name}' (XML legado). Prefira source=."));
-                        return;
-                    }
-                    if (field.Type == FieldTypes.String)
-                    {
-                        plan.Issues.Add(ValidationIssue.Warning("LEGACY_VALUE_AMBIGUOUS", path,
-                            $"value=\"{field.Value}\" não corresponde a nenhuma coluna de '{table.Alias}'; será usado como valor literal. Se for coluna, use source=."));
-                    }
-                    else
-                    {
-                        MarkPending(plan, field, rf, "INVALID_COLUMN_REFERENCE",
-                            $"value=\"{field.Value}\" não é um valor {field.Type} válido nem uma coluna de '{table.Alias}'.");
-                        return;
-                    }
-                }
-
-                rf.Kind = FieldKind.Literal;
-                rf.Literal = field.Value;
-                return;
-            }
-
-            if (field.Source != null)
-            {
-                var col = table.Columns.Count == 0 ? null : table.FindColumn(field.Source);
-                if (table.Columns.Count > 0 && col == null)
-                {
-                    MarkPending(plan, field, rf, "INVALID_COLUMN_REFERENCE",
-                        $"A coluna '{field.Source}' não existe em <selection> da tabela '{table.Alias}' (linha {field.Line}).");
-                    return;
-                }
-                rf.Kind = FieldKind.Column;
-                rf.Column = col?.Name ?? field.Source;
-                return;
-            }
-
-            if (field.Default != null)
-            {
-                rf.Kind = FieldKind.Default;
-                rf.Literal = field.Default;
-                return;
-            }
-
-            // 4. sem configuração
-            MarkPending(plan, field, rf, field.Required ? "NOT_CONFIGURED_REQUIRED" : "NOT_CONFIGURED",
-                "Campo sem valor, sem referência de coluna e sem regra padrão." +
-                (field.Required ? " Obrigatório." : ""));
-        }
-
-        private void ResolveContainer(FieldConfig field, ResolvedField rf, TableConfig table, GenerateConfig gen,
-            CustomizationSet? customizations, MappingPlan plan)
-        {
-            var path = field.Path;
-            var effective = table;
-
-            if (field.IsArray && !string.IsNullOrWhiteSpace(field.ChildAlias))
-            {
-                var child = gen.FindTable(field.ChildAlias);
-                if (child == null)
-                {
-                    plan.Issues.Add(ValidationIssue.Error("ALIAS_NOT_FOUND", path,
-                        $"O array usa alias '{field.ChildAlias}', que não existe em <generate>."));
-                    rf.Kind = FieldKind.Pending;
-                    return;
-                }
-                if (string.IsNullOrWhiteSpace(field.Key))
-                    plan.Issues.Add(ValidationIssue.Error("MISSING_KEY", path,
-                        "Array com alias de outra tabela exige o atributo key (coluna da tabela filha)."));
-                else
-                {
-                    if (child.Columns.Count > 0 && child.FindColumn(field.Key) == null)
-                        plan.Issues.Add(ValidationIssue.Error("INVALID_COLUMN_REFERENCE", path,
-                            $"key='{field.Key}' não existe em '{child.Alias}'."));
-                    var pk = field.ParentKey ?? field.Key;
-                    if (table.Columns.Count > 0 && table.FindColumn(pk) == null)
-                        plan.Issues.Add(ValidationIssue.Error("INVALID_COLUMN_REFERENCE", path,
-                            $"parentKey='{pk}' não existe em '{table.Alias}'."));
-                }
-                effective = child;
-            }
-
-            if (field.GroupBy.Length > 0 && field.Parent != null)
-                plan.Issues.Add(ValidationIssue.Warning("GROUPBY_IGNORED", path,
-                    "groupBy só é aplicado a arrays de topo; será ignorado."));
-            foreach (var g in field.GroupBy)
-                if (table.Columns.Count > 0 && table.FindColumn(g) == null)
-                    plan.Issues.Add(ValidationIssue.Error("INVALID_COLUMN_REFERENCE", path,
-                        $"groupBy usa a coluna '{g}', inexistente em '{table.Alias}'."));
-
-            rf.Alias = effective.Alias;
-
-            if (field.Children.Count == 0)
-            {
-                rf.Kind = FieldKind.EmptyContainer;
-                plan.Issues.Add(field.EmptyDeclared
-                    ? ValidationIssue.Info("EMPTY_CONTAINER_DECLARED", path, "Coleção vazia declarada explicitamente.")
-                    : ValidationIssue.Info("EMPTY_CONTAINER_NO_SOURCE", path,
-                        "Coleção sem origem e sem campos: será gerada vazia. Declare empty=\"true\" para registrar essa decisão."));
-                return;
-            }
-
-            rf.Kind = FieldKind.Container;
+            plan.Fields[field] = new ResolvedField { Kind = FieldKind.Container };
             foreach (var child in field.Children)
-                Resolve(child, effective, gen, customizations, plan);
+                ResolveField(child, columns, customizations, used, plan, issues);
+            return;
         }
 
-        private static void ApplyCustomization(FieldConfig field, ResolvedField rf, TableConfig table,
-            Customization cust, MappingPlan plan)
+        if (field.IsContainer)
         {
-            var path = field.Path;
-            switch (cust.Mode)
+            // array/object sem filhos: vazio explícito, compatível com a spec (seção 8).
+            plan.Fields[field] = new ResolvedField { Kind = FieldKind.EmptyContainer };
+            return;
+        }
+
+        var configured = FromXml(field, columns, issues);
+
+        ResolvedField? chosen;
+        if (custom != null && (custom.Override || configured == null))
+        {
+            chosen = FromCustomization(custom);
+        }
+        else
+        {
+            if (custom != null)
+                issues.Add(ValidationIssue.Info("CUSTOM_IGNORED", field.Path,
+                    "Personalização ignorada: o campo já está configurado no layout (marque 'sobrescrever' para substituí-lo)."));
+            chosen = configured;
+        }
+
+        if (chosen == null)
+        {
+            plan.Fields[field] = new ResolvedField { Kind = FieldKind.Pending };
+            plan.Pending.Add(field);
+
+            // tipo inválido já foi reportado pelo parser; evita ruído duplicado
+            if (field.Type != null)
             {
-                case CustomizationModes.Column:
-                    var col = table.Columns.Count == 0 ? null : table.FindColumn(cust.Source);
-                    if (string.IsNullOrWhiteSpace(cust.Source) || (table.Columns.Count > 0 && col == null))
-                    {
-                        MarkPending(plan, field, rf, "INVALID_CUSTOMIZATION",
-                            $"Personalização aponta para a coluna '{cust.Source}', inexistente em '{table.Alias}'.");
-                        return;
-                    }
-                    rf.Kind = FieldKind.Column;
-                    rf.Column = col?.Name ?? cust.Source;
-                    break;
-
-                case CustomizationModes.Default:
-                case CustomizationModes.Fixed:
-                    if (cust.Value == null)
-                    {
-                        MarkPending(plan, field, rf, "INVALID_CUSTOMIZATION", "Personalização sem value.");
-                        return;
-                    }
-                    rf.Kind = cust.Mode == CustomizationModes.Default ? FieldKind.Default : FieldKind.Literal;
-                    rf.Literal = cust.Value;
-                    break;
-
-                default:
-                    MarkPending(plan, field, rf, "INVALID_CUSTOMIZATION",
-                        $"Modo de personalização desconhecido: '{cust.Mode}'.");
-                    return;
+                issues.Add(field.Required
+                    ? ValidationIssue.Error(PendingCode, field.Path,
+                        $"Campo obrigatório '{field.Name}' sem valor, referência ou regra padrão (linha {field.Line}).")
+                    : ValidationIssue.Warning(PendingCode, field.Path,
+                        $"Campo '{field.Name}' sem valor, referência ou regra padrão (linha {field.Line}). Informe uma personalização."));
             }
-            plan.Issues.Add(ValidationIssue.Info("CUSTOMIZATION_APPLIED", path,
-                $"Personalização aplicada (modo {cust.Mode})."));
+            return;
         }
 
-        private static void MarkPending(MappingPlan plan, FieldConfig field, ResolvedField rf, string code, string reason)
+        if (chosen.Kind == FieldKind.Column)
         {
-            rf.Kind = FieldKind.Pending;
-            var sev = field.Required || code == "INVALID_COLUMN_REFERENCE" || code == "INVALID_CUSTOMIZATION"
-                ? IssueSeverity.Error : IssueSeverity.Warning;
-            plan.Issues.Add(new ValidationIssue { Severity = sev, Code = code, Path = field.Path, Message = reason });
-            plan.Pending.Add(new PendingField
+            if (columns.TryGetValue(chosen.Column!, out var declared))
             {
-                Path = field.Path,
-                Name = field.Name,
-                Description = field.Description ?? "",
-                Type = field.Type ?? field.RawType,
-                Required = field.Required,
-                Reason = reason
-            });
+                chosen = new ResolvedField
+                {
+                    Kind = FieldKind.Column,
+                    Column = declared.Name, // grafia declarada na seleção
+                    FromCustomization = chosen.FromCustomization,
+                    LegacyColumnInValue = chosen.LegacyColumnInValue
+                };
+            }
+            else
+            {
+                issues.Add(ValidationIssue.Error("COLUMN_NOT_FOUND", field.Path,
+                    $"O campo '{field.Name}' (linha {field.Line}) referencia a coluna '{chosen.Column}', " +
+                    "que não existe na seleção (<selection>) do layout."));
+            }
         }
 
-        private static bool IsLegacyReferenceCandidate(FieldConfig field) =>
-            field.Value != null &&
-            IdentifierRegex.IsMatch(field.Value) &&
-            !field.Value.Equals("true", StringComparison.OrdinalIgnoreCase) &&
-            !field.Value.Equals("false", StringComparison.OrdinalIgnoreCase);
+        plan.Fields[field] = chosen;
+    }
+
+    private static ResolvedField? FromXml(FieldConfig f, Dictionary<string, ColumnConfig> columns, List<ValidationIssue> issues)
+    {
+        // 1) value literal
+        if (!string.IsNullOrEmpty(f.Value))
+        {
+            // XML legado: <field name="ni" type="string" value="cpfcnpjAdquirente"/> usa value como nome de coluna.
+            if (string.IsNullOrEmpty(f.Source) && f.Type == FieldTypes.String &&
+                columns.TryGetValue(f.Value, out var legacy))
+            {
+                issues.Add(ValidationIssue.Info("LEGACY_VALUE_AS_COLUMN", f.Path,
+                    $"O atributo 'value' coincide com a coluna '{legacy.Name}' e foi tratado como referência de coluna " +
+                    $"(XML legado). Prefira source=\"{legacy.Name}\"."));
+                return new ResolvedField { Kind = FieldKind.Column, Column = legacy.Name, LegacyColumnInValue = true };
+            }
+
+            if (!string.IsNullOrEmpty(f.Source))
+                issues.Add(ValidationIssue.Warning("FIELD_VALUE_AND_SOURCE", f.Path,
+                    "O campo possui 'value' e referência de coluna; o valor fixo tem precedência."));
+
+            return new ResolvedField { Kind = FieldKind.Literal, Literal = f.Value };
+        }
+
+        // 2) coluna
+        if (!string.IsNullOrEmpty(f.Source))
+            return new ResolvedField { Kind = FieldKind.Column, Column = f.Source };
+
+        // 3) valor padrão
+        if (f.Default != null)
+            return new ResolvedField { Kind = FieldKind.Default, Literal = f.Default };
+
+        return null;
+    }
+
+    private static ResolvedField? FromCustomization(Customization c)
+    {
+        switch (c.Mode)
+        {
+            case CustomizationModes.Column:
+                var column = c.Source ?? c.Value;
+                return string.IsNullOrWhiteSpace(column)
+                    ? null
+                    : new ResolvedField { Kind = FieldKind.Column, Column = column.Trim(), FromCustomization = true };
+
+            case CustomizationModes.Default:
+                return c.Value == null
+                    ? null
+                    : new ResolvedField { Kind = FieldKind.Default, Literal = c.Value, FromCustomization = true };
+
+            default:
+                return string.IsNullOrEmpty(c.Value)
+                    ? null
+                    : new ResolvedField { Kind = FieldKind.Literal, Literal = c.Value, FromCustomization = true };
+        }
     }
 }

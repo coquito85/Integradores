@@ -1,51 +1,53 @@
-using System.Text.RegularExpressions;
+using System.Text;
 
-namespace BetaJsonIntegrator.Core.Services
+namespace BetaJsonIntegrator.Core.Services;
+
+/// <summary>Log técnico. Nunca receba CPF/CNPJ ou dados pessoais nas mensagens (spec. seção 14).</summary>
+public interface IIntegratorLog
 {
-    public interface IIntegratorLog
+    void Info(string message);
+    void Warning(string message);
+    void Error(string message);
+}
+
+public sealed class NullIntegratorLog : IIntegratorLog
+{
+    public void Info(string message) { }
+    public void Warning(string message) { }
+    public void Error(string message) { }
+}
+
+/// <summary>Grava em <c>Logs/integrator-yyyy-MM-dd.log</c> (spec. seção 13). Falha de gravação nunca derruba a execução.</summary>
+public sealed class FileIntegratorLog : IIntegratorLog
+{
+    private readonly string _directory;
+    private readonly object _lock = new();
+
+    public FileIntegratorLog(string directory)
     {
-        void Info(string message);
-        void Warn(string message);
-        void Error(string message);
+        _directory = directory;
     }
 
-    public sealed class NullIntegratorLog : IIntegratorLog
+    public void Info(string message) => Write("INFO", message);
+    public void Warning(string message) => Write("WARN", message);
+    public void Error(string message) => Write("ERROR", message);
+
+    private void Write(string level, string message)
     {
-        public static readonly NullIntegratorLog Instance = new();
-        public void Info(string message) { }
-        public void Warn(string message) { }
-        public void Error(string message) { }
-    }
-
-    /// <summary>Log em arquivo (Logs/integrator-yyyy-MM-dd.log). CPF/CNPJ são mascarados.</summary>
-    public sealed class FileIntegratorLog : IIntegratorLog
-    {
-        private static readonly Regex CpfCnpj = new(
-            @"\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b|\b\d{2}\.?\d{3}\.?\d{3}/?\d{4}-?\d{2}\b", RegexOptions.Compiled);
-
-        private readonly string _folder;
-        private readonly object _lock = new();
-
-        public FileIntegratorLog(string folder)
+        try
         {
-            _folder = folder;
-            Directory.CreateDirectory(folder);
-        }
-
-        public static string Mask(string text) => CpfCnpj.Replace(text, "***");
-
-        public void Info(string message) => Write("INFO", message);
-        public void Warn(string message) => Write("WARN", message);
-        public void Error(string message) => Write("ERROR", message);
-
-        private void Write(string level, string message)
-        {
-            var file = Path.Combine(_folder, $"integrator-{DateTime.Now:yyyy-MM-dd}.log");
-            var line = $"{DateTime.Now:HH:mm:ss.fff} [{level}] {Mask(message)}{Environment.NewLine}";
             lock (_lock)
             {
-                try { File.AppendAllText(file, line); } catch (IOException) { /* log nunca derruba a execução */ }
+                Directory.CreateDirectory(_directory);
+                var file = Path.Combine(_directory, $"integrator-{DateTime.Now:yyyy-MM-dd}.log");
+                var text = message.Replace('\r', ' ').Replace('\n', ' ');
+                File.AppendAllText(file, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [{level}] {text}{Environment.NewLine}",
+                    new UTF8Encoding(false));
             }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // o log é auxiliar: não interrompe o processamento
         }
     }
 }

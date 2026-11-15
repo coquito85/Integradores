@@ -3,13 +3,13 @@ using BetaJsonIntegrator.Core;
 using BetaJsonIntegrator.Core.Services;
 using BetaJsonIntegrator.Core.Validation;
 using BetaJsonIntegrator.Data.Providers;
-using ReferenciaFactory;
 
 namespace GenerateJS.Forms
 {
     /// <summary>
-    /// Tela principal: layout ativo, origem de dados, geração/validação/exportação e painel de mensagens.
-    /// Fluxo (spec. seção 11): layout → origem → gerar → validar → visualizar → exportar.
+    /// Tela principal: layout ativo, ações (gerar, validar, visualizar, exportar) e painel de mensagens.
+    /// Fonte de dados e geração são definidas em Configurações (frmConfiguracao).
+    /// Fluxo (spec. seção 11): layout → configurações → gerar → validar → visualizar → exportar.
     /// </summary>
     public partial class frmPrincipal : Form
     {
@@ -19,6 +19,7 @@ namespace GenerateJS.Forms
 
         private LayoutBundle? _bundle;
         private RunResult? _run;
+        private IntegratorSettings _cfg = new();
 
         public frmPrincipal()
         {
@@ -27,10 +28,6 @@ namespace GenerateJS.Forms
             _repo = new LayoutRepository(AppPaths.Layouts);
             _svc = new IntegratorService(_repo, new FileIntegratorLog(AppPaths.Logs));
             _export = new ExportService(AppPaths.Output);
-
-            cboFonte.SelectedIndex = 0;
-            cboDelimitador.SelectedIndex = 0;
-            cboEncoding.SelectedIndex = 0;
         }
 
         private void frmPrincipal_Load(object sender, EventArgs e)
@@ -56,14 +53,10 @@ namespace GenerateJS.Forms
             {
                 _bundle = _svc.LoadLayout(pasta);
                 _run = null;
-
-                cboGenerate.Items.Clear();
-                if (_bundle.Layout != null)
-                    foreach (var g in _bundle.Layout.Generates) cboGenerate.Items.Add(g.Name);
-                if (cboGenerate.Items.Count > 0) cboGenerate.SelectedIndex = 0;
+                _cfg.DefinirLayout(_bundle); // LayoutCode e lista de configurações (generate) acompanham o layout
 
                 Mensagem($"Layout carregado: {_bundle.DisplayName} (versão {_bundle.Metadata.LayoutVersion}).");
-                var val = _svc.ValidateLayout(_bundle, cboGenerate.SelectedItem as string);
+                var val = _svc.ValidateLayout(_bundle, _cfg.Generate);
                 var pend = val.Plan.Pending.Count;
                 if (val.HasErrors)
                     Mensagem($"Configuração com {val.Issues.Count(i => i.Severity == IssueSeverity.Error)} erro(s) e {pend} campo(s) pendente(s). Abra \"Configuração XML\" para resolver.", IssueSeverity.Warning);
@@ -74,6 +67,7 @@ namespace GenerateJS.Forms
             {
                 Mensagem("Não foi possível carregar o layout: " + ex.Message, IssueSeverity.Error);
                 _bundle = null;
+                _cfg.DefinirLayout(null);
             }
             AtualizarEstado();
         }
@@ -86,99 +80,25 @@ namespace GenerateJS.Forms
             if (f.Changed) CarregarLayout(_bundle.FolderName);
         }
 
-        // ------------------------------------------------------------------ origem de dados
-        private void cboFonte_SelectedIndexChanged(object sender, EventArgs e)
+        // ------------------------------------------------------------------ configurações (fonte de dados + geração)
+        private void btnConfigurar_Click(object sender, EventArgs e)
         {
-            bool csv = cboFonte.SelectedIndex == 0;
-            pnlCsv.Visible = csv;
-            pnlBanco.Visible = !csv;
-        }
+            using var f = new frmConfiguracao(_repo, _cfg);
+            if (f.ShowDialog(this) != DialogResult.OK || f.Settings == null) return;
 
-        private void btnProcurar_Click(object sender, EventArgs e)
-        {
-            using var dlg = new OpenFileDialog
+            _cfg = f.Settings;
+            _run = null; // o resultado anterior pertence à configuração antiga
+
+            // o LayoutCode pode apontar para outro layout cadastrado
+            var codigo = _cfg.LayoutCode.Trim();
+            if (_bundle == null || !string.Equals(_bundle.Metadata.Identifier, codigo, StringComparison.OrdinalIgnoreCase))
             {
-                Title = "Arquivo CSV de origem",
-                Filter = "CSV/Texto (*.csv;*.txt)|*.csv;*.txt|Todos os arquivos (*.*)|*.*"
-            };
-            if (dlg.ShowDialog(this) == DialogResult.OK) txtArquivo.Text = dlg.FileName;
-        }
-
-        private void chkMostrarConexao_CheckedChanged(object sender, EventArgs e) =>
-            txtConexao.UseSystemPasswordChar = !chkMostrarConexao.Checked;
-
-        private System.Data.Common.DbProviderFactory FabricaAtual() =>
-            cboFonte.SelectedIndex == 1
-                ? MySqlConnector.MySqlConnectorFactory.Instance
-                : Microsoft.Data.SqlClient.SqlClientFactory.Instance;
-
-        private async void btnTestarConexao_Click(object sender, EventArgs e)
-        {
-            var cs = txtConexao.Text.Trim();
-            if (cs.Length == 0)
-            {
-                Mensagem("Informe a string de conexão.", IssueSeverity.Warning);
-                return;
+                var alvo = _repo.FindByIdentifier(codigo);
+                if (alvo != null) CarregarLayout(alvo.FolderName);
             }
-            var factory = FabricaAtual();
-            btnTestarConexao.Enabled = false;
-            try
-            {
-                await Task.Run(() =>
-                {
-                    using var db = new DatabaseConnection(cs, factory);
-                    db.Open();
-                    db.ExecuteScalar("SELECT 1");
-                });
-                Mensagem("Conexão estabelecida com sucesso.");
-            }
-            catch (Exception ex)
-            {
-                // a mensagem do driver pode conter o servidor, mas nunca a senha informada
-                Mensagem("Falha ao conectar: " + ex.Message, IssueSeverity.Error);
-            }
-            finally
-            {
-                btnTestarConexao.Enabled = true;
-            }
-        }
 
-        /// <summary>Monta o provedor conforme a origem escolhida. A string de conexão fica só em memória.</summary>
-        private IDataProvider CriarProvedor()
-        {
-            switch (cboFonte.SelectedIndex)
-            {
-                case 0:
-                    if (string.IsNullOrWhiteSpace(txtArquivo.Text) || !File.Exists(txtArquivo.Text))
-                        throw new InvalidOperationException("Selecione um arquivo CSV existente.");
-                    var delim = cboDelimitador.SelectedIndex switch { 1 => ',', 2 => '|', 3 => '\t', _ => ';' };
-                    Encoding enc = cboEncoding.SelectedIndex switch
-                    {
-                        1 => Encoding.GetEncoding(1252),
-                        2 => Encoding.Latin1,
-                        _ => new UTF8Encoding(false)
-                    };
-                    return new CsvProvider(txtArquivo.Text, new CsvOptions
-                    {
-                        Delimiter = delim,
-                        Encoding = enc,
-                        HasHeader = chkCabecalho.Checked
-                    });
-
-                case 1:
-                    RequerConexao();
-                    return new MariaDbProvider(MySqlConnector.MySqlConnectorFactory.Instance, txtConexao.Text.Trim());
-
-                default:
-                    RequerConexao();
-                    return new SqlServerProvider(Microsoft.Data.SqlClient.SqlClientFactory.Instance, txtConexao.Text.Trim());
-            }
-        }
-
-        private void RequerConexao()
-        {
-            if (string.IsNullOrWhiteSpace(txtConexao.Text))
-                throw new InvalidOperationException("Informe a string de conexão.");
+            Mensagem("Configurações gravadas: " + _cfg.Resumo());
+            AtualizarEstado();
         }
 
         // ------------------------------------------------------------------ execução
@@ -191,19 +111,23 @@ namespace GenerateJS.Forms
             }
 
             IDataProvider provider;
-            try { provider = CriarProvedor(); }
-            catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+            RunOptions opcoes;
+            try
+            {
+                var erros = _cfg.Validate();
+                if (erros.Count > 0)
+                    throw new InvalidOperationException(string.Join(" ", erros) + " Abra \"Configurações...\" para ajustar.");
+
+                provider = _cfg.CreateProvider();
+                opcoes = _cfg.CreateOptions();
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or FormatException)
             {
                 Mensagem(ex.Message, IssueSeverity.Warning);
                 return;
             }
 
             var bundle = _bundle;
-            var opcoes = new RunOptions
-            {
-                GenerateName = cboGenerate.SelectedItem as string,
-                AllowPending = chkPrevia.Checked
-            };
 
             DefinirOcupado(true);
             Mensagem("Gerando JSON...");
@@ -229,7 +153,7 @@ namespace GenerateJS.Forms
                 Mensagem(lblResumo.Text, IssueSeverity.Error);
                 foreach (var p in r.Pending)
                     Mensagem($"Pendente: {p.Path} ({p.Type}){(p.Required ? " — obrigatório" : "")}", IssueSeverity.Warning);
-                Mensagem("Use \"Configuração XML\" > Personalizações, ou marque \"prévia\" para gerar sem preencher os pendentes.", IssueSeverity.Info);
+                Mensagem("Use \"Configuração XML\" > Personalizações, ou ative \"Gerar prévia\" em Configurações para gerar sem preencher os pendentes.", IssueSeverity.Info);
             }
             else
             {
@@ -259,7 +183,7 @@ namespace GenerateJS.Forms
             }
             else if (_bundle != null)
             {
-                var val = _svc.ValidateLayout(_bundle, cboGenerate.SelectedItem as string);
+                var val = _svc.ValidateLayout(_bundle, _cfg.Generate);
                 using var f = new frmValidacao(val.Issues, null, _bundle.DisplayName + " (configuração)");
                 f.ShowDialog(this);
             }
@@ -273,7 +197,9 @@ namespace GenerateJS.Forms
                 return;
             }
 
-            var res = _export.Export(_bundle.FolderName, _run, ExistsPolicy.Fail);
+            // ArquivosDestino (Configurações) substitui a pasta Output padrão
+            var export = string.IsNullOrWhiteSpace(_cfg.ArquivosDestino) ? _export : new ExportService(_cfg.ArquivosDestino.Trim());
+            var res = export.Export(_bundle.FolderName, _run, ExistsPolicy.Fail);
             if (!res.Written && res.ExistingFiles.Count > 0)
             {
                 var resp = MessageBox.Show(this,
@@ -282,7 +208,7 @@ namespace GenerateJS.Forms
                     "\n\nSim = sobrescrever\nNão = salvar com data/hora no nome (preserva os atuais)\nCancelar = não exportar",
                     "Arquivos existentes", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
                 if (resp == DialogResult.Cancel) return;
-                res = _export.Export(_bundle.FolderName, _run,
+                res = export.Export(_bundle.FolderName, _run,
                     resp == DialogResult.Yes ? ExistsPolicy.Overwrite : ExistsPolicy.Timestamp);
             }
 
@@ -328,6 +254,10 @@ namespace GenerateJS.Forms
                 ? $"Identificador {_bundle!.Metadata.Identifier}  •  versão {_bundle.Metadata.LayoutVersion}" +
                   (string.IsNullOrWhiteSpace(_bundle.Metadata.SchemaVersion) ? "" : $"  •  Schema {_bundle.Metadata.SchemaVersion}")
                 : "Use \"Layouts\" para escolher ou cadastrar um layout.";
+
+            lblConfigResumo.Text = temLayout
+                ? _cfg.Resumo()
+                : "Nenhum layout carregado. Use \"Layouts\" ou informe o LayoutCode em Configurações.";
 
             btnGerar.Enabled = temLayout;
             btnNavConfig.Enabled = temLayout;

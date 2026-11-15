@@ -1,113 +1,155 @@
+using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using BetaJsonIntegrator.Core.Validation;
 
-namespace BetaJsonIntegrator.Core.Services
+namespace BetaJsonIntegrator.Core.Services;
+
+/// <summary>O que fazer quando os arquivos de saída já existem (spec. seção 14: não sobrescrever sem política explícita).</summary>
+public enum ExistsPolicy
 {
-    public enum ExistsPolicy
+    /// <summary>Não grava e devolve a lista de arquivos existentes.</summary>
+    Fail,
+    Overwrite,
+
+    /// <summary>Grava com data/hora no nome, preservando os atuais.</summary>
+    Timestamp
+}
+
+public sealed class ExportResult
+{
+    public bool Written { get; init; }
+    public string? JsonPath { get; init; }
+    public string? ReportPath { get; init; }
+    public IReadOnlyList<string> ExistingFiles { get; init; } = Array.Empty<string>();
+}
+
+/// <summary>Grava <c>Output/&lt;layout&gt;/&lt;ano&gt;/declaracoes.json</c> e <c>validation-report.json</c> (spec. seção 13).</summary>
+public sealed class ExportService
+{
+    private const string JsonName = "declaracoes";
+    private const string ReportName = "validation-report";
+
+    private static readonly UTF8Encoding Utf8NoBom = new(false);
+
+    private static readonly JsonSerializerOptions ReportOptions = new()
     {
-        /// <summary>Não grava e informa os arquivos existentes (padrão — pede confirmação ao usuário).</summary>
-        Fail,
-        Overwrite,
-        /// <summary>Grava com sufixo yyyyMMdd-HHmmss, preservando o arquivo anterior.</summary>
-        Timestamp
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
+    private readonly string _outputRoot;
+
+    public ExportService(string outputRoot)
+    {
+        if (string.IsNullOrWhiteSpace(outputRoot))
+            throw new ArgumentException("Informe a pasta de saída.", nameof(outputRoot));
+        _outputRoot = outputRoot;
     }
 
-    public sealed class ExportResult
+    public ExportResult Export(string layoutFolder, RunResult run, ExistsPolicy policy)
     {
-        public bool Written { get; set; }
-        public string JsonPath { get; set; } = "";
-        public string ReportPath { get; set; } = "";
-        public List<string> ExistingFiles { get; } = new();
-    }
+        ArgumentNullException.ThrowIfNull(run);
+        if (!run.IsExportReady || run.Json == null)
+            throw new InvalidOperationException("Só é possível exportar um JSON gerado sem erros e sem campos pendentes.");
 
-    /// <summary>Exporta Output/&lt;Layout&gt;/&lt;Ano&gt;/declaracoes.json e validation-report.json.</summary>
-    public sealed class ExportService
-    {
-        public const string JsonFileName = "declaracoes.json";
-        public const string ReportFileName = "validation-report.json";
+        var safeFolder = Path.GetFileName(layoutFolder.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        var dir = Path.Combine(_outputRoot, safeFolder, DateTime.Now.Year.ToString());
 
-        public string OutputRoot { get; }
+        var jsonPath = Path.Combine(dir, JsonName + ".json");
+        var reportPath = Path.Combine(dir, ReportName + ".json");
 
-        public ExportService(string outputRoot) => OutputRoot = outputRoot;
-
-        public static int GuessYear(string? generateName)
+        var existing = new[] { jsonPath, reportPath }.Where(File.Exists).ToList();
+        if (existing.Count > 0)
         {
-            var m = Regex.Match(generateName ?? "", @"\b(20\d{2})\b");
-            return m.Success ? int.Parse(m.Groups[1].Value) : DateTime.Now.Year;
-        }
-
-        public string GetTargetFolder(string layoutFolder, int year) =>
-            Path.Combine(OutputRoot, layoutFolder, year.ToString());
-
-        public ExportResult Export(string layoutFolder, RunResult run, ExistsPolicy policy = ExistsPolicy.Fail)
-        {
-            if (run.Json == null) throw new InvalidOperationException("Não há JSON gerado para exportar.");
-
-            var folder = GetTargetFolder(layoutFolder, GuessYear(run.GenerateName));
-            var jsonPath = Path.Combine(folder, JsonFileName);
-            var reportPath = Path.Combine(folder, ReportFileName);
-            var res = new ExportResult { JsonPath = jsonPath, ReportPath = reportPath };
-
-            if (File.Exists(jsonPath)) res.ExistingFiles.Add(jsonPath);
-            if (File.Exists(reportPath)) res.ExistingFiles.Add(reportPath);
-
-            if (res.ExistingFiles.Count > 0)
+            switch (policy)
             {
-                if (policy == ExistsPolicy.Fail) return res;
-                if (policy == ExistsPolicy.Timestamp)
-                {
+                case ExistsPolicy.Fail:
+                    return new ExportResult { Written = false, ExistingFiles = existing };
+
+                case ExistsPolicy.Timestamp:
                     var stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
-                    res.JsonPath = Path.Combine(folder, $"declaracoes-{stamp}.json");
-                    res.ReportPath = Path.Combine(folder, $"validation-report-{stamp}.json");
-                }
+                    jsonPath = Path.Combine(dir, $"{JsonName}-{stamp}.json");
+                    reportPath = Path.Combine(dir, $"{ReportName}-{stamp}.json");
+                    break;
             }
-
-            Directory.CreateDirectory(folder);
-            File.WriteAllText(res.JsonPath, run.Json);
-            File.WriteAllText(res.ReportPath, BuildReport(run));
-            res.Written = true;
-            return res;
         }
 
-        public static string BuildReport(RunResult run)
-        {
-            var issues = new JsonArray();
-            foreach (var i in run.Issues)
-                issues.Add(new JsonObject
-                {
-                    ["severity"] = i.Severity.ToString(),
-                    ["code"] = i.Code,
-                    ["path"] = i.Path,
-                    ["message"] = i.Message
-                });
+        Directory.CreateDirectory(dir);
+        WriteAtomic(jsonPath, run.Json);
+        WriteAtomic(reportPath, BuildReport(run));
 
-            var report = new JsonObject
+        return new ExportResult { Written = true, JsonPath = jsonPath, ReportPath = reportPath };
+    }
+
+    /// <summary>Salva apenas o relatório de validação (usado pela tela de Validação).</summary>
+    public static void SaveReportTo(string path, RunResult run)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        var dir = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+        WriteAtomic(path, BuildReport(run));
+    }
+
+    /// <summary>Relatório sem dados pessoais: só metadados da execução e ocorrências com caminho.</summary>
+    public static string BuildReport(RunResult run)
+    {
+        var issues = new JsonArray();
+        foreach (var i in run.Issues)
+        {
+            issues.Add(new JsonObject
             {
-                ["layout"] = run.LayoutName,
-                ["identifier"] = run.LayoutIdentifier,
-                ["layoutVersion"] = run.LayoutVersion,
-                ["schemaVersion"] = run.SchemaVersion,
-                ["generate"] = run.GenerateName,
-                ["source"] = run.SourceName,
-                ["configHash"] = run.ConfigHash,
-                ["startedAt"] = run.StartedAt.ToString("yyyy-MM-ddTHH:mm:ss"),
-                ["durationSeconds"] = Math.Round(run.Duration.TotalSeconds, 2),
-                ["records"] = run.RecordCount,
-                ["schemaValidated"] = run.SchemaValidated,
-                ["errors"] = run.ErrorCount,
-                ["warnings"] = run.WarningCount,
-                ["issues"] = issues
-            };
-            return report.ToJsonString(new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                ["severity"] = i.Severity.ToString(),
+                ["code"] = i.Code,
+                ["path"] = i.Path,
+                ["message"] = i.Message
             });
         }
 
-        /// <summary>Relatório avulso (para o botão "Exportar relatório" da tela de validação).</summary>
-        public static void SaveReportTo(string path, RunResult run) => File.WriteAllText(path, BuildReport(run));
+        var pending = new JsonArray();
+        foreach (var p in run.Pending)
+        {
+            pending.Add(new JsonObject
+            {
+                ["path"] = p.Path,
+                ["type"] = p.Type ?? p.RawType,
+                ["required"] = p.Required
+            });
+        }
+
+        var report = new JsonObject
+        {
+            ["layout"] = new JsonObject
+            {
+                ["folder"] = run.LayoutFolder,
+                ["name"] = run.LayoutName,
+                ["identifier"] = run.LayoutIdentifier,
+                ["version"] = run.LayoutVersion,
+                ["schemaVersion"] = run.SchemaVersion,
+                ["configHash"] = run.ConfigHash
+            },
+            ["generate"] = run.GenerateName,
+            ["source"] = run.SourceName,
+            ["generatedAt"] = run.StartedAt.ToString("yyyy-MM-ddTHH:mm:ss"),
+            ["durationSeconds"] = Math.Round(run.Duration.TotalSeconds, 2),
+            ["recordCount"] = run.RecordCount,
+            ["schemaValidated"] = run.SchemaValidated,
+            ["preview"] = run.IsPreview,
+            ["blocked"] = run.Blocked,
+            ["errorCount"] = run.ErrorCount,
+            ["warningCount"] = run.WarningCount,
+            ["pending"] = pending,
+            ["issues"] = issues
+        };
+
+        return report.ToJsonString(ReportOptions);
+    }
+
+    private static void WriteAtomic(string path, string content)
+    {
+        var temp = path + ".tmp";
+        File.WriteAllText(temp, content, Utf8NoBom);
+        File.Move(temp, path, overwrite: true);
     }
 }
