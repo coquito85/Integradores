@@ -20,14 +20,16 @@ namespace GenerateJS
     {
         public const string MySql = "MySqlConnector";
         public const string SqlServer = "Microsoft.Data.SqlClient";
+        public const string Access = "System.Data.OleDb";
 
-        public static readonly string[] Names = { MySql, SqlServer };
+        public static readonly string[] Names = { MySql, SqlServer, Access };
 
         /// <summary>Reconhece o nome digitado (sem diferenciar maiúsculas) e devolve MySql ou SqlServer; null se não suportado.</summary>
         public static string? Resolver(string? nome) => (nome ?? "").Trim().ToLowerInvariant() switch
         {
             "mysqlconnector" or "mysql.data.mysqlclient" or "mariadb" or "mysql" => MySql,
             "microsoft.data.sqlclient" or "system.data.sqlclient" or "sqlserver" or "sql server" => SqlServer,
+            "system.data.oledb" or "oledb" or "access" or "ace" => Access,
             _ => null
         };
     }
@@ -171,7 +173,7 @@ namespace GenerateJS
         [Category(CatFonte)]
         [AplicaSe(FontesDados.Banco)]
         [DisplayName("ProviderName")]
-        [Description("Driver do banco (digite): MySqlConnector (MariaDB/MySQL) ou Microsoft.Data.SqlClient (SQL Server).")]
+        [Description("Driver do banco (digite): MySqlConnector (MariaDB/MySQL), Microsoft.Data.SqlClient (SQL Server) ou System.Data.OleDb (Access, ex.: Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\dados\\base.accdb;).")]
         public string ProviderName { get; set; } = DbProviders.MySql;
 
         [Category(CatFonte)]
@@ -242,6 +244,10 @@ namespace GenerateJS
         [Browsable(false)]
         public bool EhBanco => Origem == FontesDados.Banco;
 
+        /// <summary>Access não aceita "SELECT 1" sem FROM; o teste de conexão só abre a conexão.</summary>
+        [Browsable(false)]
+        public bool EhAccess => DbProviders.Resolver(ProviderName) == DbProviders.Access;
+
         [Browsable(false)]
         public bool BancoConfigurado => !string.IsNullOrWhiteSpace(ConnectionString);
 
@@ -304,11 +310,12 @@ namespace GenerateJS
         {
             DbProviders.MySql => MySqlConnector.MySqlConnectorFactory.Instance,
             DbProviders.SqlServer => Microsoft.Data.SqlClient.SqlClientFactory.Instance,
+            DbProviders.Access => System.Data.OleDb.OleDbFactory.Instance,
             _ => throw new InvalidOperationException(MensagemProvider())
         };
 
         private string MensagemProvider() =>
-            $"ProviderName '{ProviderName}' não suportado. Use {DbProviders.MySql} ou {DbProviders.SqlServer}.";
+            $"ProviderName '{ProviderName}' não suportado. Use {DbProviders.MySql}, {DbProviders.SqlServer} ou {DbProviders.Access}.";
 
         public IDataProvider CreateProvider()
         {
@@ -324,9 +331,12 @@ namespace GenerateJS
 
             var factory = CreateFactory();
             var cs = ConnectionString.Trim();
-            return DbProviders.Resolver(ProviderName) == DbProviders.SqlServer
-                ? new SqlServerProvider(factory, cs) { CommandTimeoutSeconds = CommandTimeout }
-                : new MariaDbProvider(factory, cs) { CommandTimeoutSeconds = CommandTimeout };
+            return DbProviders.Resolver(ProviderName) switch
+            {
+                DbProviders.SqlServer => new SqlServerProvider(factory, cs) { CommandTimeoutSeconds = CommandTimeout },
+                DbProviders.Access => new AccessProvider(factory, cs) { CommandTimeoutSeconds = CommandTimeout },
+                _ => new MariaDbProvider(factory, cs) { CommandTimeoutSeconds = CommandTimeout }
+            };
         }
 
         /// <summary>TableSource e FiltersSource só valem para origem de banco.</summary>

@@ -29,6 +29,9 @@ public abstract class DbQueryProvider : IDataProvider
     protected abstract char OpenQuote { get; }
     protected abstract char CloseQuote { get; }
 
+    /// <summary>Marcador do parâmetro no SQL. Padrão nomeado (@p0); OleDb/Access usa posicional (?).</summary>
+    protected virtual string ParameterMarker(int index) => "@p" + index;
+
     public int CommandTimeoutSeconds { get; set; } = 120;
 
     public SelectStatement BuildSelect(DataRequest request)
@@ -50,7 +53,8 @@ public abstract class DbQueryProvider : IDataProvider
             foreach (var f in request.Filters)
             {
                 var pname = "@p" + parameters.Count;
-                conditions.Add($"{Q(f.Column)} = {pname}");
+                conditions.Add($"{Q(f.Column)} = {ParameterMarker(parameters.Count)}");
+                // em provedores posicionais a ordem de inclusão é o que vale
                 parameters.Add(new KeyValuePair<string, object>(pname, f.Value));
             }
             sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));

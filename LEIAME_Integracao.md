@@ -39,10 +39,13 @@ A tela principal ficou só com as ações (**Gerar JSON, Ver JSON, Ver validaç�
 | Origem | Campos |
 |---|---|
 | Arquivo CSV | Arquivo, Delimitador, Codificação, Primeira linha é o cabeçalho |
-| Banco de dados | ConnectionString (mascarada, só em memória), ProviderName (texto livre: `MySqlConnector` ou `Microsoft.Data.SqlClient`; também aceita `MySql.Data.MySqlClient`, `System.Data.SqlClient`), TableSource, FiltersSource (`campo=valor,campo2=valor2`, como parâmetros SQL), CommandTimeout |
+| Banco de dados | ConnectionString (mascarada, só em memória), ProviderName (texto livre: `MySqlConnector`, `Microsoft.Data.SqlClient` ou `System.Data.OleDb` para Access; também aceita `MySql.Data.MySqlClient`, `System.Data.SqlClient`, `OleDb`, `Access`), TableSource, FiltersSource (`campo=valor,campo2=valor2`, como parâmetros SQL), CommandTimeout |
 
 **Geração:** LayoutCode (ao gravar, valida se existe layout para o código), Configuração (lista os `<generate>` do layout encontrado), Gerar prévia com pendências, ArquivosDestino (vazio = pasta `Output`).
 
 Ao gravar, as validações rodam e listam os erros (layout inexistente, arquivo CSV inexistente, conexão vazia, filtro inválido etc.). A mesma validação roda antes de gerar. Se o LayoutCode apontar outro layout cadastrado, ele é carregado. Mudar a configuração descarta o resultado anterior, para não exportar um JSON de outra origem.
 
 Ficaram de fora `ColumnUpdateSource`, `LayoutValidate` e `Generate` do modelo: o documento não define atualização na origem, e a validação já é obrigatória no fluxo.
+
+## Access (.mdb/.accdb)
+Use `ProviderName = System.Data.OleDb` e uma string como `Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\dados\base.accdb;`. Requisitos: Windows, pacote `System.Data.OleDb` (já no `GenerateJS.csproj`) e o **Microsoft Access Database Engine (ACE)** instalado com a **mesma arquitetura do app** (64 bits por padrão no .NET atual; se só houver ACE 32 bits, o app precisa ser compilado como x86). Nomes de tabela/coluna não podem ter espaços (regra comum a todos os bancos). O teste de conexão só abre a conexão, pois o Access não aceita `SELECT 1`.

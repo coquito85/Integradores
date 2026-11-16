@@ -191,6 +191,21 @@ public class SatubaTests
     private sealed class FakeFactory : System.Data.Common.DbProviderFactory { }
 
     [Fact]
+    public void Access_select_uses_brackets_and_positional_parameters()
+    {
+        var provider = new AccessProvider(new FakeFactory(), "Provider=x");
+        var select = provider.BuildSelect(new DataRequest
+        {
+            TableName = "Tab",
+            Columns = new[] { new SourceColumn("A", orderBy: true), new SourceColumn("B") },
+            Filters = new[] { new DataFilter("A", "1"), new DataFilter("B", "2") }
+        });
+
+        Assert.Equal("SELECT [A], [B] FROM [Tab] WHERE [A] = ? AND [B] = ? ORDER BY [A]", select.Sql);
+        Assert.Equal(2, select.Parameters.Count);
+    }
+
+    [Fact]
     public void Db_select_quotes_identifiers_and_parameterizes_filters()
     {
         var provider = new SqlServerProvider(new FakeFactory(), "Server=x");

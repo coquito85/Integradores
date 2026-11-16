@@ -63,6 +63,7 @@ namespace GenerateJS.Forms
 
             var factory = _work.CreateFactory();
             var cs = _work.ConnectionString.Trim();
+            bool access = _work.EhAccess;
 
             btnTestar.Enabled = false;
             try
@@ -71,7 +72,7 @@ namespace GenerateJS.Forms
                 {
                     using var db = new DatabaseConnection(cs, factory);
                     db.Open();
-                    db.ExecuteScalar("SELECT 1");
+                    if (!access) db.ExecuteScalar("SELECT 1"); // Access: abrir a conexão já é o teste
                 });
                 MessageBox.Show(this, "Conexão estabelecida com sucesso.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }

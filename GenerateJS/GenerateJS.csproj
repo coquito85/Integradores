@@ -21,6 +21,8 @@
     <!-- Drivers de banco: ficam apenas no App; o Data recebe o DbProviderFactory -->
     <PackageReference Include="MySqlConnector" Version="2.4.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
+    <!-- Access (ACE/OLEDB), somente Windows -->
+    <PackageReference Include="System.Data.OleDb" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
