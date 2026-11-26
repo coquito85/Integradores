@@ -1,9 +1,13 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
+using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
@@ -48,43 +52,30 @@ namespace ReferenciaStandard.Helpers
         }
         public static string AtualizarJsonEtapa(string jsonStr, string nomeEtapa, bool valor)
         {
-            JsonObject json = JsonNode.Parse(jsonStr).AsObject();
+            JObject json = string.IsNullOrWhiteSpace(jsonStr) ? new JObject() : JObject.Parse(jsonStr);
 
-            // Garante que existe a seção Etapas
-            if (!json.ContainsKey("Etapas"))
-                json["Etapas"] = new JsonObject();
+            // Garante que existe a secao Etapas
+            JObject etapas = json["Etapas"] as JObject;
+            if (etapas == null)
+            {
+                etapas = new JObject();
+                json["Etapas"] = etapas;
+            }
 
-            JsonObject etapas = json["Etapas"].AsObject();
-
-            //Atualiza a etapa
             etapas[nomeEtapa] = valor;
 
-            // Retorna string do JSON atualizado
-            return json.ToJsonString(new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
+            return json.ToString(Newtonsoft.Json.Formatting.Indented);
         }
 
         public static bool LeituraJsonEtapa(string jsonStr, string nomeEtapa)
         {
-            if (jsonStr != null)
-            {
-                JsonObject json = JsonNode.Parse(jsonStr).AsObject();
-
-                if (!json.ContainsKey("Etapas"))
-                    return false;
-
-                JsonObject etapas = json["Etapas"].AsObject();
-
-                if (!etapas.ContainsKey(nomeEtapa))
-                    return false;
-
-                return etapas[nomeEtapa]?.GetValue<bool>() ?? false;
-            }
-            else
+            if (string.IsNullOrWhiteSpace(jsonStr))
                 return false;
 
+            JObject etapas = JObject.Parse(jsonStr)["Etapas"] as JObject;
+            JToken valor = etapas?[nomeEtapa];
+
+            return valor != null && valor.Type == JTokenType.Boolean && valor.Value<bool>();
         }
 
 
@@ -125,26 +116,97 @@ namespace ReferenciaStandard.Helpers
         }
 
 
-        public static string IsSerializeJson<T>(T obj)
+        // ── Configuracao central de JSON (um unico lugar para mudar o comportamento de todo o sistema) ──
+        private static JsonSerializerSettings CriarConfiguracao()
         {
-            var settings = new JsonSerializerSettings
+            return new JsonSerializerSettings
             {
                 Formatting = Newtonsoft.Json.Formatting.Indented,
-                NullValueHandling = NullValueHandling.Ignore
+                NullValueHandling = NullValueHandling.Ignore,
+                DateParseHandling = DateParseHandling.DateTime,
+                Converters = { new StringEnumConverter() }
             };
+        }
 
-            return JsonConvert.SerializeObject(obj, settings);
+        public static string Serializar<T>(T obj)
+        {
+            return JsonConvert.SerializeObject(obj, CriarConfiguracao());
+        }
+
+        public static T Desserializar<T>(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+                return default(T);
+
+            return JsonConvert.DeserializeObject<T>(json, CriarConfiguracao());
+        }
+
+        public static string IsSerializeJson<T>(T obj)
+        {
+            return Serializar(obj);
         }
 
         public static T IsDeserializeObjectJson<T>(string json)
         {
-            var settings = new JsonSerializerSettings
-            {
-                NullValueHandling = NullValueHandling.Ignore
-            };
-
-            return JsonConvert.DeserializeObject<T>(json, settings);
+            return Desserializar<T>(json);
         }
+
+        /// <summary>
+        /// Le um arquivo JSON para o tipo T. Arquivo inexistente, vazio ou corrompido devolve "padrao"
+        /// (nunca lanca excecao: quem chama decide o que fazer com o valor padrao).
+        /// </summary>
+        public static T LerArquivo<T>(string caminho, T padrao = default(T))
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(caminho) || !File.Exists(caminho))
+                    return padrao;
+
+                string conteudo = File.ReadAllText(caminho);
+                if (string.IsNullOrWhiteSpace(conteudo))
+                    return padrao;
+
+                T resultado = Desserializar<T>(conteudo);
+                return resultado == null ? padrao : resultado;
+            }
+            catch
+            {
+                return padrao;
+            }
+        }
+
+        /// <summary>
+        /// Grava o objeto em JSON de forma atomica (escreve num arquivo temporario e troca no final),
+        /// assim uma queda de energia no meio da gravacao nao corrompe o arquivo existente.
+        /// </summary>
+        public static bool GravarArquivo<T>(string caminho, T obj, out string erro)
+        {
+            erro = null;
+            string temporario = null;
+            try
+            {
+                string pasta = Path.GetDirectoryName(caminho);
+                if (!string.IsNullOrEmpty(pasta))
+                    Directory.CreateDirectory(pasta);
+
+                temporario = caminho + ".tmp";
+                File.WriteAllText(temporario, Serializar(obj), new UTF8Encoding(false));
+
+                if (File.Exists(caminho))
+                    File.Replace(temporario, caminho, null);
+                else
+                    File.Move(temporario, caminho);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                erro = ex.Message;
+                try { if (temporario != null && File.Exists(temporario)) File.Delete(temporario); } catch { }
+                return false;
+            }
+        }
+
         public static async Task<string> ObterGeneroAsync(string nome)
         {
             using (var client = new HttpClient())

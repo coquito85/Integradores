@@ -1,6 +1,7 @@
-﻿using ReferenciaFactory.Collections;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+﻿using Newtonsoft.Json;
+using ReferenciaFactory.Collections;
+using ReferenciaStandard.Helpers;
+using ReferenciaStandard.Repository;
 
 namespace ExecutorService.Model
 {
@@ -27,14 +28,7 @@ namespace ExecutorService.Model
 
     internal static class Pastas
     {
-        public static readonly string Raiz = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OrionAutomator");
-
-        public static readonly JsonSerializerOptions Json = new()
-        {
-            WriteIndented = true,
-            Converters = { new JsonStringEnumConverter() }
-        };
+        public static string Raiz => AppPaths.Raiz;
     }
 
     /// <summary>Persistencia dos agendamentos (JSON em %AppData%\OrionAutomator\agendamentos.json).</summary>
@@ -53,20 +47,16 @@ namespace ExecutorService.Model
 
         private void Carregar()
         {
-            try
-            {
-                if (!File.Exists(_arquivo)) return;
-                var lista = JsonSerializer.Deserialize<List<ModeloSchedule>>(File.ReadAllText(_arquivo), Pastas.Json) ?? new();
-                _dados = lista.Where(s => !string.IsNullOrWhiteSpace(s.FilePath))
-                              .ToDictionary(s => s.FilePath, StringComparer.OrdinalIgnoreCase);
-            }
-            catch { _dados = new(StringComparer.OrdinalIgnoreCase); }
+            var lista = JsonHelper.LerArquivo(_arquivo, new List<ModeloSchedule>()) ?? new List<ModeloSchedule>();
+            _dados = lista.Where(s => !string.IsNullOrWhiteSpace(s.FilePath))
+                          .GroupBy(s => s.FilePath, StringComparer.OrdinalIgnoreCase)
+                          .ToDictionary(g => g.Key, g => g.Last(), StringComparer.OrdinalIgnoreCase);
         }
 
         private void Gravar()
         {
-            Directory.CreateDirectory(Pastas.Raiz);
-            File.WriteAllText(_arquivo, JsonSerializer.Serialize(_dados.Values.ToList(), Pastas.Json));
+            if (!JsonHelper.GravarArquivo(_arquivo, _dados.Values.ToList(), out var erro))
+                throw new IOException(erro);
         }
 
         public Dictionary<string, ModeloSchedule> Snapshot()
@@ -107,9 +97,14 @@ namespace ExecutorService.Model
 
                 if (novo.Ordem <= 0) novo.Ordem = _dados.Count == 0 ? 1 : _dados.Values.Max(s => s.Ordem) + 1;
 
+                _dados.TryGetValue(novo.FilePath, out var anterior);
                 _dados[novo.FilePath] = novo;
                 try { Gravar(); }
-                catch (Exception ex) { return (false, "Não foi possível gravar: " + ex.Message); }
+                catch (Exception ex)
+                {
+                    if (anterior != null) _dados[novo.FilePath] = anterior; else _dados.Remove(novo.FilePath);
+                    return (false, "Não foi possível gravar: " + ex.Message);
+                }
             }
 
             Atualizado?.Invoke(novo.FilePath);
@@ -123,26 +118,16 @@ namespace ExecutorService.Model
         private static readonly string Arquivo = Path.Combine(Pastas.Raiz, "recent.json");
         private const int Maximo = 20;
 
-        public static List<string> Ler()
-        {
-            try
-            {
-                if (!File.Exists(Arquivo)) return new();
-                var l = JsonSerializer.Deserialize<List<string>>(File.ReadAllText(Arquivo)) ?? new();
-                return l.Where(File.Exists).ToList();
-            }
-            catch { return new(); }
-        }
+        /// <summary>
+        /// Devolve a lista salva, inclusive arquivos que nao existem mais: a janela mostra esses itens em
+        /// vermelho para o usuario remover. Filtrar aqui apagaria da lista, na proxima gravacao,
+        /// arquivos de uma unidade de rede que estivesse apenas offline.
+        /// </summary>
+        public static List<string> Ler() =>
+            JsonHelper.LerArquivo(Arquivo, new List<string>()) ?? new List<string>();
 
-        public static void Gravar(IEnumerable<string> caminhos)
-        {
-            try
-            {
-                Directory.CreateDirectory(Pastas.Raiz);
-                File.WriteAllText(Arquivo, JsonSerializer.Serialize(caminhos.Take(Maximo).ToList(), Pastas.Json));
-            }
-            catch { }
-        }
+        public static void Gravar(IEnumerable<string> caminhos) =>
+            JsonHelper.GravarArquivo(Arquivo, caminhos.Take(Maximo).ToList(), out _);
 
         public static void Adicionar(string path)
         {

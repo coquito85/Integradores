@@ -1,5 +1,4 @@
-﻿using OrionAutomator.Infra.Tema;
-using OrionAutomator.Tema;
+﻿using OrionAutomator.Tema;
 
 namespace OrionAutomator.Janelas
 {
@@ -18,7 +17,7 @@ namespace OrionAutomator.Janelas
 
         #region Windows Form Designer generated code
 
-        // Tudo aqui sao apenas valores iniciais: posicao, cor, fonte e visibilidade reais vem de Config/UiConfig.xml.
+        // Tudo aqui sao apenas valores iniciais: posicao, cor, fonte, visibilidade e habilitacao reais vem do UiConfig.xml.
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
@@ -58,6 +57,8 @@ namespace OrionAutomator.Janelas
             lblVersao = new Label();
 
             btnChat = new ModernButton();
+
+            tmrRegras = new System.Windows.Forms.Timer(components);
 
             ctxItem = new ContextMenuStrip(components);
             mnuExecutar = new ToolStripMenuItem();
@@ -307,7 +308,7 @@ namespace OrionAutomator.Janelas
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Orion Automator";
             Load += FrmGerenciadorFluxos_Load;
-//            Resize += (_, _) => btnChat.BringToFront();
+            Resize += (_, _) => btnChat.BringToFront();
 
             pnlConteudo.ResumeLayout(false);
             pnlEsquerda.ResumeLayout(false);
@@ -372,6 +373,8 @@ namespace OrionAutomator.Janelas
         private Label lblVersao;
 
         private ModernButton btnChat;
+
+        private System.Windows.Forms.Timer tmrRegras;
 
         private ContextMenuStrip ctxItem;
         private ToolStripMenuItem mnuExecutar;

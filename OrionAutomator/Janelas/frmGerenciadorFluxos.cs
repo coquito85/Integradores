@@ -1,5 +1,7 @@
 using ExecutorService.Model;
 using OrionAutomator.Tema;
+using ReferenciaFactory.Collections;
+using ReferenciaFactory.Regras;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
@@ -24,6 +26,7 @@ namespace OrionAutomator.Janelas
         private const string FiltroArquivos = "Fluxos (*.uax;*.json)|*.uax;*.json|Todos (*.*)|*.*";
 
         private UiConfig _ui = null!;
+        private Dictionary<string, bool> _habilitadoXml = new(StringComparer.OrdinalIgnoreCase);
         private RegrasService _regras = null!;
         private ResultadoRegras _estado = null!;
 
@@ -51,10 +54,14 @@ namespace OrionAutomator.Janelas
             _regras = RegrasService.Carregar();
 
             // 1) propriedades vindas do XML   2) regras de licenca/versao por cima (so podem desabilitar)
-            UiConfigApplier.Aplicar(this, _ui, mnuExecutar, mnuAbrirItem, mnuPip, mnuRemover);
+            // escala 1: o AutoScale do WinForms multiplica tudo (designer + XML) quando a janela abre.
+            _habilitadoXml = UiConfigApplier.Aplicar(this, _ui, 1f, true, mnuExecutar, mnuAbrirItem, mnuPip, mnuRemover);
             PrepararRecursos();
             PrepararMenu();
-            lstRecentes.ItemHeight = _ui.Metrica("AlturaItem", 80);
+
+            tmrRegras.Interval = _regras.IntervaloVerificacaoSegundos * 1000;
+            tmrRegras.Tick += (_, _) => AplicarRegras();
+            tmrRegras.Start();
 
             AgendamentoStore.Instance.Atualizado += OnAgendamentoAtualizado;
             _schedules = AgendamentoStore.Instance.Snapshot();
@@ -66,6 +73,7 @@ namespace OrionAutomator.Janelas
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
+            tmrRegras.Stop();
             AgendamentoStore.Instance.Atualizado -= OnAgendamentoAtualizado;
             foreach (var r in _recursos) r.Dispose();
             _recursos.Clear();
@@ -74,9 +82,47 @@ namespace OrionAutomator.Janelas
 
         private void FrmGerenciadorFluxos_Load(object? sender, EventArgs e)
         {
-            if (_ui?.Erro != null)
+            // o Load roda depois do AutoScale: agora o DPI real da tela e conhecido
+            _ui.Escala = DeviceDpi / 96f;
+            lstRecentes.ItemHeight = _ui.Escalar(_ui.Metrica("AlturaItem", 80));
+
+            if (_ui.Erro != null)
                 Debug.WriteLine("[UiConfig] " + _ui.Erro + " (usando padrões embutidos)");
             btnChat.BringToFront();
+        }
+
+        /// <summary>F5: relê o UiConfig.xml (embutido + Config\UiConfig.xml) e reaplica cores, fontes e propriedades.</summary>
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.F5)
+            {
+                RecarregarTema();
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void RecarregarTema()
+        {
+            var novo = UiConfig.Carregar();
+            novo.Escala = DeviceDpi / 96f;
+            _ui = novo;
+
+            _habilitadoXml = UiConfigApplier.Aplicar(this, _ui, _ui.Escala, false, mnuExecutar, mnuAbrirItem, mnuPip, mnuRemover);
+
+            foreach (var r in _recursos) r.Dispose();
+            _recursos.Clear();
+            PrepararRecursos();
+            PrepararMenu();
+
+            lstRecentes.ItemHeight = _ui.Escalar(_ui.Metrica("AlturaItem", 80));
+            AplicarRegras();
+            btnChat.BringToFront();
+            Invalidate(true);
+
+            if (_ui.Erro != null)
+                MessageBox.Show(this, "O tema foi recarregado com avisos:\n\n" + _ui.Erro, TituloMsg,
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         // ══ Tema ═════════════════════════════════════════════════════════════
@@ -142,17 +188,20 @@ namespace OrionAutomator.Janelas
             Bloquear("Chat", btnChat);
 
             btnNotificacao.Emblema = (msg != null) ? "!" : null;
+            AtualizarPainelAgenda();
         }
 
-        private void Bloquear(string funcionalidade, Control c)
-        {
-            if (!_regras.Permite(funcionalidade, out _)) c.Enabled = false;
-        }
+        /// <summary>habilitado = (o que o XML definiu) E (o que as regras permitem). Reavaliavel a qualquer momento.</summary>
+        private void Bloquear(string funcionalidade, Control c) =>
+            c.Enabled = HabilitadoNoXml(c) && _regras.Permite(_estado, funcionalidade, out _);
+
+        private bool HabilitadoNoXml(Control c) => !_habilitadoXml.TryGetValue(c.Name, out var h) || h;
 
         /// <summary>Verificacao no momento da acao (cobre prazo vencendo com o app aberto).</summary>
         private bool Permitir(string funcionalidade)
         {
-            if (_regras.Permite(funcionalidade, out var motivo)) return true;
+            _estado = _regras.Avaliar();
+            if (_regras.Permite(_estado, funcionalidade, out var motivo)) return true;
             AplicarRegras();
             MessageBox.Show(this, motivo, TituloMsg, MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return false;
@@ -257,16 +306,18 @@ namespace OrionAutomator.Janelas
         // ── Desenho do item ──────────────────────────────────────────────────
         private (Rectangle baixar, Rectangle enviar) RetsAcao(Rectangle card)
         {
-            int t = _ui.Metrica("TamanhoIconeAcao", 28);
-            int gap = _ui.Metrica("EspacoIconeAcao", 8);
-            int mr = _ui.Metrica("MargemIconeAcao", 14);
+            int t = E(_ui.Metrica("TamanhoIconeAcao", 28));
+            int gap = E(_ui.Metrica("EspacoIconeAcao", 8));
+            int mr = E(_ui.Metrica("MargemIconeAcao", 14));
             int y = card.Y + (card.Height - t) / 2;
             var enviar = new Rectangle(card.Right - mr - t, y, t, t);
             var baixar = new Rectangle(enviar.X - gap - t, y, t, t);
             return (baixar, enviar);
         }
 
-        private static Rectangle CardDe(Rectangle b) => new(b.X + 1, b.Y + 4, b.Width - 3, b.Height - 8);
+        private int E(int valor) => _ui.Escalar(valor);
+
+        private Rectangle CardDe(Rectangle b) => new(b.X + 1, b.Y + E(4), b.Width - 3, b.Height - E(8));
 
         private void LstRecentes_DrawItem(object? sender, DrawItemEventArgs e)
         {
@@ -278,7 +329,7 @@ namespace OrionAutomator.Janelas
             if (e.Index >= _recentes.Count)
             {
                 TextRenderer.DrawText(g, "Nenhum projeto recente encontrado.", _ui.Fonte("ItemVazio"),
-                    new Point(e.Bounds.X + 12, e.Bounds.Y + 20), _ui.Cor("TextoDesabilitado"), TextFormatFlags.NoPadding);
+                    new Point(e.Bounds.X + E(12), e.Bounds.Y + E(20)), _ui.Cor("TextoDesabilitado"), TextFormatFlags.NoPadding);
                 return;
             }
 
@@ -291,15 +342,16 @@ namespace OrionAutomator.Janelas
             bool temSched = _schedules.TryGetValue(path, out var sched);
 
             var card = CardDe(e.Bounds);
-            using (var gp = Desenho.Arredondado(card, _ui.Metrica("RaioCard", 10)))
+            using (var gp = Desenho.Arredondado(card, E(_ui.Metrica("RaioCard", 10))))
             {
                 g.FillPath(sel ? _bSel : hover ? _bHover : _bCard, gp);
                 g.DrawPath(sel ? _penSel : _penBorda, gp);
             }
 
             // icone do fluxo
-            var caixaIcone = new Rectangle(card.X + 14, card.Y + (card.Height - 36) / 2, 36, 36);
-            using (var gp = Desenho.Arredondado(caixaIcone, 9))
+            int tamIcone = E(36);
+            var caixaIcone = new Rectangle(card.X + E(14), card.Y + (card.Height - tamIcone) / 2, tamIcone, tamIcone);
+            using (var gp = Desenho.Arredondado(caixaIcone, E(9)))
                 g.FillPath(sel ? _bPrimaria : _bIconeFundo, gp);
             TextRenderer.DrawText(g, "\uE713", _ui.Fonte("Icone"), caixaIcone,
                 sel ? _ui.Cor("TextoSobrePrimaria") : _ui.Cor("Primaria"),
@@ -307,12 +359,12 @@ namespace OrionAutomator.Janelas
 
             // textos
             var (rBaixar, _) = RetsAcao(card);
-            int tx = caixaIcone.Right + 14;
-            int largura = Math.Max(40, rBaixar.X - 10 - tx);
+            int tx = caixaIcone.Right + E(14);
+            int largura = Math.Max(E(40), rBaixar.X - E(10) - tx);
             const TextFormatFlags fl = TextFormatFlags.Left | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine;
 
             void Linha(string texto, string fonte, Color cor, int dy) =>
-                TextRenderer.DrawText(g, texto, _ui.Fonte(fonte), new Rectangle(tx, card.Y + dy, largura, 18), cor, fl);
+                TextRenderer.DrawText(g, texto, _ui.Fonte(fonte), new Rectangle(tx, card.Y + E(dy), largura, E(18)), cor, fl);
 
             Linha(nome, "ItemNome", !existe ? _ui.Cor("Perigo") : sel ? _ui.Cor("Primaria") : _ui.Cor("Texto"), 8);
             Linha(dir, "ItemPath", _ui.Cor("TextoSecundario"), 28);
@@ -340,7 +392,7 @@ namespace OrionAutomator.Janelas
 
         private void DesenharIconeAcao(Graphics g, Rectangle r, string glifo, bool hover)
         {
-            using (var gp = Desenho.Arredondado(r, 7))
+            using (var gp = Desenho.Arredondado(r, E(7)))
                 g.FillPath(hover ? _bIconeHover : _bIconeFundo, gp);
             TextRenderer.DrawText(g, glifo, _ui.Fonte("IconeAcao"), r,
                 hover ? _ui.Cor("TextoSobrePrimaria") : _ui.Cor("Primaria"),
@@ -367,7 +419,7 @@ namespace OrionAutomator.Janelas
 
             if (s.UltimoInicio.HasValue)
                 return ($"Última execução: {s.UltimoInicio:dd/MM/yyyy HH:mm:ss}  ·  {FormatarDuracao(s.DuracaoUltimaSegundos)}  ·  {s.UltimoStatus}",
-                        s.UltimoStatus == StatusExecucao.Erro);
+                        s.UltimoStatus == IsStatusExecute.Erro);
 
             return ("Nunca executado", false);
         }
@@ -457,10 +509,11 @@ namespace OrionAutomator.Janelas
             if (!valido) { e.Cancel = true; return; }
 
             bool existe = File.Exists(_recentes[idx]);
-            mnuExecutar.Enabled = existe && _regras.Permite("AbrirRecente", out _);
-            mnuAbrirItem.Enabled = existe && _regras.Permite("AbrirNoEditor", out _);
-            mnuPip.Enabled = existe && _regras.Permite("Pip", out _);
-            mnuRemover.Enabled = _regras.Permite("Remover", out _);
+            var r = _regras.Avaliar();
+            mnuExecutar.Enabled = existe && _regras.Permite(r, "AbrirRecente", out _);
+            mnuAbrirItem.Enabled = existe && _regras.Permite(r, "AbrirNoEditor", out _);
+            mnuPip.Enabled = existe && _regras.Permite(r, "Pip", out _);
+            mnuRemover.Enabled = _regras.Permite(r, "Remover", out _);
         }
 
         private bool TentarObterSelecionado(string funcionalidade, out string caminho)
@@ -590,16 +643,18 @@ namespace OrionAutomator.Janelas
 
         private void AtualizarPainelAgenda()
         {
-            bool permitido = _regras.Permite("Agendar", out var motivo);
+            bool permitido = _regras.Permite(_estado, "Agendar", out var motivo);
             bool liberado = _caminhoAtual != null && permitido;
 
             foreach (Control c in new Control[] { txtData, txtHoraIni, txtHoraFim, chkAgendado, btnSalvarAgendamento })
-                c.Enabled = liberado;
+                c.Enabled = liberado && HabilitadoNoXml(c);
 
             if (!permitido)
                 lblHistorico.Text = "Agendamento bloqueado.\n" + motivo;
             else if (_caminhoAtual == null)
                 lblHistorico.Text = "Selecione um modelo para agendar.";
+            else
+                AtualizarHistorico(_caminhoAtual);
         }
 
         private void AtualizarHistorico(string? path)

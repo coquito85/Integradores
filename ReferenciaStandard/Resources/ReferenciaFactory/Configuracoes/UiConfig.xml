@@ -1,122 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   UiConfig.xml  -  controla aparencia e propriedades da interface.
-  Cores:   "#RRGGBB", "#AARRGGBB", nome do .NET (ex.: "White") ou "@NomeDaCor" (referencia a secao <Cores>)
-  Fontes:  "@NomeDaFonte" ou "Familia;tamanho;estilo"  (estilo: Regular, Bold, Italic, Bold|Italic)
-  Dock:    None, Top, Bottom, Left, Right, Fill
+
+  Cores:    "#RRGGBB", "#AARRGGBB", nome do .NET (ex.: "White") ou "@NomeDaCor" (referencia a secao <Cores>)
+  Fontes:   "@NomeDaFonte" ou "Familia;tamanho;estilo"  (estilo: Regular, Bold, Italic, Bold|Italic)
+  Dock:     None, Top, Bottom, Left, Right, Fill
+  Ancora:   Top, Bottom, Left, Right combinados com virgula (ex.: "Top,Right")
   margemDireita / margemInferior: distancia da borda do pai (o controle acompanha o redimensionamento)
+
+  Atributos de controle: nome, texto, x, y, largura, altura, dock, ancora, margemDireita, margemInferior,
+    visivel, habilitado, tabIndex, fonte, corFundo, corTexto, corHover, corPressionado, corBorda,
+    corAtiva, corInativa, raio
+  Atributos de janela:   titulo, largura, altura, minLargura, minAltura,
+    barraTituloEscura, corBarraTitulo, corTextoBarraTitulo, corBordaJanela  (Windows 11 para as cores da barra)
+
+  Medidas em pixels sao "logicas" (100% de zoom do Windows): o programa escala sozinho em telas com DPI maior.
+  Sobreposicao: um arquivo Config\UiConfig.xml ao lado do .exe so precisa conter o que se quer mudar
+  (cores, fontes, metricas e controles sao mesclados por nome sobre este padrao).
+  F5 na janela principal recarrega as cores/fontes/propriedades sem fechar o programa.
   As regras de licenca/versao (Regras.xml) sempre vencem: elas podem desabilitar, nunca habilitar.
 -->
 <UiConfig versao="1">
 
-  <Tema>
-    <Cores>
-      <Cor nome="Fundo"              valor="#0A0A0B"/>
-      <Cor nome="Superficie"         valor="#131316"/>
-      <Cor nome="SuperficieAlt"      valor="#1C1C21"/>
-      <Cor nome="Borda"              valor="#2B2B33"/>
-      <Cor nome="Primaria"           valor="#A3E635"/>
-      <Cor nome="PrimariaHover"      valor="#BEF264"/>
-      <Cor nome="PrimariaPressionada" valor="#84CC16"/>
-      <Cor nome="PrimariaSuave"      valor="#1A2410"/>
-      <Cor nome="TextoSobrePrimaria" valor="#0A0A0B"/>
-      <Cor nome="Texto"              valor="#F4F4F5"/>
-      <Cor nome="TextoSecundario"    valor="#A1A1AA"/>
-      <Cor nome="TextoDesabilitado"  valor="#52525B"/>
-      <Cor nome="Perigo"             valor="#F43F5E"/>
-      <Cor nome="PerigoHover"        valor="#FB7185"/>
-      <Cor nome="Aviso"              valor="#FACC15"/>
-      <Cor nome="Sucesso"            valor="#A3E635"/>
-    </Cores>
+	<Tema>
+		<Cores>
+			<Cor nome="Fundo"              valor="#000000"/>
+			<Cor nome="Superficie"         valor="#040A05"/>
+			<Cor nome="SuperficieAlt"      valor="#0A1A0E"/>
+			<Cor nome="Borda"              valor="#0F3D1A"/>
+			<Cor nome="Primaria"           valor="#00FF41"/>
+			<Cor nome="PrimariaHover"      valor="#5CFF85"/>
+			<Cor nome="PrimariaPressionada" valor="#00C832"/>
+			<Cor nome="PrimariaSuave"      valor="#00200A"/>
+			<Cor nome="TextoSobrePrimaria" valor="#000000"/>
+			<Cor nome="Texto"              valor="#D6FFE0"/>
+			<Cor nome="TextoSecundario"    valor="#4FBF6B"/>
+			<Cor nome="TextoDesabilitado"  valor="#1F5C2E"/>
+			<Cor nome="Perigo"             valor="#F43F5E"/>
+			<Cor nome="PerigoHover"        valor="#FB7185"/>
+			<Cor nome="Aviso"              valor="#FACC15"/>
+			<Cor nome="Sucesso"            valor="#00FF41"/>
+		</Cores>
 
-    <Fontes>
-      <Fonte nome="Titulo"      familia="Segoe UI Semibold" tamanho="20"  estilo="Bold"/>
-      <Fonte nome="Subtitulo"   familia="Segoe UI"          tamanho="9"   estilo="Regular"/>
-      <Fonte nome="SecaoTitulo" familia="Segoe UI Semibold" tamanho="12"  estilo="Bold"/>
-      <Fonte nome="Normal"      familia="Segoe UI"          tamanho="9.5" estilo="Regular"/>
-      <Fonte nome="Rotulo"      familia="Segoe UI"          tamanho="9"   estilo="Regular"/>
-      <Fonte nome="Botao"       familia="Segoe UI Semibold" tamanho="9.5" estilo="Bold"/>
-      <Fonte nome="Icone"       familia="Segoe MDL2 Assets" tamanho="14"  estilo="Regular"/>
-      <Fonte nome="IconeGrande" familia="Segoe MDL2 Assets" tamanho="18"  estilo="Regular"/>
-      <Fonte nome="IconeAcao"   familia="Segoe MDL2 Assets" tamanho="10"  estilo="Regular"/>
-      <Fonte nome="ItemNome"    familia="Segoe UI Semibold" tamanho="10.5" estilo="Bold"/>
-      <Fonte nome="ItemPath"    familia="Segoe UI"          tamanho="8"   estilo="Regular"/>
-      <Fonte nome="ItemMeta"    familia="Segoe UI"          tamanho="8"   estilo="Regular"/>
-      <Fonte nome="ItemVazio"   familia="Segoe UI"          tamanho="10"  estilo="Italic"/>
-    </Fontes>
+		<Fontes>
+			<Fonte nome="Titulo"      familia="Segoe UI Semibold" tamanho="20"  estilo="Bold"/>
+			<Fonte nome="Subtitulo"   familia="Segoe UI"          tamanho="9"   estilo="Regular"/>
+			<Fonte nome="SecaoTitulo" familia="Segoe UI Semibold" tamanho="12"  estilo="Bold"/>
+			<Fonte nome="Normal"      familia="Segoe UI"          tamanho="9.5" estilo="Regular"/>
+			<Fonte nome="Rotulo"      familia="Segoe UI"          tamanho="9"   estilo="Regular"/>
+			<Fonte nome="Botao"       familia="Segoe UI Semibold" tamanho="9.5" estilo="Bold"/>
+			<Fonte nome="Icone"       familia="Segoe MDL2 Assets" tamanho="14"  estilo="Regular"/>
+			<Fonte nome="IconeGrande" familia="Segoe MDL2 Assets" tamanho="18"  estilo="Regular"/>
+			<Fonte nome="IconeAcao"   familia="Segoe MDL2 Assets" tamanho="10"  estilo="Regular"/>
+			<Fonte nome="ItemNome"    familia="Segoe UI Semibold" tamanho="10.5" estilo="Bold"/>
+			<Fonte nome="ItemPath"    familia="Segoe UI"          tamanho="8"   estilo="Regular"/>
+			<Fonte nome="ItemMeta"    familia="Segoe UI"          tamanho="8"   estilo="Regular"/>
+			<Fonte nome="ItemVazio"   familia="Segoe UI"          tamanho="10"  estilo="Italic"/>
+		</Fontes>
 
-    <Metricas>
-      <Metrica nome="AlturaItem"        valor="80"/>
-      <Metrica nome="RaioCard"          valor="10"/>
-      <Metrica nome="RaioBotao"         valor="10"/>
-      <Metrica nome="TamanhoIconeAcao"  valor="28"/>
-      <Metrica nome="EspacoIconeAcao"   valor="8"/>
-      <Metrica nome="MargemIconeAcao"   valor="14"/>
-    </Metricas>
-  </Tema>
+		<Metricas>
+			<Metrica nome="AlturaItem"        valor="80"/>
+			<Metrica nome="RaioCard"          valor="10"/>
+			<Metrica nome="RaioBotao"         valor="10"/>
+			<Metrica nome="TamanhoIconeAcao"  valor="28"/>
+			<Metrica nome="EspacoIconeAcao"   valor="8"/>
+			<Metrica nome="MargemIconeAcao"   valor="14"/>
+		</Metricas>
+	</Tema>
 
-  <Janelas>
-    <Janela nome="frmGerenciadorFluxos"
-            titulo="Orion Automator — Gerenciador de Fluxos"
-            largura="1020" altura="660" minLargura="860" minAltura="560">
+	<Janelas>
+		<Janela nome="frmGerenciadorFluxos"
+				titulo="Orion Automator — Gerenciador de Fluxos"
+				largura="1020" altura="660" minLargura="860" minAltura="560"
+				barraTituloEscura="true" corBarraTitulo="@Fundo" corTextoBarraTitulo="@Texto" corBordaJanela="@Borda">
 
-      <!-- Cabecalho -->
-      <Controle nome="pnlHeader"        dock="Top"    altura="76" corFundo="@Fundo"/>
-      <Controle nome="pnlHeaderAccent"  dock="Bottom" altura="2"  corFundo="@Primaria"/>
-      <Controle nome="lblTitulo"        texto="ORION AUTOMATOR" x="24" y="10" fonte="@Titulo" corTexto="@Texto"/>
-      <Controle nome="lblSubtitulo"     texto="Editor de Automação Visual" x="26" y="46" fonte="@Subtitulo" corTexto="@Primaria"/>
-      <Controle nome="lblVersao"        texto="v1.0.0" margemDireita="24" y="28" fonte="@Rotulo" corTexto="@TextoSecundario"/>
+			<!-- Cabecalho -->
+			<Controle nome="pnlHeader"        dock="Top"    altura="76" corFundo="@Fundo"/>
+			<Controle nome="pnlHeaderAccent"  dock="Bottom" altura="2"  corFundo="@Primaria"/>
+			<Controle nome="lblTitulo"        texto="ORION AUTOMATOR" x="24" y="10" fonte="@Titulo" corTexto="@Texto"/>
+			<Controle nome="lblSubtitulo"     texto="Editor de Automação Visual" x="26" y="46" fonte="@Subtitulo" corTexto="@Primaria"/>
+			<Controle nome="lblVersao"        texto="v1.0.0" margemDireita="24" y="28" fonte="@Rotulo" corTexto="@TextoSecundario"/>
 
-      <!-- Faixa de aviso (regras de licenca/versao) -->
-      <Controle nome="pnlBanner"        dock="Top" altura="40" visivel="false"/>
-      <Controle nome="lblBanner"        dock="Fill" fonte="@Botao"/>
+			<!-- Faixa de aviso (regras de licenca/versao) -->
+			<Controle nome="pnlBanner"        dock="Top" altura="40" visivel="false"/>
+			<Controle nome="lblBanner"        dock="Fill" fonte="@Botao"/>
 
-      <!-- Area principal -->
-      <Controle nome="pnlConteudo"      corFundo="@Fundo"/>
-      <Controle nome="pnlEsquerda"      corFundo="@Fundo"/>
-      <Controle nome="pnlListaTopo"     dock="Top" altura="68" corFundo="@Fundo"/>
-      <Controle nome="lblModelosTitulo" texto="Modelos Recentes" x="0" y="6"  fonte="@SecaoTitulo" corTexto="@Texto"/>
-      <Controle nome="lblModelosSub"    texto="Selecione um modelo" x="0" y="34" fonte="@Subtitulo" corTexto="@TextoSecundario"/>
-      <Controle nome="btnNotificacao"   texto="&#xE7ED;" largura="44" altura="44" margemDireita="0" y="6"
-                fonte="@Icone" corFundo="@Superficie" corHover="@SuperficieAlt" corPressionado="@PrimariaSuave"
-                corBorda="@Borda" corTexto="@Primaria" raio="12"/>
-      <Controle nome="lstRecentes"      dock="Fill" corFundo="@Fundo"/>
+			<!-- Area principal -->
+			<Controle nome="pnlConteudo"      corFundo="@Fundo"/>
+			<Controle nome="pnlEsquerda"      corFundo="@Fundo"/>
+			<Controle nome="pnlListaTopo"     dock="Top" altura="68" corFundo="@Fundo"/>
+			<Controle nome="lblModelosTitulo" texto="Modelos Recentes" x="0" y="6"  fonte="@SecaoTitulo" corTexto="@Texto"/>
+			<Controle nome="lblModelosSub"    texto="Selecione um modelo" x="0" y="34" fonte="@Subtitulo" corTexto="@TextoSecundario"/>
+			<Controle nome="btnNotificacao"   texto="&#xE7ED;" largura="44" altura="44" margemDireita="0" y="6"
+					  fonte="@Icone" corFundo="@Superficie" corHover="@SuperficieAlt" corPressionado="@PrimariaSuave"
+					  corBorda="@Borda" corTexto="@Primaria" raio="12"/>
+			<Controle nome="lstRecentes"      dock="Fill" corFundo="@Fundo"/>
 
-      <!-- Rodape -->
-      <Controle nome="pnlRodape"        dock="Bottom" altura="72" corFundo="@Fundo"/>
-      <Controle nome="btnCancelar"      texto="Cancelar"      x="0"   y="14" largura="110" altura="42"
-                fonte="@Botao" corFundo="@Fundo" corHover="#2A1015" corPressionado="#3A1520" corBorda="@Perigo" corTexto="@Perigo"/>
-      <Controle nome="btnAbrirArquivo"  texto="Abrir Arquivo" x="122" y="14" largura="150" altura="42"
-                fonte="@Botao" corFundo="@Superficie" corHover="@SuperficieAlt" corPressionado="@PrimariaSuave" corBorda="@Borda" corTexto="@Texto"/>
-      <Controle nome="btnNovoFluxo"     texto="Novo Fluxo"    x="284" y="14" largura="150" altura="42"
-                fonte="@Botao" corFundo="@Primaria" corHover="@PrimariaHover" corPressionado="@PrimariaPressionada" corBorda="#00000000" corTexto="@TextoSobrePrimaria"/>
+			<!-- Rodape -->
+			<Controle nome="pnlRodape"        dock="Bottom" altura="72" corFundo="@Fundo"/>
+			<Controle nome="btnCancelar"      texto="Cancelar"      x="0"   y="14" largura="110" altura="42"
+					  fonte="@Botao" corFundo="@Fundo" corHover="#2A1015" corPressionado="#3A1520" corBorda="@Perigo" corTexto="@Perigo"/>
+			<Controle nome="btnAbrirArquivo"  texto="Abrir Arquivo" x="122" y="14" largura="150" altura="42"
+					  fonte="@Botao" corFundo="@Superficie" corHover="@SuperficieAlt" corPressionado="@PrimariaSuave" corBorda="@Borda" corTexto="@Texto"/>
+			<Controle nome="btnNovoFluxo"     texto="Novo Fluxo"    x="284" y="14" largura="150" altura="42"
+					  fonte="@Botao" corFundo="@Primaria" corHover="@PrimariaHover" corPressionado="@PrimariaPressionada" corBorda="#00000000" corTexto="@TextoSobrePrimaria"/>
 
-      <!-- Painel de agendamento -->
-      <Controle nome="pnlAgendamento"   dock="Right" largura="320" corFundo="@Superficie"/>
-      <Controle nome="lblAgTitulo"      texto="Agendamento" x="24" y="22" fonte="@SecaoTitulo" corTexto="@Primaria"/>
-      <Controle nome="lblData"          texto="Data de execução" x="24" y="64"  fonte="@Rotulo" corTexto="@TextoSecundario"/>
-      <Controle nome="txtData"          x="24" y="86"  largura="272" altura="30" fonte="@Normal" corFundo="@SuperficieAlt" corTexto="@Texto"/>
-      <Controle nome="lblHoraIni"       texto="Hora inicial" x="24" y="128" fonte="@Rotulo" corTexto="@TextoSecundario"/>
-      <Controle nome="txtHoraIni"       x="24" y="150" largura="272" altura="30" fonte="@Normal" corFundo="@SuperficieAlt" corTexto="@Texto"/>
-      <Controle nome="lblHoraFim"       texto="Hora final" x="24" y="192" fonte="@Rotulo" corTexto="@TextoSecundario"/>
-      <Controle nome="txtHoraFim"       x="24" y="214" largura="272" altura="30" fonte="@Normal" corFundo="@SuperficieAlt" corTexto="@Texto"/>
-      <Controle nome="chkAgendado"      texto="Agendado" x="24" y="260" largura="160" altura="28" fonte="@Normal" corTexto="@Texto"
-                corAtiva="@Primaria" corInativa="@Borda"/>
-      <Controle nome="btnSalvarAgendamento" texto="Salvar agendamento" x="24" y="304" largura="272" altura="42"
-                fonte="@Botao" corFundo="@Primaria" corHover="@PrimariaHover" corPressionado="@PrimariaPressionada" corBorda="#00000000" corTexto="@TextoSobrePrimaria"/>
-      <Controle nome="lblUltimaTitulo"  texto="Última execução" x="24" y="372" fonte="@Botao" corTexto="@Primaria"/>
-      <Controle nome="lblHistorico"     x="24" y="396" largura="272" altura="130" fonte="@Rotulo" corTexto="@TextoSecundario"/>
+			<!-- Painel de agendamento -->
+			<Controle nome="pnlAgendamento"   dock="Right" largura="320" corFundo="@Superficie"/>
+			<Controle nome="lblAgTitulo"      texto="Agendamento" x="24" y="22" fonte="@SecaoTitulo" corTexto="@Primaria"/>
+			<Controle nome="lblData"          texto="Data de execução" x="24" y="64"  fonte="@Rotulo" corTexto="@TextoSecundario"/>
+			<Controle nome="txtData"          x="24" y="86"  largura="272" altura="30" fonte="@Normal" corFundo="@SuperficieAlt" corTexto="@Texto"/>
+			<Controle nome="lblHoraIni"       texto="Hora inicial" x="24" y="128" fonte="@Rotulo" corTexto="@TextoSecundario"/>
+			<Controle nome="txtHoraIni"       x="24" y="150" largura="272" altura="30" fonte="@Normal" corFundo="@SuperficieAlt" corTexto="@Texto"/>
+			<Controle nome="lblHoraFim"       texto="Hora final" x="24" y="192" fonte="@Rotulo" corTexto="@TextoSecundario"/>
+			<Controle nome="txtHoraFim"       x="24" y="214" largura="272" altura="30" fonte="@Normal" corFundo="@SuperficieAlt" corTexto="@Texto"/>
+			<Controle nome="chkAgendado"      texto="Agendado" x="24" y="260" largura="160" altura="28" fonte="@Normal" corTexto="@Texto"
+					  corAtiva="@Primaria" corInativa="@Borda"/>
+			<Controle nome="btnSalvarAgendamento" texto="Salvar agendamento" x="24" y="304" largura="272" altura="42"
+					  fonte="@Botao" corFundo="@Primaria" corHover="@PrimariaHover" corPressionado="@PrimariaPressionada" corBorda="#00000000" corTexto="@TextoSobrePrimaria"/>
+			<Controle nome="lblUltimaTitulo"  texto="Última execução" x="24" y="372" fonte="@Botao" corTexto="@Primaria"/>
+			<Controle nome="lblHistorico"     x="24" y="396" largura="272" altura="130" fonte="@Rotulo" corTexto="@TextoSecundario"/>
 
-      <!-- Chat flutuante -->
-      <Controle nome="btnChat"          texto="&#xE8BD;" largura="52" altura="52" margemDireita="24" margemInferior="24"
-                fonte="@IconeGrande" corFundo="@Primaria" corHover="@PrimariaHover" corPressionado="@PrimariaPressionada"
-                corBorda="@Fundo" corTexto="@TextoSobrePrimaria" raio="26"/>
+			<!-- Chat flutuante -->
+			<Controle nome="btnChat"          texto="&#xE8BD;" largura="52" altura="52" margemDireita="24" margemInferior="24"
+					  fonte="@IconeGrande" corFundo="@Primaria" corHover="@PrimariaHover" corPressionado="@PrimariaPressionada"
+					  corBorda="@Fundo" corTexto="@TextoSobrePrimaria" raio="26"/>
 
-      <!-- Menu de contexto (itens) -->
-      <Controle nome="mnuExecutar"  texto="Executar"/>
-      <Controle nome="mnuAbrirItem" texto="Abrir Item"/>
-      <Controle nome="mnuPip"       texto="Picture in Picture"/>
-      <Controle nome="mnuRemover"   texto="Remover da lista"/>
-    </Janela>
-  </Janelas>
+			<!-- Menu de contexto (itens) -->
+			<Controle nome="mnuExecutar"  texto="Executar"/>
+			<Controle nome="mnuAbrirItem" texto="Abrir Item"/>
+			<Controle nome="mnuPip"       texto="Picture in Picture"/>
+			<Controle nome="mnuRemover"   texto="Remover da lista"/>
+		</Janela>
+	</Janelas>
 </UiConfig>

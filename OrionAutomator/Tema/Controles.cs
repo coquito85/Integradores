@@ -26,6 +26,38 @@ namespace OrionAutomator.Tema
         {
             try { SetWindowTheme(c.Handle, "DarkMode_Explorer", null); } catch { }
         }
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int atributo, ref int valor, int tamanho);
+
+        private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;   // Windows 10 2004+
+        private const int DWMWA_BORDER_COLOR = 34;              // Windows 11
+        private const int DWMWA_CAPTION_COLOR = 35;             // Windows 11
+        private const int DWMWA_TEXT_COLOR = 36;                // Windows 11
+
+        private static int ParaColorRef(Color c) => c.R | (c.G << 8) | (c.B << 16);
+
+        /// <summary>
+        /// Barra de titulo escura/colorida (some o "branco" da barra padrao do Windows). Cada atributo e
+        /// opcional e falha em silencio nas versoes do Windows que nao o suportam.
+        /// </summary>
+        public static void BarraTitulo(Form f, bool escura, Color? fundo, Color? texto, Color? borda)
+        {
+            void Aplicar()
+            {
+                try
+                {
+                    if (escura) { int v = 1; DwmSetWindowAttribute(f.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref v, sizeof(int)); }
+                    if (fundo is { } cf) { int v = ParaColorRef(cf); DwmSetWindowAttribute(f.Handle, DWMWA_CAPTION_COLOR, ref v, sizeof(int)); }
+                    if (texto is { } ct) { int v = ParaColorRef(ct); DwmSetWindowAttribute(f.Handle, DWMWA_TEXT_COLOR, ref v, sizeof(int)); }
+                    if (borda is { } cb) { int v = ParaColorRef(cb); DwmSetWindowAttribute(f.Handle, DWMWA_BORDER_COLOR, ref v, sizeof(int)); }
+                }
+                catch { }
+            }
+
+            if (f.IsHandleCreated) Aplicar();
+            else f.HandleCreated += (_, _) => Aplicar();
+        }
     }
 
     /// <summary>Botao plano arredondado com hover/pressionado e emblema (badge) opcional.</summary>
@@ -73,7 +105,8 @@ namespace OrionAutomator.Tema
             Color fundo = !Enabled ? CorDesabilitado : _down ? CorPressionado : _hover ? CorHover : CorFundo;
             Color texto = Enabled ? CorTexto : CorTextoDesabilitado;
 
-            using (var path = Desenho.Arredondado(rect, Math.Min(Raio, Math.Min(Width, Height) / 2)))
+            float esc = DeviceDpi / 96f;
+            using (var path = Desenho.Arredondado(rect, Math.Min((int)Math.Round(Raio * esc), Math.Min(Width, Height) / 2)))
             using (var br = new SolidBrush(fundo))
             {
                 g.FillPath(br, path);
@@ -90,7 +123,8 @@ namespace OrionAutomator.Tema
 
             if (!string.IsNullOrEmpty(_emblema))
             {
-                var r = new Rectangle(Width - 18, 2, 16, 16);
+                int dEmb = (int)Math.Round(16 * esc);
+                var r = new Rectangle(Width - dEmb - 2, 2, dEmb, dEmb);
                 using var br = new SolidBrush(CorEmblema);
                 g.FillEllipse(br, r);
                 using var f = new Font("Segoe UI", 7f, FontStyle.Bold);
@@ -120,7 +154,8 @@ namespace OrionAutomator.Tema
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(Parent?.BackColor ?? BackColor);
 
-            const int w = 40, h = 22;
+            float esc = DeviceDpi / 96f;
+            int w = (int)Math.Round(40 * esc), h = (int)Math.Round(22 * esc), m = (int)Math.Round(3 * esc);
             int y = (Height - h) / 2;
             var trilho = new Rectangle(0, y, w, h);
 
@@ -128,12 +163,13 @@ namespace OrionAutomator.Tema
             using (var br = new SolidBrush(Enabled ? (Checked ? CorAtiva : CorInativa) : Color.FromArgb(40, 40, 46)))
                 g.FillPath(br, path);
 
-            int d = h - 6;
-            int x = Checked ? w - d - 3 : 3;
+            int d = h - 2 * m;
+            int x = Checked ? w - d - m : m;
             using (var br = new SolidBrush(Checked ? Color.FromArgb(10, 10, 11) : Color.FromArgb(161, 161, 170)))
-                g.FillEllipse(br, x, y + 3, d, d);
+                g.FillEllipse(br, x, y + m, d, d);
 
-            TextRenderer.DrawText(g, Text, Font, new Rectangle(w + 10, 0, Width - w - 10, Height),
+            int gap = (int)Math.Round(10 * esc);
+            TextRenderer.DrawText(g, Text, Font, new Rectangle(w + gap, 0, Width - w - gap, Height),
                 Enabled ? ForeColor : Color.FromArgb(82, 82, 91),
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
         }

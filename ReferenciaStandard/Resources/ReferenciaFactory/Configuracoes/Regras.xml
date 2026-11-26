@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Regras.xml  -  licenca, versao e bloqueios por funcionalidade.
+  Este arquivo e lido SO do recurso embutido (nunca de uma copia solta no disco): assim o usuario nao
+  consegue estender o prazo editando um arquivo. Para mudar prazo/versao, edite aqui e recompile.
+
+  Licenca:
+    ativa="false" desliga a verificacao (modo desenvolvimento).
+    validade (aaaa-mm-dd): o ultimo dia de uso, inclusive.
+    diasAviso: quantos dias antes do vencimento mostrar o aviso amarelo.
+    toleranciaRelogioMinutos: quanto o relogio pode "voltar" antes de ser considerado adulterado.
+    intervaloVerificacaoSegundos: de quanto em quanto tempo a janela reavalia as regras enquanto esta aberta.
   Placeholders nas mensagens: {validade} {dias} {titular} {atual} {minima} {ultima}
   Funcionalidades usadas pelo gerenciador: NovoFluxo, AbrirArquivo, AbrirRecente, AbrirNoEditor,
-  Pip, Nuvem, Agendar, Chat. Funcionalidade nao listada = exige licenca valida e versao minima.
+  Pip, Nuvem, Agendar, Chat, Remover. Funcionalidade nao listada = exige licenca valida e versao minima.
 -->
 <Regras>
 
@@ -11,9 +20,12 @@
            titular="Cliente Demo"
            validade="2026-12-31"
            diasAviso="15"
+           toleranciaRelogioMinutos="60"
+           intervaloVerificacaoSegundos="60"
            mensagemExpirada="Seu prazo de uso expirou em {validade}. Entre em contato para renovar a licença."
            mensagemAviso="Sua licença expira em {dias} dia(s) ({validade})."
-           mensagemRelogio="Data do sistema inconsistente. Corrija o relógio do computador para continuar."/>
+           mensagemRelogio="Data do sistema inconsistente. Corrija o relógio do computador para continuar."
+           mensagemInvalida="Não foi possível validar a licença. Entre em contato com o suporte."/>
 
   <Versao minima="1.0.0"
           ultima="1.0.0"

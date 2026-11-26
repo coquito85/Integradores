@@ -15,7 +15,7 @@ using System.Xml.Linq;
 namespace ReferenciaStandard.Helpers
 {
 #pragma warning disable
-    public class XmlHelper
+    public partial class XmlHelper
     {
 
 
