@@ -28,4 +28,8 @@
     <ProjectReference Include="..\ExecutorService\ExecutorService.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Acoes\" />
+  </ItemGroup>
+
 </Project>
