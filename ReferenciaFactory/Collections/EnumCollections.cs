@@ -1,7 +1,7 @@
 ﻿namespace ReferenciaFactory.Collections
 {
 
-    public enum StatusExecucao 
+    public enum IsStatusExecute 
     { 
         Nenhum, 
         Sucesso,

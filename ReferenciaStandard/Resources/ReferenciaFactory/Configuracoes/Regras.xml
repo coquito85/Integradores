@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Regras.xml  -  licenca, versao e bloqueios por funcionalidade.
+  Placeholders nas mensagens: {validade} {dias} {titular} {atual} {minima} {ultima}
+  Funcionalidades usadas pelo gerenciador: NovoFluxo, AbrirArquivo, AbrirRecente, AbrirNoEditor,
+  Pip, Nuvem, Agendar, Chat. Funcionalidade nao listada = exige licenca valida e versao minima.
+-->
+<Regras>
+
+  <Licenca ativa="true"
+           titular="Cliente Demo"
+           validade="2026-12-31"
+           diasAviso="15"
+           mensagemExpirada="Seu prazo de uso expirou em {validade}. Entre em contato para renovar a licença."
+           mensagemAviso="Sua licença expira em {dias} dia(s) ({validade})."
+           mensagemRelogio="Data do sistema inconsistente. Corrija o relógio do computador para continuar."/>
+
+  <Versao minima="1.0.0"
+          ultima="1.0.0"
+          urlDownload=""
+          mensagemObrigatoria="Esta versão ({atual}) não é mais suportada. Atualize para a {minima} ou superior."
+          mensagemNova="Nova versão {ultima} disponível (você está na {atual})."/>
+
+  <Bloqueios>
+    <Funcionalidade nome="NovoFluxo"     exigeLicenca="true"  exigeVersaoMinima="true"/>
+    <Funcionalidade nome="AbrirArquivo"  exigeLicenca="true"  exigeVersaoMinima="true"/>
+    <Funcionalidade nome="AbrirRecente"  exigeLicenca="true"  exigeVersaoMinima="true"/>
+    <Funcionalidade nome="AbrirNoEditor" exigeLicenca="true"  exigeVersaoMinima="true"/>
+    <Funcionalidade nome="Pip"           exigeLicenca="true"  exigeVersaoMinima="true"/>
+    <Funcionalidade nome="Nuvem"         exigeLicenca="true"  exigeVersaoMinima="true"/>
+    <Funcionalidade nome="Agendar"       exigeLicenca="true"  exigeVersaoMinima="true"/>
+    <Funcionalidade nome="Chat"          exigeLicenca="true"  exigeVersaoMinima="false"/>
+    <Funcionalidade nome="Remover"       exigeLicenca="false" exigeVersaoMinima="false"/>
+  </Bloqueios>
+
+</Regras>

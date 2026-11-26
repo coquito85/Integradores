@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace ExecutorService.Entidades
+namespace ExecutorService.Model
 {
     public sealed class ModeloSchedule
     {
@@ -14,7 +14,7 @@ namespace ExecutorService.Entidades
 
         public DateTime? UltimoInicio { get; set; }
         public DateTime? UltimoFim { get; set; }
-        public StatusExecucao UltimoStatus { get; set; } = StatusExecucao.Nenhum;
+        public IsStatusExecute UltimoStatus { get; set; } = IsStatusExecute.Nenhum;
         public string? UltimoDetalhe { get; set; }
         public DateTime? IgnoradoEm { get; set; }
 

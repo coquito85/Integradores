@@ -5,6 +5,16 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="Resources\ReferenciaFactory\Regras.xml" />
+	  <None Remove="Resources\ReferenciaFactory\UiConfig.xml" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\Regras.xml" />
+	  <EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\UiConfig.xml" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 	</ItemGroup>
 

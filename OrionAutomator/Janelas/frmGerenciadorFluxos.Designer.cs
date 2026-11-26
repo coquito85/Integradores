@@ -1,4 +1,5 @@
 ﻿using OrionAutomator.Infra.Tema;
+using OrionAutomator.Tema;
 
 namespace OrionAutomator.Janelas
 {
@@ -306,7 +307,7 @@ namespace OrionAutomator.Janelas
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Orion Automator";
             Load += FrmGerenciadorFluxos_Load;
-            Resize += (_, _) => btnChat.BringToFront();
+//            Resize += (_, _) => btnChat.BringToFront();
 
             pnlConteudo.ResumeLayout(false);
             pnlEsquerda.ResumeLayout(false);
