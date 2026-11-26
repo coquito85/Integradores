@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+	  <PackageId>BetaAnalytics.DataAnalyzer</PackageId>
+	  <RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+	  <AssemblyName>BetaAnalytics.DataAnalyzer</AssemblyName>
+
+	  <!-- Remove pastas net10.0-windows e similares -->
+	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+
+	  <!-- Saída direta em bin\Debug / bin\Release -->
+	  <OutputPath>bin\$(Configuration)\</OutputPath>
+	  <AssemblyVersion>1.0.0.0</AssemblyVersion>
+	  <FileVersion>1.0.0.0</FileVersion>
+	  <Version>1.0</Version>
+	  <AssemblyInformationalVersion>1.0</AssemblyInformationalVersion>
+
+	  
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ReferenciaFactory\ReferenciaFactory.csproj" />
+  </ItemGroup>
+
+</Project>

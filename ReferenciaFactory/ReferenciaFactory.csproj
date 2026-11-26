@@ -1,10 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+
+
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoItX.NetCore" Version="3.3.16.1" />
+    <PackageReference Include="Microsoft.ML" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ReferenciaStandard\ReferenciaStandard.csproj" />
+  </ItemGroup>
 
 </Project>
