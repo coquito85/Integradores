@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Tema "Clássico" (claro, cabecalho azul-marinho) - inspirado na primeira versao do programa.
+  Veja os comentarios de Tema_Matrix.xml para a descricao de cada grupo de cores.
+-->
+<UiConfig versao="1">
+	<Tema>
+		<Cores>
+			<Cor nome="Fundo"               valor="#F2F5FA"/>
+			<Cor nome="Superficie"          valor="#FFFFFF"/>
+			<Cor nome="SuperficieAlt"       valor="#E6EEF9"/>
+			<Cor nome="Borda"               valor="#C8D3E3"/>
+
+			<Cor nome="Primaria"            valor="#1565C0"/>
+			<Cor nome="PrimariaHover"       valor="#2A7AD8"/>
+			<Cor nome="PrimariaPressionada" valor="#0F4C98"/>
+			<Cor nome="PrimariaSuave"       valor="#DCE9F8"/>
+			<Cor nome="TextoSobrePrimaria"  valor="#FFFFFF"/>
+
+			<Cor nome="Texto"               valor="#14213D"/>
+			<Cor nome="TextoSecundario"     valor="#5B6B85"/>
+			<Cor nome="TextoDesabilitado"   valor="#A3AEC2"/>
+
+			<Cor nome="Perigo"              valor="#DC143C"/>
+			<Cor nome="PerigoHover"         valor="#E5476A"/>
+			<Cor nome="PerigoSuave"         valor="#FDE8EC"/>
+			<Cor nome="PerigoPressionado"   valor="#F9CBD5"/>
+			<Cor nome="TextoSobrePerigo"    valor="#FFFFFF"/>
+			<Cor nome="Aviso"               valor="#FACC15"/>
+			<Cor nome="TextoSobreAviso"     valor="#000000"/>
+			<Cor nome="Sucesso"             valor="#2E7D32"/>
+
+			<Cor nome="Cabecalho"           valor="#000040"/>
+			<Cor nome="TextoCabecalho"      valor="#FFFFFF"/>
+			<Cor nome="SubtituloCabecalho"  valor="#C9D4F2"/>
+			<Cor nome="VersaoCabecalho"     valor="#9FB0DD"/>
+			<Cor nome="DestaqueCabecalho"   valor="#1565C0"/>
+
+			<Cor nome="BarraTitulo"         valor="#FFFFFF"/>
+			<Cor nome="TextoBarraTitulo"    valor="#000000"/>
+			<Cor nome="BordaJanela"         valor="#C8D3E3"/>
+
+			<Cor nome="ToggleBolinhaOn"     valor="#FFFFFF"/>
+			<Cor nome="ToggleBolinhaOff"    valor="#FFFFFF"/>
+			<Cor nome="ToggleTrilhoDesab"   valor="#D5DCE8"/>
+			<Cor nome="ToggleTextoDesab"    valor="#A3AEC2"/>
+
+			<Cor nome="CanvasFundo"         valor="#FFFFFF"/>
+			<Cor nome="CanvasGrade"         valor="#E9EDF3"/>
+			<Cor nome="CanvasGradeForte"    valor="#D5DCE8"/>
+		</Cores>
+		<Metricas>
+			<Metrica nome="TemaEscuro" valor="0"/>
+		</Metricas>
+	</Tema>
+</UiConfig>

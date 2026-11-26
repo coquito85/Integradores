@@ -33,6 +33,9 @@ namespace OrionAutomator.Janelas
             lblModelosTitulo = new Label();
             lblModelosSub = new Label();
             btnNotificacao = new ModernButton();
+            btnTema = new ModernButton();
+            ctxTema = new ContextMenuStrip(components);
+            dica = new ToolTip(components);
 
             pnlAgendamento = new Panel();
             lblAgTitulo = new Label();
@@ -135,6 +138,7 @@ namespace OrionAutomator.Janelas
             pnlEsquerda.Name = "pnlEsquerda";
             pnlEsquerda.Padding = new Padding(24, 12, 24, 0);
 
+            pnlListaTopo.Controls.Add(btnTema);
             pnlListaTopo.Controls.Add(btnNotificacao);
             pnlListaTopo.Controls.Add(lblModelosSub);
             pnlListaTopo.Controls.Add(lblModelosTitulo);
@@ -158,6 +162,18 @@ namespace OrionAutomator.Janelas
             btnNotificacao.TabIndex = 3;
             btnNotificacao.Text = "\uE7ED";
             btnNotificacao.Click += BtnNotificacao_Click;
+
+            // botao de tema: o menu (ctxTema) e preenchido a cada abertura por TemaMenu.Preencher
+            btnTema.Name = "btnTema";
+            btnTema.Size = new Size(44, 44);
+            btnTema.Location = new Point(554, 6);
+            btnTema.TabIndex = 14;
+            btnTema.Text = "";
+            btnTema.Click += BtnTema_Click;
+            dica.SetToolTip(btnTema, "Tema e cores");
+
+            ctxTema.Name = "ctxTema";
+            ctxTema.ShowImageMargin = false;
 
             lstRecentes.ContextMenuStrip = ctxItem;
             lstRecentes.Dock = DockStyle.Fill;
@@ -350,6 +366,9 @@ namespace OrionAutomator.Janelas
         private Label lblModelosTitulo;
         private Label lblModelosSub;
         private ModernButton btnNotificacao;
+        private ModernButton btnTema;
+        private ContextMenuStrip ctxTema;
+        private ToolTip dica;
 
         private Panel pnlAgendamento;
         private Label lblAgTitulo;

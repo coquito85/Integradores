@@ -15,7 +15,8 @@ namespace OrionAutomator
             ApplicationConfiguration.Initialize();
 
             // O gerenciador devolve a acao escolhida (mesmo contrato do ManagerModeloForm original).
-            // Quando o editor visual existir, e aqui que ele sera aberto.
+            // Novo fluxo / abrir arquivo / abrir no editor abrem o editor (frmDesignerFluxos); ao fechar o editor
+            // o gerenciador volta.
             while (true)
             {
                 using var gerenciador = new frmGerenciadorFluxos();
@@ -27,8 +28,20 @@ namespace OrionAutomator
 
         private static void ExecutarAcao(AcaoGerenciador acao, string? caminho)
         {
-            // TODO: ligar ao editor/executor. Por enquanto apenas confirma a escolha.
-            MessageBox.Show($"Ação: {acao}" + (caminho == null ? "" : $"\n\n{caminho}"),"Orion Automator", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            switch (acao)
+            {
+                case AcaoGerenciador.NovoFluxo:
+                case AcaoGerenciador.AbrirArquivo:
+                case AcaoGerenciador.AbrirNoEditor:
+                    using (var editor = new frmDesignerFluxos { CaminhoArquivo = caminho })
+                        editor.ShowDialog();
+                    break;
+
+                default:
+                    // TODO: ligar ao executor (Executar / Picture in Picture). Por enquanto apenas confirma a escolha.
+                    MessageBox.Show($"Ação: {acao}" + (caminho == null ? "" : $"\n\n{caminho}"), "Orion Automator", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    break;
+            }
         }
     }
 }

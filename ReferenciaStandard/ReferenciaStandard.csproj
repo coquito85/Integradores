@@ -5,12 +5,18 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="Resources\ReferenciaFactory\Configuracoes\Tema_Classico.xml" />
+	  <None Remove="Resources\ReferenciaFactory\Configuracoes\Tema_Grafite.xml" />
+	  <None Remove="Resources\ReferenciaFactory\Configuracoes\Tema_Matrix.xml" />
 	  <None Remove="Resources\ReferenciaFactory\Regras.xml" />
 	  <None Remove="Resources\ReferenciaFactory\UiConfig.xml" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\Regras.xml" />
+	  <EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\Tema_Classico.xml" />
+	  <EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\Tema_Grafite.xml" />
+	  <EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\Tema_Matrix.xml" />
 	  <EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\UiConfig.xml" />
 	</ItemGroup>
 

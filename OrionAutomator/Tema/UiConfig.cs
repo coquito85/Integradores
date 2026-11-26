@@ -12,7 +12,8 @@ namespace OrionAutomator.Tema
     /// Tema + propriedades de controles. Camadas (a ultima vence, mesclando por nome):
     ///   1) padroes embutidos no codigo (a UI continua bonita mesmo sem nenhum XML);
     ///   2) UiConfig.xml embutido na DLL ReferenciaStandard;
-    ///   3) Config\UiConfig.xml ao lado do .exe (opcional, so precisa conter o que muda).
+    ///   3) tema escolhido (TemaManager): Tema_*.xml embutido ou arquivo da pasta de temas;
+    ///   4) Config\UiConfig.xml ao lado do .exe (opcional, so precisa conter o que muda).
     /// A leitura do XML e feita pelo XmlHelper; aqui so se converte texto em Color/Font.
     /// </summary>
     public sealed class UiConfig
@@ -30,6 +31,12 @@ namespace OrionAutomator.Tema
         /// <summary>Fator de escala da tela (DeviceDpi / 96). Usado em tudo que e desenhado manualmente.</summary>
         public float Escala { get; set; } = 1f;
 
+        /// <summary>Id do tema usado nesta carga (ver TemaManager).</summary>
+        public string TemaId { get; private set; } = TemaManager.IdPadrao;
+
+        /// <summary>True para temas escuros (metrica "TemaEscuro" = 1): barra de titulo e barras de rolagem escuras.</summary>
+        public bool Escuro => Metrica("TemaEscuro", 1) != 0;
+
         private readonly Dictionary<string, Font> _cacheFontes = new(StringComparer.OrdinalIgnoreCase);
 
         private UiConfig() { AplicarPadroes(); }
@@ -40,6 +47,13 @@ namespace OrionAutomator.Tema
             var erros = new List<string>();
 
             cfg.LerCamada(FilesRepository.LerEmbutido(NomeArquivo), "UiConfig.xml embutido", erros);
+
+            // tema escolhido pelo usuario (cores/fontes/metricas); se nao puder ser lido, o visual base continua valendo
+            var tema = TemaManager.Atual;
+            cfg.TemaId = tema.Id;
+            string? xmlTema = TemaManager.LerXml(tema);
+            if (xmlTema != null) cfg.LerCamada(xmlTema, $"Tema '{tema.Nome}'", erros);
+            else erros.Add($"Tema '{tema.Nome}': não foi possível ler ({TemaManager.UltimoErro ?? "arquivo não encontrado"})");
 
             // sobreposicao externa e opcional: arquivo ausente nao e erro, arquivo invalido e (e e ignorado)
             string? externo = FilesRepository.LerExterno(NomeArquivo);
@@ -176,6 +190,16 @@ namespace OrionAutomator.Tema
             C("Primaria", "#00FF41"); C("PrimariaHover", "#5CFF85"); C("PrimariaPressionada", "#00C832"); C("PrimariaSuave", "#00200A");
             C("TextoSobrePrimaria", "#000000"); C("Texto", "#D6FFE0"); C("TextoSecundario", "#4FBF6B"); C("TextoDesabilitado", "#1F5C2E");
             C("Perigo", "#F43F5E"); C("PerigoHover", "#FB7185"); C("Aviso", "#FACC15"); C("Sucesso", "#00FF41");
+
+            // estados e cabecalho
+            C("PerigoSuave", "#2A1015"); C("PerigoPressionado", "#3A1520"); C("TextoSobrePerigo", "#FFFFFF"); C("TextoSobreAviso", "#000000");
+            C("Cabecalho", "#000000"); C("TextoCabecalho", "#D6FFE0"); C("SubtituloCabecalho", "#00FF41");
+            C("VersaoCabecalho", "#4FBF6B"); C("DestaqueCabecalho", "#00FF41");
+            // barra de titulo do Windows
+            C("BarraTitulo", "#000000"); C("TextoBarraTitulo", "#D6FFE0"); C("BordaJanela", "#0F3D1A");
+            // interruptor e editor
+            C("ToggleBolinhaOn", "#0A0A0B"); C("ToggleBolinhaOff", "#A1A1AA"); C("ToggleTrilhoDesab", "#28282E"); C("ToggleTextoDesab", "#52525B");
+            C("CanvasFundo", "#020A04"); C("CanvasGrade", "#0B2412"); C("CanvasGradeForte", "#12401F");
         }
     }
 
@@ -195,6 +219,7 @@ namespace OrionAutomator.Tema
         /// multiplicar tudo ao abrir a janela) e DeviceDpi/96 quando reaplicado com a janela ja aberta (F5).
         /// Devolve o estado "habilitado" que o XML definiu para cada controle (padrao: true), para que as
         /// regras de licenca possam desabilitar e depois restaurar sem passar por cima do XML.
+        /// Tambem serve para trocar de tema com a janela aberta: basta chamar de novo com um UiConfig recarregado.
         /// </summary>
         public static Dictionary<string, bool> Aplicar(Form form, UiConfig cfg, float escala, bool inicial,
                                                        params ToolStripItem[] itensMenu)
@@ -216,8 +241,9 @@ namespace OrionAutomator.Tema
             int minL = j.Int("minLargura") ?? 0, minA = j.Int("minAltura") ?? 0;
             if (minL > 0 || minA > 0) form.MinimumSize = new Size(S(minL), S(minA));
 
+            // sem o atributo no XML, quem decide e o tema (metrica TemaEscuro)
             Desenho.BarraTitulo(form,
-                j.Bool("barraTituloEscura") ?? false,
+                j.Bool("barraTituloEscura") ?? cfg.Escuro,
                 cfg.ResolverCor(j.Texto("corBarraTitulo")),
                 cfg.ResolverCor(j.Texto("corTextoBarraTitulo")),
                 cfg.ResolverCor(j.Texto("corBordaJanela")));
@@ -291,8 +317,27 @@ namespace OrionAutomator.Tema
                 case ToggleSwitch s:
                     if (cfg.ResolverCor(cc.Texto("corAtiva")) is { } a1) s.CorAtiva = a1;
                     if (cfg.ResolverCor(cc.Texto("corInativa")) is { } a2) s.CorInativa = a2;
+                    s.CorBolinhaAtiva = cfg.Cor("ToggleBolinhaOn");
+                    s.CorBolinhaInativa = cfg.Cor("ToggleBolinhaOff");
+                    s.CorTrilhoDesabilitado = cfg.Cor("ToggleTrilhoDesab");
+                    s.CorTextoDesabilitado = cfg.Cor("ToggleTextoDesab");
                     s.Invalidate();
                     break;
+
+                case ListaFluxos lista:
+                    lista.Escuro = cfg.Escuro;   // barra de rolagem acompanha o tema
+                    break;
+
+                case AreaCanvas canvas:
+                    if (cfg.ResolverCor(cc.Texto("corGrade")) is { } cg1) canvas.CorGrade = cg1;
+                    if (cfg.ResolverCor(cc.Texto("corGradeForte")) is { } cg2) canvas.CorGradeForte = cg2;
+                    if (cc.Int("grade") is { } cg3) canvas.TamanhoGrade = cg3;
+                    if (cc.Tem("mensagem")) canvas.Mensagem = cc.Texto("mensagem") ?? "";
+                    canvas.Invalidate();
+                    break;
+
+                case RichTextBox:
+                    break;   // painel de log: mantem o estilo do Designer (sem borda)
 
                 case TextBoxBase tb:
                     tb.BorderStyle = BorderStyle.FixedSingle;

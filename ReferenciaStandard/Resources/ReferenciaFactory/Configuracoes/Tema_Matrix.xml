@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Tema "Matrix" (verde sobre preto) - e o visual original do programa.
+
+  Um tema e uma paleta COMPLETA: defina todas as cores abaixo (cada uma e usada por alguma parte da tela).
+  Para criar o seu: menu de tema > "Criar tema personalizado a partir do atual", edite os valores,
+  salve e pressione F5 na janela. Formato das cores: "#RRGGBB", "#AARRGGBB" ou "@OutraCor".
+
+  Grupos:
+    Base ............ Fundo, Superficie, SuperficieAlt, Borda
+    Destaque ........ Primaria*, TextoSobrePrimaria
+    Texto ........... Texto, TextoSecundario, TextoDesabilitado
+    Estados ......... Perigo*, Aviso, Sucesso, TextoSobrePerigo, TextoSobreAviso
+    Cabecalho ....... Cabecalho, TextoCabecalho, SubtituloCabecalho, VersaoCabecalho, DestaqueCabecalho
+    Barra de titulo . BarraTitulo, TextoBarraTitulo, BordaJanela (Windows 11) e Metrica TemaEscuro (1 = escuro, 0 = claro)
+    Interruptor ..... Toggle*
+    Editor .......... CanvasFundo, CanvasGrade, CanvasGradeForte
+-->
+<UiConfig versao="1">
+	<Tema>
+		<Cores>
+			<Cor nome="Fundo"               valor="#000000"/>
+			<Cor nome="Superficie"          valor="#040A05"/>
+			<Cor nome="SuperficieAlt"       valor="#0A1A0E"/>
+			<Cor nome="Borda"               valor="#0F3D1A"/>
+
+			<Cor nome="Primaria"            valor="#00FF41"/>
+			<Cor nome="PrimariaHover"       valor="#5CFF85"/>
+			<Cor nome="PrimariaPressionada" valor="#00C832"/>
+			<Cor nome="PrimariaSuave"       valor="#00200A"/>
+			<Cor nome="TextoSobrePrimaria"  valor="#000000"/>
+
+			<Cor nome="Texto"               valor="#D6FFE0"/>
+			<Cor nome="TextoSecundario"     valor="#4FBF6B"/>
+			<Cor nome="TextoDesabilitado"   valor="#1F5C2E"/>
+
+			<Cor nome="Perigo"              valor="#F43F5E"/>
+			<Cor nome="PerigoHover"         valor="#FB7185"/>
+			<Cor nome="PerigoSuave"         valor="#2A1015"/>
+			<Cor nome="PerigoPressionado"   valor="#3A1520"/>
+			<Cor nome="TextoSobrePerigo"    valor="#FFFFFF"/>
+			<Cor nome="Aviso"               valor="#FACC15"/>
+			<Cor nome="TextoSobreAviso"     valor="#000000"/>
+			<Cor nome="Sucesso"             valor="#00FF41"/>
+
+			<Cor nome="Cabecalho"           valor="#000000"/>
+			<Cor nome="TextoCabecalho"      valor="#D6FFE0"/>
+			<Cor nome="SubtituloCabecalho"  valor="#00FF41"/>
+			<Cor nome="VersaoCabecalho"     valor="#4FBF6B"/>
+			<Cor nome="DestaqueCabecalho"   valor="#00FF41"/>
+
+			<Cor nome="BarraTitulo"         valor="#000000"/>
+			<Cor nome="TextoBarraTitulo"    valor="#D6FFE0"/>
+			<Cor nome="BordaJanela"         valor="#0F3D1A"/>
+
+			<Cor nome="ToggleBolinhaOn"     valor="#0A0A0B"/>
+			<Cor nome="ToggleBolinhaOff"    valor="#A1A1AA"/>
+			<Cor nome="ToggleTrilhoDesab"   valor="#28282E"/>
+			<Cor nome="ToggleTextoDesab"    valor="#52525B"/>
+
+			<Cor nome="CanvasFundo"         valor="#020A04"/>
+			<Cor nome="CanvasGrade"         valor="#0B2412"/>
+			<Cor nome="CanvasGradeForte"    valor="#12401F"/>
+		</Cores>
+		<Metricas>
+			<Metrica nome="TemaEscuro" valor="1"/>
+		</Metricas>
+	</Tema>
+</UiConfig>

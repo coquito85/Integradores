@@ -12,7 +12,13 @@
     visivel, habilitado, tabIndex, fonte, corFundo, corTexto, corHover, corPressionado, corBorda,
     corAtiva, corInativa, raio
   Atributos de janela:   titulo, largura, altura, minLargura, minAltura,
-    barraTituloEscura, corBarraTitulo, corTextoBarraTitulo, corBordaJanela  (Windows 11 para as cores da barra)
+    barraTituloEscura (opcional: sem ele vale a metrica TemaEscuro do tema), corBarraTitulo, corTextoBarraTitulo,
+    corBordaJanela  (Windows 11 para as cores da barra)
+  Atributos do canvas (AreaCanvas): corGrade, corGradeForte, grade (espacamento), mensagem
+
+  TEMAS: as cores acima sao o tema padrao (Matrix). O usuario troca o tema pelo botao de paleta (ou menu Exibir > Tema);
+  cada tema (Tema_*.xml) redefine a paleta inteira, e os controles abaixo apenas referenciam as cores por nome (@Nome),
+  por isso nao precisam mudar. Prefira sempre @Cor em vez de "#RRGGBB" nos controles para o tema valer.
 
   Medidas em pixels sao "logicas" (100% de zoom do Windows): o programa escala sozinho em telas com DPI maior.
   Sobreposicao: um arquivo Config\UiConfig.xml ao lado do .exe so precisa conter o que se quer mudar
@@ -40,6 +46,31 @@
 			<Cor nome="PerigoHover"        valor="#FB7185"/>
 			<Cor nome="Aviso"              valor="#FACC15"/>
 			<Cor nome="Sucesso"            valor="#00FF41"/>
+
+			<!-- Estados -->
+			<Cor nome="PerigoSuave"        valor="#2A1015"/>
+			<Cor nome="PerigoPressionado"  valor="#3A1520"/>
+			<Cor nome="TextoSobrePerigo"   valor="#FFFFFF"/>
+			<Cor nome="TextoSobreAviso"    valor="#000000"/>
+			<!-- Cabecalho -->
+			<Cor nome="Cabecalho"          valor="#000000"/>
+			<Cor nome="TextoCabecalho"     valor="#D6FFE0"/>
+			<Cor nome="SubtituloCabecalho" valor="#00FF41"/>
+			<Cor nome="VersaoCabecalho"    valor="#4FBF6B"/>
+			<Cor nome="DestaqueCabecalho"  valor="#00FF41"/>
+			<!-- Barra de titulo do Windows -->
+			<Cor nome="BarraTitulo"        valor="#000000"/>
+			<Cor nome="TextoBarraTitulo"   valor="#D6FFE0"/>
+			<Cor nome="BordaJanela"        valor="#0F3D1A"/>
+			<!-- Interruptor -->
+			<Cor nome="ToggleBolinhaOn"    valor="#0A0A0B"/>
+			<Cor nome="ToggleBolinhaOff"   valor="#A1A1AA"/>
+			<Cor nome="ToggleTrilhoDesab"  valor="#28282E"/>
+			<Cor nome="ToggleTextoDesab"   valor="#52525B"/>
+			<!-- Editor de fluxos -->
+			<Cor nome="CanvasFundo"        valor="#020A04"/>
+			<Cor nome="CanvasGrade"        valor="#0B2412"/>
+			<Cor nome="CanvasGradeForte"   valor="#12401F"/>
 		</Cores>
 
 		<Fontes>
@@ -59,6 +90,7 @@
 		</Fontes>
 
 		<Metricas>
+			<Metrica nome="TemaEscuro"        valor="1"/>
 			<Metrica nome="AlturaItem"        valor="80"/>
 			<Metrica nome="RaioCard"          valor="10"/>
 			<Metrica nome="RaioBotao"         valor="10"/>
@@ -72,14 +104,14 @@
 		<Janela nome="frmGerenciadorFluxos"
 				titulo="Orion Automator — Gerenciador de Fluxos"
 				largura="1020" altura="660" minLargura="860" minAltura="560"
-				barraTituloEscura="true" corBarraTitulo="@Fundo" corTextoBarraTitulo="@Texto" corBordaJanela="@Borda">
+				corBarraTitulo="@BarraTitulo" corTextoBarraTitulo="@TextoBarraTitulo" corBordaJanela="@BordaJanela">
 
 			<!-- Cabecalho -->
-			<Controle nome="pnlHeader"        dock="Top"    altura="76" corFundo="@Fundo"/>
-			<Controle nome="pnlHeaderAccent"  dock="Bottom" altura="2"  corFundo="@Primaria"/>
-			<Controle nome="lblTitulo"        texto="ORION AUTOMATOR" x="24" y="10" fonte="@Titulo" corTexto="@Texto"/>
-			<Controle nome="lblSubtitulo"     texto="Editor de Automação Visual" x="26" y="46" fonte="@Subtitulo" corTexto="@Primaria"/>
-			<Controle nome="lblVersao"        texto="v1.0.0" margemDireita="24" y="28" fonte="@Rotulo" corTexto="@TextoSecundario"/>
+			<Controle nome="pnlHeader"        dock="Top"    altura="76" corFundo="@Cabecalho"/>
+			<Controle nome="pnlHeaderAccent"  dock="Bottom" altura="2"  corFundo="@DestaqueCabecalho"/>
+			<Controle nome="lblTitulo"        texto="ORION AUTOMATOR" x="24" y="10" fonte="@Titulo" corTexto="@TextoCabecalho"/>
+			<Controle nome="lblSubtitulo"     texto="Editor de Automação Visual" x="26" y="46" fonte="@Subtitulo" corTexto="@SubtituloCabecalho"/>
+			<Controle nome="lblVersao"        texto="v1.0.0" margemDireita="24" y="28" fonte="@Rotulo" corTexto="@VersaoCabecalho"/>
 
 			<!-- Faixa de aviso (regras de licenca/versao) -->
 			<Controle nome="pnlBanner"        dock="Top" altura="40" visivel="false"/>
@@ -94,12 +126,16 @@
 			<Controle nome="btnNotificacao"   texto="&#xE7ED;" largura="44" altura="44" margemDireita="0" y="6"
 					  fonte="@Icone" corFundo="@Superficie" corHover="@SuperficieAlt" corPressionado="@PrimariaSuave"
 					  corBorda="@Borda" corTexto="@Primaria" raio="12"/>
+			<!-- Botao de tema (paleta): abre o menu de temas ao lado do sino -->
+			<Controle nome="btnTema"          texto="&#xE790;" largura="44" altura="44" margemDireita="52" y="6"
+					  fonte="@Icone" corFundo="@Superficie" corHover="@SuperficieAlt" corPressionado="@PrimariaSuave"
+					  corBorda="@Borda" corTexto="@Primaria" raio="12"/>
 			<Controle nome="lstRecentes"      dock="Fill" corFundo="@Fundo"/>
 
 			<!-- Rodape -->
 			<Controle nome="pnlRodape"        dock="Bottom" altura="72" corFundo="@Fundo"/>
 			<Controle nome="btnCancelar"      texto="Cancelar"      x="0"   y="14" largura="110" altura="42"
-					  fonte="@Botao" corFundo="@Fundo" corHover="#2A1015" corPressionado="#3A1520" corBorda="@Perigo" corTexto="@Perigo"/>
+					  fonte="@Botao" corFundo="@Fundo" corHover="@PerigoSuave" corPressionado="@PerigoPressionado" corBorda="@Perigo" corTexto="@Perigo"/>
 			<Controle nome="btnAbrirArquivo"  texto="Abrir Arquivo" x="122" y="14" largura="150" altura="42"
 					  fonte="@Botao" corFundo="@Superficie" corHover="@SuperficieAlt" corPressionado="@PrimariaSuave" corBorda="@Borda" corTexto="@Texto"/>
 			<Controle nome="btnNovoFluxo"     texto="Novo Fluxo"    x="284" y="14" largura="150" altura="42"
@@ -131,6 +167,55 @@
 			<Controle nome="mnuAbrirItem" texto="Abrir Item"/>
 			<Controle nome="mnuPip"       texto="Picture in Picture"/>
 			<Controle nome="mnuRemover"   texto="Remover da lista"/>
+		</Janela>
+
+		<!--
+		  Editor de fluxos (frmDesignerFluxos). Ambiente preparado: o layout e dividido em ZONAS nomeadas que voce
+		  pode reposicionar, redimensionar, recolorir ou ocultar so editando este bloco (ou Config\UiConfig.xml):
+		    pnlBarra ........ faixa superior (ferramentas)      pnlCatalogo ..... catalogo de acoes (esquerda)
+		    areaCanvas ...... area do fluxo (centro)            pnlPropriedades . propriedades do no (direita)
+		    pnlLog .......... log de execucao (embaixo)         pnlStatus ....... barra de status
+		  Exemplos: dock="Right" em pnlCatalogo move o catalogo para a direita; visivel="false" em pnlLog oculta o log;
+		  largura="320" em pnlPropriedades alarga o painel.
+		-->
+		<Janela nome="frmDesignerFluxos"
+				titulo="Orion Automator — Editor de Fluxos"
+				largura="1280" altura="780" minLargura="900" minAltura="560"
+				corBarraTitulo="@BarraTitulo" corTextoBarraTitulo="@TextoBarraTitulo" corBordaJanela="@BordaJanela">
+
+			<!-- Faixa superior -->
+			<Controle nome="pnlBarra"             dock="Top" altura="46" corFundo="@Superficie"/>
+			<Controle nome="lblFluxo"             x="16" y="11" fonte="@SecaoTitulo" corTexto="@Texto"/>
+
+			<!-- Catalogo de acoes (esquerda) -->
+			<Controle nome="pnlCatalogo"          dock="Left" largura="240" corFundo="@Superficie"/>
+			<Controle nome="pnlCatalogoTitulo"    dock="Top" altura="30" corFundo="@SuperficieAlt"/>
+			<Controle nome="lblCatalogoTitulo"    dock="Fill" texto="Catálogo de Ações" fonte="@Botao" corTexto="@TextoSecundario"/>
+			<Controle nome="pnlCatalogoCorpo"     dock="Fill" corFundo="@Superficie"/>
+			<Controle nome="splitCatalogo"        largura="5" corFundo="@Borda"/>
+
+			<!-- Propriedades (direita) -->
+			<Controle nome="pnlPropriedades"      dock="Right" largura="280" corFundo="@Superficie"/>
+			<Controle nome="pnlPropriedadesTitulo" dock="Top" altura="30" corFundo="@SuperficieAlt"/>
+			<Controle nome="lblPropriedadesTitulo" dock="Fill" texto="Propriedades" fonte="@Botao" corTexto="@TextoSecundario"/>
+			<Controle nome="pnlPropriedadesCorpo" dock="Fill" corFundo="@Superficie"/>
+			<Controle nome="splitPropriedades"    largura="5" corFundo="@Borda"/>
+
+			<!-- Log (embaixo, so sob o canvas) -->
+			<Controle nome="pnlLog"               dock="Bottom" altura="170" corFundo="@Superficie"/>
+			<Controle nome="pnlLogTitulo"         dock="Top" altura="30" corFundo="@SuperficieAlt"/>
+			<Controle nome="lblLogTitulo"         dock="Fill" texto="Log de Execução" fonte="@Botao" corTexto="@TextoSecundario"/>
+			<Controle nome="rtbLog"               dock="Fill" corFundo="@Superficie" corTexto="@Texto" fonte="Consolas;9;Regular"/>
+			<Controle nome="splitLog"             altura="5" corFundo="@Borda"/>
+
+			<!-- Area do fluxo -->
+			<Controle nome="areaCanvas"           dock="Fill" corFundo="@CanvasFundo" corTexto="@TextoDesabilitado" fonte="@Normal"
+					  corGrade="@CanvasGrade" corGradeForte="@CanvasGradeForte" grade="20"
+					  mensagem="Área do fluxo — ambiente preparado.&#10;Os nós e conexões serão desenhados aqui."/>
+
+			<!-- Status -->
+			<Controle nome="pnlStatus"            dock="Bottom" altura="26" corFundo="@SuperficieAlt"/>
+			<Controle nome="lblStatus"            dock="Fill" fonte="@Rotulo" corTexto="@Sucesso"/>
 		</Janela>
 	</Janelas>
 </UiConfig>

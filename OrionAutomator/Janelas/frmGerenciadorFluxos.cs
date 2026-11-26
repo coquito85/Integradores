@@ -64,6 +64,7 @@ namespace OrionAutomator.Janelas
             tmrRegras.Start();
 
             AgendamentoStore.Instance.Atualizado += OnAgendamentoAtualizado;
+            TemaManager.TemaAlterado += OnTemaAlterado;
             _schedules = AgendamentoStore.Instance.Snapshot();
 
             AplicarRegras();
@@ -75,6 +76,7 @@ namespace OrionAutomator.Janelas
         {
             tmrRegras.Stop();
             AgendamentoStore.Instance.Atualizado -= OnAgendamentoAtualizado;
+            TemaManager.TemaAlterado -= OnTemaAlterado;
             foreach (var r in _recursos) r.Dispose();
             _recursos.Clear();
             base.OnFormClosed(e);
@@ -100,6 +102,20 @@ namespace OrionAutomator.Janelas
                 return true;
             }
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        /// <summary>Tema trocado no menu (ou "Recarregar tema"): relê tudo e reaplica com a janela aberta.</summary>
+        private void OnTemaAlterado(object? sender, EventArgs e)
+        {
+            if (IsDisposed) return;
+            if (InvokeRequired) BeginInvoke(new Action(RecarregarTema));
+            else RecarregarTema();
+        }
+
+        private void BtnTema_Click(object? sender, EventArgs e)
+        {
+            TemaMenu.Preencher(ctxTema.Items);
+            ctxTema.Show(btnTema, new Point(0, btnTema.Height + 2));
         }
 
         private void RecarregarTema()
@@ -144,12 +160,18 @@ namespace OrionAutomator.Janelas
 
         private void PrepararMenu()
         {
-            ctxItem.Renderer = new MenuRenderer(_ui);
-            ctxItem.BackColor = _ui.Cor("Superficie");
-            ctxItem.ForeColor = _ui.Cor("Texto");
-            ctxItem.Font = _ui.Fonte("Normal");
-            ctxItem.Padding = new Padding(4);
+            EstilizarMenu(ctxItem);
+            EstilizarMenu(ctxTema);
             mnuRemover.Tag = _ui.Cor("Perigo");
+        }
+
+        private void EstilizarMenu(ContextMenuStrip menu)
+        {
+            menu.Renderer = new MenuRenderer(_ui);
+            menu.BackColor = _ui.Cor("Superficie");
+            menu.ForeColor = _ui.Cor("Texto");
+            menu.Font = _ui.Fonte("Normal");
+            menu.Padding = new Padding(4);
         }
 
         // ══ Regras de licenca / versao ═══════════════════════════════════════
@@ -165,9 +187,9 @@ namespace OrionAutomator.Janelas
             Color fundo, texto;
 
             if (!_estado.LicencaValida || _estado.VersaoObrigatoriaPendente)
-            { msg = _estado.MensagemBloqueio; fundo = _ui.Cor("Perigo"); texto = Color.White; }
+            { msg = _estado.MensagemBloqueio; fundo = _ui.Cor("Perigo"); texto = _ui.Cor("TextoSobrePerigo"); }
             else if (_estado.AvisoLicenca)
-            { msg = _estado.MensagemAviso; fundo = _ui.Cor("Aviso"); texto = _ui.Cor("Fundo"); }
+            { msg = _estado.MensagemAviso; fundo = _ui.Cor("Aviso"); texto = _ui.Cor("TextoSobreAviso"); }
             else if (_estado.VersaoNovaDisponivel)
             { msg = _estado.MensagemVersaoNova; fundo = _ui.Cor("PrimariaSuave"); texto = _ui.Cor("Primaria"); }
             else

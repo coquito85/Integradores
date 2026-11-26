@@ -22,9 +22,12 @@ namespace OrionAutomator.Tema
         private static extern int SetWindowTheme(IntPtr hWnd, string? subApp, string? subIdList);
 
         /// <summary>Barras de rolagem escuras (Windows 10 1809+ / 11). Falha silenciosa nas versoes antigas.</summary>
-        public static void TemaEscuro(Control c)
+        public static void TemaEscuro(Control c) => TemaRolagem(c, true);
+
+        /// <summary>Barras de rolagem escuras ou claras, conforme o tema.</summary>
+        public static void TemaRolagem(Control c, bool escuro)
         {
-            try { SetWindowTheme(c.Handle, "DarkMode_Explorer", null); } catch { }
+            try { SetWindowTheme(c.Handle, escuro ? "DarkMode_Explorer" : "Explorer", null); } catch { }
         }
 
         [DllImport("dwmapi.dll")]
@@ -37,9 +40,12 @@ namespace OrionAutomator.Tema
 
         private static int ParaColorRef(Color c) => c.R | (c.G << 8) | (c.B << 16);
 
+        private const int DWMWA_COLOR_DEFAULT = unchecked((int)0xFFFFFFFF);   // volta a cor padrao do Windows
+
         /// <summary>
-        /// Barra de titulo escura/colorida (some o "branco" da barra padrao do Windows). Cada atributo e
-        /// opcional e falha em silencio nas versoes do Windows que nao o suportam.
+        /// Barra de titulo escura/clara/colorida. Cada atributo falha em silencio nas versoes do Windows que nao o
+        /// suportam. E reversivel (necessario para trocar de tema com a janela aberta): escura=false volta ao claro
+        /// e uma cor nula volta a cor padrao do Windows.
         /// </summary>
         public static void BarraTitulo(Form f, bool escura, Color? fundo, Color? texto, Color? borda)
         {
@@ -47,10 +53,17 @@ namespace OrionAutomator.Tema
             {
                 try
                 {
-                    if (escura) { int v = 1; DwmSetWindowAttribute(f.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref v, sizeof(int)); }
-                    if (fundo is { } cf) { int v = ParaColorRef(cf); DwmSetWindowAttribute(f.Handle, DWMWA_CAPTION_COLOR, ref v, sizeof(int)); }
-                    if (texto is { } ct) { int v = ParaColorRef(ct); DwmSetWindowAttribute(f.Handle, DWMWA_TEXT_COLOR, ref v, sizeof(int)); }
-                    if (borda is { } cb) { int v = ParaColorRef(cb); DwmSetWindowAttribute(f.Handle, DWMWA_BORDER_COLOR, ref v, sizeof(int)); }
+                    int v = escura ? 1 : 0;
+                    DwmSetWindowAttribute(f.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref v, sizeof(int));
+
+                    v = fundo is { } cf ? ParaColorRef(cf) : DWMWA_COLOR_DEFAULT;
+                    DwmSetWindowAttribute(f.Handle, DWMWA_CAPTION_COLOR, ref v, sizeof(int));
+
+                    v = texto is { } ct ? ParaColorRef(ct) : DWMWA_COLOR_DEFAULT;
+                    DwmSetWindowAttribute(f.Handle, DWMWA_TEXT_COLOR, ref v, sizeof(int));
+
+                    v = borda is { } cb ? ParaColorRef(cb) : DWMWA_COLOR_DEFAULT;
+                    DwmSetWindowAttribute(f.Handle, DWMWA_BORDER_COLOR, ref v, sizeof(int));
                 }
                 catch { }
             }
@@ -139,6 +152,10 @@ namespace OrionAutomator.Tema
     {
         [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)] public Color CorAtiva { get; set; } = Color.FromArgb(163, 230, 53);
         [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)] public Color CorInativa { get; set; } = Color.FromArgb(43, 43, 51);
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)] public Color CorBolinhaAtiva { get; set; } = Color.FromArgb(10, 10, 11);
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)] public Color CorBolinhaInativa { get; set; } = Color.FromArgb(161, 161, 170);
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)] public Color CorTrilhoDesabilitado { get; set; } = Color.FromArgb(40, 40, 46);
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)] public Color CorTextoDesabilitado { get; set; } = Color.FromArgb(82, 82, 91);
 
         public ToggleSwitch()
         {
@@ -160,24 +177,39 @@ namespace OrionAutomator.Tema
             var trilho = new Rectangle(0, y, w, h);
 
             using (var path = Desenho.Arredondado(trilho, h / 2))
-            using (var br = new SolidBrush(Enabled ? (Checked ? CorAtiva : CorInativa) : Color.FromArgb(40, 40, 46)))
+            using (var br = new SolidBrush(Enabled ? (Checked ? CorAtiva : CorInativa) : CorTrilhoDesabilitado))
                 g.FillPath(br, path);
 
             int d = h - 2 * m;
             int x = Checked ? w - d - m : m;
-            using (var br = new SolidBrush(Checked ? Color.FromArgb(10, 10, 11) : Color.FromArgb(161, 161, 170)))
+            using (var br = new SolidBrush(Checked ? CorBolinhaAtiva : CorBolinhaInativa))
                 g.FillEllipse(br, x, y + m, d, d);
 
             int gap = (int)Math.Round(10 * esc);
             TextRenderer.DrawText(g, Text, Font, new Rectangle(w + gap, 0, Width - w - gap, Height),
-                Enabled ? ForeColor : Color.FromArgb(82, 82, 91),
+                Enabled ? ForeColor : CorTextoDesabilitado,
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
         }
     }
 
-    /// <summary>ListBox owner-draw sem flicker e com barra de rolagem escura.</summary>
+    /// <summary>ListBox owner-draw sem flicker e com barra de rolagem escura (ou clara, conforme o tema).</summary>
     public class ListaFluxos : ListBox
     {
+        private bool _escuro = true;
+
+        /// <summary>Barra de rolagem escura (padrao). O UiConfigApplier ajusta conforme o tema ativo.</summary>
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public bool Escuro
+        {
+            get => _escuro;
+            set
+            {
+                if (_escuro == value) return;
+                _escuro = value;
+                if (IsHandleCreated) Desenho.TemaRolagem(this, _escuro);
+            }
+        }
+
         public ListaFluxos()
         {
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.ResizeRedraw, true);
@@ -189,7 +221,7 @@ namespace OrionAutomator.Tema
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
-            Desenho.TemaEscuro(this);
+            Desenho.TemaRolagem(this, _escuro);
         }
     }
 
@@ -210,6 +242,14 @@ namespace OrionAutomator.Tema
         public override Color ImageMarginGradientEnd => _c.Cor("Superficie");
         public override Color SeparatorDark => _c.Cor("Borda");
         public override Color SeparatorLight => _c.Cor("Borda");
+
+        // barra de menu (MenuStrip) das janelas com menu superior
+        public override Color MenuStripGradientBegin => _c.Cor("Superficie");
+        public override Color MenuStripGradientEnd => _c.Cor("Superficie");
+        public override Color MenuItemPressedGradientBegin => _c.Cor("SuperficieAlt");
+        public override Color MenuItemPressedGradientMiddle => _c.Cor("SuperficieAlt");
+        public override Color MenuItemPressedGradientEnd => _c.Cor("SuperficieAlt");
+        public override Color ToolStripBorder => _c.Cor("Borda");
     }
 
     public sealed class MenuRenderer : ToolStripProfessionalRenderer
