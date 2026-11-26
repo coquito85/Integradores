@@ -1,7 +1,7 @@
 ﻿
 using System.Text.RegularExpressions;
 
-namespace OrionAutomator.Engine
+namespace ReferenciaFactory.Engine
 {
     public static class HotkeyTranslator
     {

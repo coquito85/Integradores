@@ -25,7 +25,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ReferenciaFactory\ReferenciaFactory.csproj" />
+    <ProjectReference Include="..\ExecutorService\ExecutorService.csproj" />
   </ItemGroup>
 
 </Project>
