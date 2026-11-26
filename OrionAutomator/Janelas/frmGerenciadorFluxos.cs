@@ -1,8 +1,8 @@
 namespace OrionAutomator.Janelas
 {
-    public partial class Form1 : Form
+    public partial class frmGerenciadorFluxos : Form
     {
-        public Form1()
+        public frmGerenciadorFluxos()
         {
             InitializeComponent();
         }

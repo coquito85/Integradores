@@ -1,6 +1,6 @@
 ﻿namespace OrionAutomator.Janelas
 {
-    partial class Form1
+    partial class frmGerenciadorFluxos
     {
         /// <summary>
         ///  Required designer variable.
