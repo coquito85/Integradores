@@ -42,6 +42,12 @@ namespace OrionAutomator.Tema
 
         private const int DWMWA_COLOR_DEFAULT = unchecked((int)0xFFFFFFFF);   // volta a cor padrao do Windows
 
+        [DllImport("user32.dll")]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint flags);
+
+        private const uint SWP_NOSIZE = 0x0001, SWP_NOMOVE = 0x0002, SWP_NOZORDER = 0x0004,
+                           SWP_NOACTIVATE = 0x0010, SWP_FRAMECHANGED = 0x0020;
+
         /// <summary>
         /// Barra de titulo escura/clara/colorida. Cada atributo falha em silencio nas versoes do Windows que nao o
         /// suportam. E reversivel (necessario para trocar de tema com a janela aberta): escura=false volta ao claro
@@ -64,6 +70,12 @@ namespace OrionAutomator.Tema
 
                     v = borda is { } cb ? ParaColorRef(cb) : DWMWA_COLOR_DEFAULT;
                     DwmSetWindowAttribute(f.Handle, DWMWA_BORDER_COLOR, ref v, sizeof(int));
+
+                    // O Windows nao repinta a barra de titulo sozinho ao mudar estes atributos com a janela ja
+                    // visivel (troca de tema em tempo real): forca a recomposicao da moldura.
+                    if (f.Visible)
+                        SetWindowPos(f.Handle, IntPtr.Zero, 0, 0, 0, 0,
+                            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
                 }
                 catch { }
             }
