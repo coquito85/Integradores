@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using ReferenciaStandard.Repository;
 using ExecutorService.GeneratorJs;
 using Microsoft.Web.WebView2.Core;
 
@@ -12,7 +11,7 @@ namespace GenerateJS.Gerenciador
     {
         private const string Host = "app.generatorjs";
         private static readonly string WebRoot = Path.Combine(AppContext.BaseDirectory, "wwwroot");
-        private static readonly string WebViewData = Path.Combine(AppPaths.GeneratorJs, "WebView2");
+        private static readonly string WebViewData = Path.Combine(ReferenciaStandard.Repository.AppPaths.GeneratorJs, "WebView2");
         private Bridge? _bridge;
 
         public frmTelaGeneratorJS()
@@ -20,7 +19,10 @@ namespace GenerateJS.Gerenciador
             InitializeComponent();   // controles e propriedades da janela: frmTelaGeneratorJS.Designer.cs
         }
 
-        private async void frmTelaGeneratorJS_Load(object? sender, EventArgs e) => await InitAsync();
+        private async void frmTelaGeneratorJS_Load(object? sender, EventArgs e)
+        {
+            await InitAsync();
+        }
 
         protected override void OnHandleCreated(EventArgs e)
         {

@@ -5,8 +5,7 @@ using ReferenciaStandard.Helpers;
 using ReferenciaStandard.Repository;
 using System.Diagnostics;
 using System.Reflection;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json.Linq;
 
 namespace GenerateJS.Gerenciador
 {
@@ -19,11 +18,6 @@ namespace GenerateJS.Gerenciador
     /// </summary>
     internal sealed class Bridge
     {
-        private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
-        {
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
-        };
-
         private readonly CoreWebView2 _core;
         private readonly frmTelaGeneratorJS _ui;
         private readonly GeneratorJsExecutor _exec;
@@ -41,11 +35,10 @@ namespace GenerateJS.Gerenciador
             int id = 0;
             try
             {
-                using var doc = JsonDocument.Parse(message);
-                var root = doc.RootElement;
-                id = root.GetProperty("id").GetInt32();
-                var cmd = root.GetProperty("cmd").GetString() ?? "";
-                var args = root.TryGetProperty("args", out var a) ? a.Clone() : default;
+                var root = JObject.Parse(message);
+                id = root.Value<int>("id");
+                var cmd = root.Value<string>("cmd") ?? "";
+                var args = root["args"] as JObject ?? new JObject();
 
                 var data = await DispatchAsync(cmd, args);
                 Send(new { id, ok = true, data });
@@ -57,26 +50,30 @@ namespace GenerateJS.Gerenciador
 
         private void Send(object payload)
         {
-            var text = JsonSerializer.Serialize(payload, Json);
+            var text = JsonHelper.SerializarTela(payload);   // serializacao central: ReferenciaStandard.Helpers.JsonHelper
             if (_ui.InvokeRequired) _ui.BeginInvoke(new Action(() => _core.PostWebMessageAsJson(text)));
             else _core.PostWebMessageAsJson(text);
         }
 
         private void Emit(string name, object data) => Send(new { @event = name, data });
 
-        private static T Arg<T>(JsonElement args, string name)
+        private static T Arg<T>(JObject args, string name)
         {
-            if (args.ValueKind != JsonValueKind.Object || !args.TryGetProperty(name, out var v))
+            var v = args[name];
+            if (v == null || v.Type == JTokenType.Null)
                 throw new GeneratorException($"Parametro '{name}' ausente.");
-            return v.Deserialize<T>(Json) ?? throw new GeneratorException($"Parametro '{name}' invalido.");
+            var valor = JsonHelper.DesserializarTela<T>(v.ToString(Newtonsoft.Json.Formatting.None));
+            return valor ?? throw new GeneratorException($"Parametro '{name}' invalido.");
         }
 
-        private static string Str(JsonElement args, string name, string def = "") =>
-            args.ValueKind == JsonValueKind.Object && args.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String
-                ? v.GetString() ?? def : def;
+        private static string Str(JObject args, string name, string def = "")
+        {
+            var v = args[name];
+            return v != null && v.Type == JTokenType.String ? (string?)v ?? def : def;
+        }
 
         // ------------------------------------------------------------------ comandos
-        private async Task<object?> DispatchAsync(string cmd, JsonElement a)
+        private async Task<object?> DispatchAsync(string cmd, JObject a)
         {
             switch (cmd)
             {
@@ -93,7 +90,7 @@ namespace GenerateJS.Gerenciador
                 case "ui.theme":
                     {
                         var hex = Str(a, "caption", "#000000").TrimStart('#');
-                        var dark = a.TryGetProperty("dark", out var d) && d.ValueKind == JsonValueKind.True;
+                        var dark = a.Value<bool?>("dark") == true;
                         if (hex.Length == 6)
                             _ui.SetTitleBar(dark, System.Drawing.Color.FromArgb(Convert.ToInt32(hex, 16) | unchecked((int)0xFF000000)));
                         return null;

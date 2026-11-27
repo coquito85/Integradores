@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -126,6 +127,36 @@ namespace ReferenciaStandard.Helpers
                 DateParseHandling = DateParseHandling.DateTime,
                 Converters = { new StringEnumConverter() }
             };
+        }
+
+        // ── Configuracao da ponte com a tela (JavaScript/WebView2) ──
+        // Nomes em camelCase, enums em camelCase, nulos mantidos, uma linha so. Chaves de dicionario NAO mudam
+        // (nomes de coluna e ids de campo precisam chegar na tela exatamente como estao).
+        private static readonly JsonSerializerSettings ConfiguracaoTela = new JsonSerializerSettings
+        {
+            Formatting = Newtonsoft.Json.Formatting.None,
+            NullValueHandling = NullValueHandling.Include,
+            DateParseHandling = DateParseHandling.None,
+            ContractResolver = new DefaultContractResolver
+            {
+                NamingStrategy = new CamelCaseNamingStrategy { ProcessDictionaryKeys = false, OverrideSpecifiedNames = true }
+            },
+            Converters = { new StringEnumConverter(new CamelCaseNamingStrategy()) }
+        };
+
+        /// <summary>Objeto -> JSON para enviar a tela (camelCase).</summary>
+        public static string SerializarTela<T>(T obj)
+        {
+            return JsonConvert.SerializeObject(obj, ConfiguracaoTela);
+        }
+
+        /// <summary>JSON recebido da tela -> objeto (nomes sem diferenciar maiusculas/minusculas).</summary>
+        public static T DesserializarTela<T>(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+                return default(T);
+
+            return JsonConvert.DeserializeObject<T>(json, ConfiguracaoTela);
         }
 
         public static string Serializar<T>(T obj)
