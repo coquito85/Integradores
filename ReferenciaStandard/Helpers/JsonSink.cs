@@ -1,11 +1,14 @@
+using ReferenciaStandard.Entidades;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-using ReferenciaStandard.Entidades;
 
-namespace ReferenciaFactory.Gerador;
+
 
 /// <summary>
 /// Grava {"raiz":[ item, item, ... ]} em streaming, sem manter tudo na memoria.
@@ -13,7 +16,7 @@ namespace ReferenciaFactory.Gerador;
 /// </summary>
 public sealed class JsonSink : IDisposable
 {
-    private static readonly JsonWriterOptions WriterOptions = new()
+    private static readonly JsonWriterOptions WriterOptions = new JsonWriterOptions()
     {
         Indented = true,
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping   // acentos legiveis, sem \u00E7
@@ -25,21 +28,21 @@ public sealed class JsonSink : IDisposable
     private readonly string _baseName;
     private readonly int _maxPerFile;
 
-    private Stream? _stream;
-    private Utf8JsonWriter? _writer;
-    private string? _currentPath;
+    private Stream _stream;
+    private Utf8JsonWriter _writer;
+    private string _currentPath;
     private long _inFile;
     private int _fileIndex;
-    private readonly List<GeneratedFile> _files = new();
-    private MemoryStream? _memory;
+    private readonly List<GeneratedFile> _files = new List<GeneratedFile>();
+    private MemoryStream _memory;
 
     public long TotalRows { get; private set; }
     public IReadOnlyList<GeneratedFile> Files => _files;
 
     /// <summary>Conteudo gerado (somente modo virtual, apos Complete).</summary>
-    public string? VirtualJson { get; private set; }
+    public string VirtualJson { get; private set; }
 
-    public JsonSink(string rootName, bool toFiles, string? folder, string baseName, int maxPerFile)
+    public JsonSink(string rootName, bool toFiles, string folder, string baseName, int maxPerFile)
     {
         _rootName = rootName;
         _toFiles = toFiles;
@@ -51,9 +54,9 @@ public sealed class JsonSink : IDisposable
 
     public void Write(JsonNode item)
     {
-        if (_writer is null || (_maxPerFile > 0 && _inFile >= _maxPerFile))
+        if (_writer == null || (_maxPerFile > 0 && _inFile >= _maxPerFile))
             Rotate();
-        item.WriteTo(_writer!);
+        item.WriteTo(_writer);
         _inFile++;
         TotalRows++;
     }
@@ -93,19 +96,19 @@ public sealed class JsonSink : IDisposable
 
     private void CloseCurrent()
     {
-        if (_writer is null) return;
+        if (_writer == null) return;
         _writer.WriteEndArray();
         _writer.WriteEndObject();
         _writer.Flush();
         _writer.Dispose();
         _writer = null;
 
-        if (_toFiles && _currentPath is not null)
+        if (_toFiles && _currentPath != null)
         {
-            _stream!.Dispose();
+            _stream.Dispose();
             _files.Add(new GeneratedFile(_currentPath, _inFile, new FileInfo(_currentPath).Length));
         }
-        else if (_memory is not null)
+        else if (_memory != null)
         {
             VirtualJson = Encoding.UTF8.GetString(_memory.ToArray());
         }
@@ -115,7 +118,7 @@ public sealed class JsonSink : IDisposable
     /// <summary>Fecha o que estiver aberto. Mesmo com zero linhas gera um documento valido (array vazio).</summary>
     public void Complete()
     {
-        if (_writer is null && TotalRows == 0) Rotate();
+        if (_writer == null && TotalRows == 0) Rotate();
         CloseCurrent();
     }
 
@@ -128,7 +131,7 @@ public sealed class JsonSink : IDisposable
         _stream = null;
         if (!_toFiles) return;
         foreach (var f in _files) TryDelete(f.Path);
-        if (_currentPath is not null) TryDelete(_currentPath);
+        if (_currentPath != null) TryDelete(_currentPath);
         _files.Clear();
     }
 
