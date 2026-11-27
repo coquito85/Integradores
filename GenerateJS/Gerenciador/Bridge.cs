@@ -116,6 +116,7 @@ namespace GenerateJS.Gerenciador
                         category = p.Category,
                         abbr = p.Abbr,                    // "CSV", "TXT", "XLS"...
                         supportsRaw = p.SupportsRaw,      // false para arquivos
+                        enabled = !ProvidersDesativados.Contains(p.Key),   // false = botao desativado na tela
                         fields = p.Fields.Select(f => new
                         {
                             id = f.Id,
@@ -269,6 +270,9 @@ namespace GenerateJS.Gerenciador
         }
 
         /// <summary>Perfil gravado (segredos ja descriptografados) ou null se ainda nao foi salvo.</summary>
+        /// <summary>Providers que aparecem desativados na tela de conexao (para reativar, remova a chave daqui).</summary>
+        private static readonly HashSet<string> ProvidersDesativados = new(StringComparer.OrdinalIgnoreCase) { "access" };
+
         private ConnectionProfile? FindStored(string id)
         {
             if (string.IsNullOrEmpty(id)) return null;

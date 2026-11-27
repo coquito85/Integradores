@@ -1623,3 +1623,19 @@ dialog {
                 -webkit-line-clamp: unset;
                 overflow: visible;
             }
+
+/* Provider desativado na tela de conexão */
+.pbtn:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+    .pbtn:disabled:hover {
+        border-color: var(--border);
+        color: var(--text-2);
+    }
+
+.pbtn.on:disabled {
+    border-color: var(--primary);
+    color: var(--primary);
+}

@@ -1228,6 +1228,8 @@ function renderConexoes() {
             },
                 h('button', {
                     class: 'btn sm',
+                    disabled: prov.enabled === false,
+                    title: prov.enabled === false ? 'Provider desativado' : null,
                     onclick: () => testSaved(p)
                 }, icon('refresh', 'sm'), 'Testar'),
                 h('button', {
@@ -1351,6 +1353,7 @@ function switchProvider(key) {
 function renderConnDialog() {
     const dlg = $('#dlgConn');
     const prov = providerByKey(D.providerKey);
+    const off = prov.enabled === false;   // provider desativado: sem string completa, teste ou salvar
     const cat = catOf(prov);
     const cats = [...new Set(S.providers.map(catOf))];
     const canRaw = prov.supportsRaw !== false;
@@ -1384,8 +1387,10 @@ function renderConnDialog() {
         class: 'providers'
     }, ...S.providers.filter(p => catOf(p) === cat).map(p =>
         h('button', {
-            class: 'pbtn' + (p.key === D.providerKey ? ' on' : ''),
+            class: 'pbtn' + (p.key === D.providerKey ? ' on' : '') + (p.enabled === false ? ' off' : ''),
             type: 'button',
+            disabled: p.enabled === false,
+            title: p.enabled === false ? 'Desativado' : null,
             onclick: () => {
                 if (p.key !== D.providerKey) switchProvider(p.key);
             }
@@ -1400,6 +1405,7 @@ function renderConnDialog() {
     if (canRaw) rawSwitch = h('input', {
         type: 'checkbox',
         checked: D.mode === 'raw',
+        disabled: off,
         onchange: async () => {
             const toRaw = rawSwitch.checked;
             rawSwitch.disabled = true;
@@ -1474,11 +1480,16 @@ function renderConnDialog() {
             body,
             rawSwitch ? h('label', {
                 class: 'check',
-                style: 'margin-top:6px'
+                style: 'margin-top:6px' + (off ? ';opacity:.45;cursor:not-allowed' : '')
             }, rawSwitch,
                 h('span', {}, 'Usar string de conexão completa', h('small', {
                     text: 'Para cenários avançados. Marcar/desmarcar converte os campos e a string automaticamente.'
                 }))) : null,
+            off ? h('div', {
+                class: 'hint warnline',
+                style: 'margin-top:8px',
+                text: 'Este provider está desativado: não é possível usar string completa, testar nem salvar.'
+            }) : null,
             D.testBox),
         h('div', {
             class: 'dlg-foot'
@@ -1486,6 +1497,7 @@ function renderConnDialog() {
             h('button', {
                 class: 'btn',
                 type: 'button',
+                disabled: off,
                 onclick: testDraft
             }, icon('refresh'), prov.testLabel || 'Testar conexão'),
             h('span', {
@@ -1499,6 +1511,7 @@ function renderConnDialog() {
             h('button', {
                 class: 'btn primary',
                 type: 'button',
+                disabled: off,
                 onclick: saveDraft
             }, icon('check'), 'Salvar')));
 }
@@ -1753,6 +1766,7 @@ function paintTest() {
 }
 
 async function testDraft() {
+    if (providerByKey(D.providerKey)?.enabled === false) return;
     D.test = {
         busy: true
     };
@@ -1771,6 +1785,7 @@ async function testDraft() {
 }
 
 async function saveDraft() {
+    if (providerByKey(D.providerKey)?.enabled === false) return;
     try {
         await call('profiles.save', {
             profile: draftProfile()
