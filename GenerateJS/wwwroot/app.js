@@ -1210,10 +1210,15 @@ function renderConexoes() {
                     title: p.summary
                 }))),
             st ? h('span', {
-                class: 'chip ' + st.state
+                class: 'chip ' + st.state,
+                title: st.state === 'err' ? st.text + '\n(clique para expandir/recolher)' : null,
+                onclick: st.state === 'err' ? (e) => e.currentTarget.classList.toggle('open') : null
             }, h('span', {
                 class: 'dot'
-            }), st.text) : h('span', {
+            }), h('span', {
+                class: 'ctext',
+                text: st.text
+            })) : h('span', {
                 class: 'chip'
             }, h('span', {
                 class: 'dot'
@@ -1285,7 +1290,7 @@ async function delProfile(p) {
 // ---- diálogo de conexão: o PROVIDER define os campos (como o [ProviderSpecific] do DatabasePropertyConfiguration)
 let D = null; // estado do diálogo
 
-function openConnDialog(existing) {
+async function openConnDialog(existing) {
     D = existing ?
         {
             id: existing.id,
@@ -1312,6 +1317,14 @@ function openConnDialog(existing) {
             test: null
         };
     if (!existing) applyDefaults();
+    // modo "string completa": traz a string salva (descriptografada pelo app) para aparecer ao editar
+    if (existing && existing.mode === 'raw' && existing.hasRaw) {
+        try {
+            D.raw = (await call('profiles.getRaw', { id: existing.id })) || '';
+        } catch (e) {
+            D.raw = '';
+        }
+    }
     renderConnDialog();
     $('#dlgConn').showModal();
 }
@@ -1420,7 +1433,7 @@ function renderConnDialog() {
             text: 'String de conexão'
         }), ta, h('span', {
             class: 'hint',
-            text: 'Gerada a partir dos campos. Fica criptografada ao salvar e não é exibida ao reabrir.'
+            text: 'Fica criptografada neste computador ao salvar.'
         }));
     } else {
         body = renderFields(prov);
@@ -1667,7 +1680,7 @@ function comboField(f) {
         class: 'hint'
     });
     const chips = h('div', {
-        class: 'chips'
+        class: 'opt-chips'
     });
     const inp = h('input', {
         type: 'text',
@@ -1684,7 +1697,7 @@ function comboField(f) {
         status.classList.toggle('warnline', !!v && !!o && !o.installed);
         chips.replaceChildren(...opts.map(x => h('button', {
             type: 'button',
-            class: 'chip ' + (x.installed ? 'ok' : 'miss') + (x.value.toLowerCase() === v.toLowerCase() ? ' on' : ''),
+            class: 'opt-chip ' + (x.installed ? 'ok' : 'miss') + (x.value.toLowerCase() === v.toLowerCase() ? ' on' : ''),
             title: x.label,
             onclick: () => {
                 D.fields[f.id] = x.value;

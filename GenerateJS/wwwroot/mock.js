@@ -749,6 +749,36 @@
                         else profiles[i] = m;
                         return m;
                     }
+                    case 'profiles.toRaw': {
+                        const f = a.profile.fields || {};
+                        if (a.profile.providerKey === 'access')
+                            return f.file ? `Provider=${f.oledb || 'Microsoft.ACE.OLEDB.12.0'};Data Source=${f.file}` + (f.dbpassword ? `;Jet OLEDB:Database Password=${f.dbpassword}` : '') : '';
+                        if (!f.server) return '';
+                        return `Data Source=${f.server}${f.port ? ',' + f.port : ''};Initial Catalog=${f.database || ''};User ID=${f.user || ''};Password=${f.password || ''};TrustServerCertificate=true`;
+                    }
+                    case 'profiles.fromRaw': {
+                        const m = {};
+                        String(a.raw || '').split(';').forEach(kv => {
+                            const i = kv.indexOf('=');
+                            if (i > 0) m[kv.slice(0, i).trim().toLowerCase()] = kv.slice(i + 1).trim();
+                        });
+                        if (a.providerKey === 'access')
+                            return {
+                                oledb: m['provider'] || '',
+                                file: m['data source'] || '',
+                                dbpassword: m['jet oledb:database password'] || ''
+                            };
+                        const [server, port] = (m['data source'] || m['server'] || '').split(',');
+                        return {
+                            server: server || '',
+                            ...(port ? {
+                                port
+                            } : {}),
+                            database: m['initial catalog'] || m['database'] || '',
+                            user: m['user id'] || '',
+                            password: m['password'] || ''
+                        };
+                    }
                     case 'profiles.delete':
                         profiles = profiles.filter(p => p.id !== a.id);
                         return null;

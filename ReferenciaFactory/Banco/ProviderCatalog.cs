@@ -495,6 +495,180 @@ namespace ReferenciaFactory.Banco
         public static ProviderInfo? FromLegacyName(string? providerName) =>
             All.FirstOrDefault(p => p.LegacyNames.Contains(providerName ?? "", StringComparer.OrdinalIgnoreCase));
 
+        // ------------------------------------------------------------ conversao campos <-> string de conexao
+        /// <summary>
+        /// Campos do formulario -> string de conexao (usado ao marcar "Usar string de conexao completa").
+        /// Tolerante: nao exige campos obrigatorios; se nenhum deles foi preenchido devolve "".
+        /// </summary>
+        public static string ToConnectionString(ConnectionProfile profile)
+        {
+            var p = Get(profile.ProviderKey);
+            if (!p.SupportsRaw) throw new GeneratorException($"{p.DisplayName} nao usa string de conexao.");
+            var preenchido = p.Fields.Where(x => x.Required)
+                .Any(x => profile.Fields.TryGetValue(x.Id, out var v) && !string.IsNullOrWhiteSpace(v));
+            return preenchido ? p.BuildConnectionString(profile.Fields) : "";
+        }
+
+        /// <summary>
+        /// String de conexao -> campos do formulario (usado ao desmarcar a opcao). E o inverso de
+        /// <see cref="ProviderInfo.BuildConnectionString"/>: o que o formulario nao reconhece vai para o campo "extra",
+        /// entao nada se perde. Para um banco novo, inclua um case aqui.
+        /// </summary>
+        public static Dictionary<string, string> ParseConnectionString(string? providerKey, string? raw)
+        {
+            var p = Get(providerKey);
+            if (!p.SupportsRaw) throw new GeneratorException($"{p.DisplayName} nao usa string de conexao.");
+            if (string.IsNullOrWhiteSpace(raw)) throw new GeneratorException("Informe a string de conexao para converter em campos.");
+
+            var b = new DbConnectionStringBuilder();
+            try { b.ConnectionString = raw; }
+            catch (ArgumentException ex) { throw new GeneratorException("String de conexao invalida: " + ex.Message, ex); }
+
+            var f = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            // conv devolve null = valor nao reconhecido (a chave segue para "extra"); "" = aceito, mas vazio.
+            void Take(string field, Func<string, string?> conv, params string[] keys)
+            {
+                foreach (var k in keys)
+                {
+                    if (!b.TryGetValue(k, out var v)) continue;
+                    var s = conv(Convert.ToString(v)?.Trim() ?? "");
+                    if (s is null) continue;
+                    used.Add(k);
+                    if (s.Length > 0 && !f.ContainsKey(field)) f[field] = s;
+                }
+            }
+            void Drop(params string[] keys) { foreach (var k in keys) if (b.ContainsKey(k)) used.Add(k); }
+
+            Func<string, string?> txt = s => s;
+            Func<string, string?> tri = s => s.ToLowerInvariant() switch
+            {
+                "true" or "yes" or "1" => "true",
+                "false" or "no" or "0" => "false",
+                "" => "",
+                _ => null
+            };
+            Func<string, string?> integrated = s => s.ToLowerInvariant() switch
+            {
+                "true" or "yes" or "sspi" or "1" => "true",
+                "false" or "no" or "0" => "false",
+                "" => "",
+                _ => null
+            };
+            Func<string, string?> pos = s => s.Length == 0 ? "" : int.TryParse(s, out var n) && n > 0 ? n.ToString() : null;
+
+            switch (p.Key.ToLowerInvariant())
+            {
+                case "sqlserver":
+                    {
+                        Take("server", txt, "Data Source", "Server", "Address", "Addr", "Network Address");
+                        if (f.TryGetValue("server", out var srv))
+                        {
+                            if (srv.StartsWith("tcp:", StringComparison.OrdinalIgnoreCase)) srv = srv[4..];
+                            var comma = srv.LastIndexOf(',');
+                            if (comma > 0 && int.TryParse(srv[(comma + 1)..].Trim(), out var port))
+                            {
+                                f["port"] = port.ToString();
+                                srv = srv[..comma].Trim();
+                            }
+                            f["server"] = srv;
+                        }
+                        Take("database", txt, "Initial Catalog", "Database");
+                        Take("integrated", integrated, "Integrated Security", "Trusted_Connection");
+                        if (!f.ContainsKey("integrated")) f["integrated"] = "false";
+                        Take("user", txt, "User ID", "UID", "User");
+                        Take("password", txt, "Password", "Pwd");
+                        Take("trustCert", tri, "TrustServerCertificate", "Trust Server Certificate");
+                        if (!f.ContainsKey("trustCert")) f["trustCert"] = "false";   // ausente = padrao do driver (false)
+                        Take("encrypt", tri, "Encrypt");
+                        Take("pooling", tri, "Pooling");
+                        Take("mars", tri, "MultipleActiveResultSets", "MARS");
+                        Take("persist", tri, "Persist Security Info", "PersistSecurityInfo");
+                        Take("connectTimeout", pos, "Connect Timeout", "Connection Timeout", "Timeout");
+                        Drop("Application Name", "App");   // o aplicativo grava o proprio
+                        break;
+                    }
+                case "postgres":
+                    Take("server", txt, "Host", "Server");
+                    Take("port", pos, "Port");
+                    Take("database", txt, "Database");
+                    Take("user", txt, "Username", "User Name", "User Id", "UserId", "UID", "User");
+                    Take("password", txt, "Password", "Pwd");
+                    Take("connectTimeout", pos, "Timeout");
+                    break;
+
+                case "mysql":
+                    {
+                        Func<string, string?> ssl = s =>
+                        {
+                            if (s.Length == 0) return "";
+                            foreach (var o in new[] { "None", "Preferred", "Required", "VerifyCA", "VerifyFull" })
+                                if (o.Equals(s, StringComparison.OrdinalIgnoreCase)) return o;
+                            return null;
+                        };
+                        Take("server", txt, "Server", "Host", "Data Source", "DataSource", "Address", "Addr", "Network Address");
+                        Take("port", pos, "Port");
+                        Take("database", txt, "Database", "Initial Catalog");
+                        Take("user", txt, "User ID", "UserID", "Username", "Uid", "User", "User Name");
+                        Take("password", txt, "Password", "Pwd");
+                        Take("sslMode", ssl, "SslMode", "SSL Mode");
+                        Take("charset", txt, "CharSet", "Character Set");
+                        Take("allowPublicKey", tri, "AllowPublicKeyRetrieval");
+                        Take("allowZeroDate", tri, "AllowZeroDateTime");
+                        Take("convertZeroDate", tri, "ConvertZeroDateTime");
+                        if (!f.ContainsKey("convertZeroDate")) f["convertZeroDate"] = "false";   // ausente = padrao do driver
+                        Take("connectTimeout", pos, "Connection Timeout", "Connect Timeout", "ConnectionTimeout");
+                        break;
+                    }
+                case "oracle":
+                    {
+                        Take("_ds", txt, "Data Source", "DataSource");
+                        var ds = f.GetValueOrDefault("_ds") ?? "";
+                        f.Remove("_ds");
+                        var m = System.Text.RegularExpressions.Regex.Match(ds, @"^(?://)?(?<h>[^:/\s]+)(?::(?<p>\d+))?/(?<s>\S+)$");
+                        if (!m.Success)
+                            throw new GeneratorException("O Data Source do Oracle (alias TNS ou descritor) nao tem equivalente nos campos. Mantenha a string de conexao completa.");
+                        f["server"] = m.Groups["h"].Value;
+                        if (m.Groups["p"].Success) f["port"] = m.Groups["p"].Value;
+                        f["database"] = m.Groups["s"].Value;
+                        Take("user", txt, "User Id", "UID", "User");
+                        Take("password", txt, "Password", "Pwd");
+                        Take("connectTimeout", pos, "Connection Timeout", "Connect Timeout");
+                        break;
+                    }
+                case "firebird":
+                    Take("server", txt, "DataSource", "Data Source", "Server", "Host");
+                    Take("port", pos, "Port");
+                    Take("database", txt, "Database", "Initial Catalog");
+                    Take("user", txt, "User", "User ID", "UserID", "Username");
+                    Take("password", txt, "Password");
+                    Take("charset", txt, "Charset", "Character Set");
+                    Take("connectTimeout", pos, "Connection Timeout", "Connect Timeout");
+                    break;
+
+                case "sqlite":
+                    Take("file", txt, "Data Source", "Filename");
+                    if (b.TryGetValue("Mode", out var mode) && "ReadOnly".Equals(Convert.ToString(mode), StringComparison.OrdinalIgnoreCase))
+                        used.Add("Mode");   // o gerador ja forca somente leitura
+                    break;
+
+                case "access":
+                    Take("oledb", txt, "Provider");
+                    Take("file", txt, "Data Source", "DataSource", "Dbq");
+                    Take("dbpassword", txt, "Jet OLEDB:Database Password");
+                    break;
+            }
+
+            // tudo que o formulario nao conhece segue em "Opcoes avancadas", sem perder nada
+            var rest = new DbConnectionStringBuilder();
+            foreach (string k in b.Keys)
+                if (!used.Contains(k)) rest[k] = b[k];
+            if (rest.Count > 0) f["extra"] = rest.ConnectionString;
+
+            return f;
+        }
+
         public static string BuildConnectionString(ConnectionProfile profile)
         {
             var p = Get(profile.ProviderKey);

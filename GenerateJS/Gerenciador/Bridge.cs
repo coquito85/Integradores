@@ -1,5 +1,5 @@
-
 using Microsoft.Web.WebView2.Core;
+using ReferenciaFactory.Banco;
 using ReferenciaStandard.Entidades;
 using ReferenciaStandard.Helpers;
 using ReferenciaStandard.Repository;
@@ -145,6 +145,40 @@ namespace GenerateJS.Gerenciador
                 case "profiles.test":
                     return await _exec.TestarConexaoAsync(Arg<ConnectionProfile>(a, "profile"));
 
+                // Campos -> string de conexao (ao marcar "Usar string de conexao completa").
+                // Segredos em branco no formulario (ja salvos) sao completados a partir do perfil gravado.
+                case "profiles.toRaw":
+                    {
+                        var prof = Arg<ConnectionProfile>(a, "profile");
+                        var stored = FindStored(prof.Id);
+                        if (stored is not null && stored.ProviderKey == prof.ProviderKey)
+                            foreach (var kv in stored.Fields.Where(k => _exec.EhCampoSecreto(k.Key) && !string.IsNullOrEmpty(k.Value)))
+                                if (!prof.Fields.TryGetValue(kv.Key, out var cur) || string.IsNullOrEmpty(cur))
+                                    prof.Fields[kv.Key] = kv.Value;
+                        return ProviderCatalog.ToConnectionString(prof);
+                    }
+
+                // String de conexao -> campos (ao desmarcar). String em branco = usa a string ja salva do perfil.
+                case "profiles.fromRaw":
+                    {
+                        var key = Str(a, "providerKey");
+                        var raw = Str(a, "raw");
+                        if (string.IsNullOrWhiteSpace(raw))
+                        {
+                            var stored = FindStored(Str(a, "profileId"));
+                            if (stored is not null && stored.ProviderKey == key && !string.IsNullOrEmpty(stored.RawConnectionString))
+                                raw = stored.RawConnectionString;
+                        }
+                        return ProviderCatalog.ParseConnectionString(key, raw);
+                    }
+
+                // Devolve a string de conexao salva (descriptografada) para exibir ao editar.
+                case "profiles.getRaw":
+                    {
+                        var stored = FindStored(Str(a, "id"));
+                        return stored?.RawConnectionString ?? "";
+                    }
+
                 case "schema.tables":
                     return await _exec.ListarTabelasAsync(Str(a, "profileId"));
 
@@ -232,6 +266,14 @@ namespace GenerateJS.Gerenciador
                 default:
                     throw new GeneratorException($"Comando desconhecido: {cmd}");
             }
+        }
+
+        /// <summary>Perfil gravado (segredos ja descriptografados) ou null se ainda nao foi salvo.</summary>
+        private ConnectionProfile? FindStored(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return null;
+            var p = _exec.ListarConexoes().FirstOrDefault(x => x.Id == id);
+            return p is null ? null : ProfileStore.Decrypt(p);
         }
 
         // ------------------------------------------------------------------ DTOs
