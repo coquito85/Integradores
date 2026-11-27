@@ -94,13 +94,8 @@ namespace ReferenciaStandard.Helpers
             return CollectionConfig;
         }
 
-        /// <summary>
-        /// Método genérico e centralizado para ler qualquer lista simples do XML (um nó por item,
-        /// campos filhos com o mesmo nome das propriedades de T). Usado por catálogos como o de
-        /// Novidades, evitando duplicar lógica de parsing de XML fora deste repositório.
-        /// Ex.: ScraperXmlLista&lt;NovidadeItem&gt;(conteudoXml, "//Novidade")
-        /// </summary>
-       
+ 
+
         //public List<T> ScraperXmlLista<T>(string conteudoXML, string xpathNodes) where T : new()
         //{
         //    var lista = new List<T>();
@@ -122,305 +117,305 @@ namespace ReferenciaStandard.Helpers
         //    return lista;
         //}
 
-        //public List<T> ScraperXmlContent<T>(string conteudoXML, Entid_LayoutInfo _helper) where T : new()
-        //{
+            //public List<T> ScraperXmlContent<T>(string conteudoXML, Entid_LayoutInfo _helper) where T : new()
+            //{
 
-        //    var listaObjetos = new List<T>();
-        //    var xmlDoc = new XmlDocument();
-        //    xmlDoc.LoadXml(conteudoXML);
+            //    var listaObjetos = new List<T>();
+            //    var xmlDoc = new XmlDocument();
+            //    xmlDoc.LoadXml(conteudoXML);
 
-        //    XmlNode configurationNode = xmlDoc.DocumentElement; // <schema> ou <model>
-        //    if (configurationNode == null)
-        //        return listaObjetos;
+            //    XmlNode configurationNode = xmlDoc.DocumentElement; // <schema> ou <model>
+            //    if (configurationNode == null)
+            //        return listaObjetos;
 
-        //    string configName = configurationNode.Attributes?["name"]?.Value;
-        //    if (string.IsNullOrEmpty(configName))
-        //        return listaObjetos;
+            //    string configName = configurationNode.Attributes?["name"]?.Value;
+            //    if (string.IsNullOrEmpty(configName))
+            //        return listaObjetos;
 
-        //    if (!configName.Equals(_helper.IsNameLayout, StringComparison.OrdinalIgnoreCase))
-        //        return listaObjetos;
-
-
-        //    string section = _helper.IsStruture?.ToLower();
+            //    if (!configName.Equals(_helper.IsNameLayout, StringComparison.OrdinalIgnoreCase))
+            //        return listaObjetos;
+
+
+            //    string section = _helper.IsStruture?.ToLower();
 
-        //    XmlNodeList XmlStrturures = null;
+            //    XmlNodeList XmlStrturures = null;
 
-        //    if (section.Equals("designer", StringComparison.OrdinalIgnoreCase))
-        //    {
-        //        XmlStrturures = configurationNode.SelectNodes($"{section}[@name='{_helper.IsNameStruture}']");
-        //        if (XmlStrturures == null || XmlStrturures.Count == 0)
-        //            return listaObjetos;
+            //    if (section.Equals("designer", StringComparison.OrdinalIgnoreCase))
+            //    {
+            //        XmlStrturures = configurationNode.SelectNodes($"{section}[@name='{_helper.IsNameStruture}']");
+            //        if (XmlStrturures == null || XmlStrturures.Count == 0)
+            //            return listaObjetos;
 
 
-        //        foreach (XmlNode NodeStruture in XmlStrturures)
-        //        {
-        //            var objeto = new T();
-        //            // XmlNode bodyNode = Nodestruture.SelectSingleNode("Body");
-        //            PreencherObjeto(objeto, NodeStruture);
-        //            listaObjetos.Add(objeto);
-        //        }
+            //        foreach (XmlNode NodeStruture in XmlStrturures)
+            //        {
+            //            var objeto = new T();
+            //            // XmlNode bodyNode = Nodestruture.SelectSingleNode("Body");
+            //            PreencherObjeto(objeto, NodeStruture);
+            //            listaObjetos.Add(objeto);
+            //        }
 
 
-        //    }
-        //    else if (section.Equals("gallery", StringComparison.OrdinalIgnoreCase))
-        //    {
-        //        XmlStrturures = configurationNode.SelectNodes($"{section}[@name='{_helper.IsNameStruture}']");
-        //        if (XmlStrturures == null || XmlStrturures.Count == 0)
-        //            return listaObjetos;
+            //    }
+            //    else if (section.Equals("gallery", StringComparison.OrdinalIgnoreCase))
+            //    {
+            //        XmlStrturures = configurationNode.SelectNodes($"{section}[@name='{_helper.IsNameStruture}']");
+            //        if (XmlStrturures == null || XmlStrturures.Count == 0)
+            //            return listaObjetos;
 
 
-        //        foreach (XmlNode NodeStruture in XmlStrturures)
-        //        {
-        //            var objeto = new T();
-        //            // XmlNode bodyNode = Nodestruture.SelectSingleNode("Body");
-        //            PreencherObjetoMoods(objeto, NodeStruture);
-        //            listaObjetos.Add(objeto);
-        //        }
+            //        foreach (XmlNode NodeStruture in XmlStrturures)
+            //        {
+            //            var objeto = new T();
+            //            // XmlNode bodyNode = Nodestruture.SelectSingleNode("Body");
+            //            PreencherObjetoMoods(objeto, NodeStruture);
+            //            listaObjetos.Add(objeto);
+            //        }
 
 
-        //    }
-        //    else if (section.Equals("model", StringComparison.OrdinalIgnoreCase))
-        //    {
+            //    }
+            //    else if (section.Equals("model", StringComparison.OrdinalIgnoreCase))
+            //    {
 
-        //        XmlStrturures = configurationNode.SelectNodes($"{section}/table[@name='{_helper.IsTable}']");
+            //        XmlStrturures = configurationNode.SelectNodes($"{section}/table[@name='{_helper.IsTable}']");
 
-        //        if (XmlStrturures == null || XmlStrturures.Count == 0)
-        //            return listaObjetos;
-        //        foreach (XmlNode NodeStruture in XmlStrturures)
-        //        {
-        //            string IsNameView = string.Empty;
-        //            if (!string.IsNullOrEmpty(_helper.IsOperation))
-        //            {
-        //                var objeto = new T();
-        //                IsNameView = NodeStruture.Attributes?["displayName"]?.Value;
-        //                if (_helper.IsOperation.Equals("insert", StringComparison.OrdinalIgnoreCase))
-        //                    PreencherObjeto(objeto, InsertTableModelVazio(NodeStruture, _helper.IsTable, false).Trim(), IsNameView);
-        //                else if (_helper.IsOperation.Equals("insertselect", StringComparison.OrdinalIgnoreCase))
-        //                    PreencherObjeto(objeto, InsertTableModelVazio(NodeStruture, _helper.IsTable, true).Trim(), IsNameView);
-        //                else if (_helper.IsOperation.Equals("update", StringComparison.OrdinalIgnoreCase))
-        //                    PreencherObjeto(objeto, UpdateTableModelVazio(NodeStruture, _helper.IsTable).Trim(), IsNameView);
+            //        if (XmlStrturures == null || XmlStrturures.Count == 0)
+            //            return listaObjetos;
+            //        foreach (XmlNode NodeStruture in XmlStrturures)
+            //        {
+            //            string IsNameView = string.Empty;
+            //            if (!string.IsNullOrEmpty(_helper.IsOperation))
+            //            {
+            //                var objeto = new T();
+            //                IsNameView = NodeStruture.Attributes?["displayName"]?.Value;
+            //                if (_helper.IsOperation.Equals("insert", StringComparison.OrdinalIgnoreCase))
+            //                    PreencherObjeto(objeto, InsertTableModelVazio(NodeStruture, _helper.IsTable, false).Trim(), IsNameView);
+            //                else if (_helper.IsOperation.Equals("insertselect", StringComparison.OrdinalIgnoreCase))
+            //                    PreencherObjeto(objeto, InsertTableModelVazio(NodeStruture, _helper.IsTable, true).Trim(), IsNameView);
+            //                else if (_helper.IsOperation.Equals("update", StringComparison.OrdinalIgnoreCase))
+            //                    PreencherObjeto(objeto, UpdateTableModelVazio(NodeStruture, _helper.IsTable).Trim(), IsNameView);
 
-        //                listaObjetos.Add(objeto);
-        //            }
+            //                listaObjetos.Add(objeto);
+            //            }
 
 
 
-        //        }
-        //    }
-        //    else if (section.Equals("schema", StringComparison.OrdinalIgnoreCase))
-        //    {
-        //        XmlStrturures = configurationNode.SelectNodes($"{section}/table[@name='{_helper.IsTable}']");
-        //        if (XmlStrturures == null || XmlStrturures.Count == 0)
-        //            return listaObjetos;
+            //        }
+            //    }
+            //    else if (section.Equals("schema", StringComparison.OrdinalIgnoreCase))
+            //    {
+            //        XmlStrturures = configurationNode.SelectNodes($"{section}/table[@name='{_helper.IsTable}']");
+            //        if (XmlStrturures == null || XmlStrturures.Count == 0)
+            //            return listaObjetos;
 
-        //        foreach (XmlNode NodeStruture in XmlStrturures)
-        //        {
+            //        foreach (XmlNode NodeStruture in XmlStrturures)
+            //        {
 
-        //            bool create = NodeStruture.Attributes?["Create"]?.Value == "true";
-        //            bool isExists = NodeStruture.Attributes?["IsExists"]?.Value == "true";
+            //            bool create = NodeStruture.Attributes?["Create"]?.Value == "true";
+            //            bool isExists = NodeStruture.Attributes?["IsExists"]?.Value == "true";
 
-        //            if (create)
-        //            {
+            //            if (create)
+            //            {
 
-        //                var objeto = new T();
-        //                PreencherObjeto(objeto, CreateTableStatement(NodeStruture, _helper.IsTable, isExists).Trim());
-        //                listaObjetos.Add(objeto);
-        //            }
+            //                var objeto = new T();
+            //                PreencherObjeto(objeto, CreateTableStatement(NodeStruture, _helper.IsTable, isExists).Trim());
+            //                listaObjetos.Add(objeto);
+            //            }
 
 
-        //        }
-        //    }
-        //    else if (section.Equals("triggers", StringComparison.OrdinalIgnoreCase))
-        //    {
-        //        XmlStrturures = configurationNode.SelectNodes($"{section}/TableRule[@name='{_helper.IsTable}']");
-        //        if (XmlStrturures == null || XmlStrturures.Count == 0)
-        //            return listaObjetos;
+            //        }
+            //    }
+            //    else if (section.Equals("triggers", StringComparison.OrdinalIgnoreCase))
+            //    {
+            //        XmlStrturures = configurationNode.SelectNodes($"{section}/TableRule[@name='{_helper.IsTable}']");
+            //        if (XmlStrturures == null || XmlStrturures.Count == 0)
+            //            return listaObjetos;
 
-        //        foreach (XmlNode tableRule in XmlStrturures)
-        //        {
-        //            // pega todas as regras de timing (Insert / Update)
-        //            XmlNodeList timings = tableRule.SelectNodes("Timing");
+            //        foreach (XmlNode tableRule in XmlStrturures)
+            //        {
+            //            // pega todas as regras de timing (Insert / Update)
+            //            XmlNodeList timings = tableRule.SelectNodes("Timing");
 
 
 
-        //            foreach (XmlNode timing in timings)
-        //            {
-        //                bool create = timing.Attributes["Create"]?.Value == "true";
-        //                bool isExists = timing.Attributes["IsExists"]?.Value == "true";
+            //            foreach (XmlNode timing in timings)
+            //            {
+            //                bool create = timing.Attributes["Create"]?.Value == "true";
+            //                bool isExists = timing.Attributes["IsExists"]?.Value == "true";
 
-        //                if (create)
-        //                {
-        //                    var objeto = new T();
+            //                if (create)
+            //                {
+            //                    var objeto = new T();
 
-        //                    PreencherObjeto(objeto, CreateTriggerStatement(timing, tableRule, _helper.IsTable, isExists));
-        //                    listaObjetos.Add(objeto);
-        //                }
+            //                    PreencherObjeto(objeto, CreateTriggerStatement(timing, tableRule, _helper.IsTable, isExists));
+            //                    listaObjetos.Add(objeto);
+            //                }
 
 
 
-        //            }
-        //        }
+            //            }
+            //        }
 
 
-        //    }
-        //    else if (section.Equals("generate", StringComparison.OrdinalIgnoreCase))
-        //    {
-        //        XmlStrturures = configurationNode.SelectNodes($"{section}/table[@name='{_helper.IsTable}']");
-        //        if (XmlStrturures == null || XmlStrturures.Count == 0)
-        //            return listaObjetos;
-        //        foreach (XmlNode NodeStruture in XmlStrturures)
-        //        {
-        //            bool IsSelect = NodeStruture.Attributes?["generateselect"]?.Value == "true";
+            //    }
+            //    else if (section.Equals("generate", StringComparison.OrdinalIgnoreCase))
+            //    {
+            //        XmlStrturures = configurationNode.SelectNodes($"{section}/table[@name='{_helper.IsTable}']");
+            //        if (XmlStrturures == null || XmlStrturures.Count == 0)
+            //            return listaObjetos;
+            //        foreach (XmlNode NodeStruture in XmlStrturures)
+            //        {
+            //            bool IsSelect = NodeStruture.Attributes?["generateselect"]?.Value == "true";
 
-        //            if (IsSelect)
-        //            {
-        //                var objeto = new T();
-        //                string IsNameView = string.Empty;
+            //            if (IsSelect)
+            //            {
+            //                var objeto = new T();
+            //                string IsNameView = string.Empty;
 
-        //                if (!string.IsNullOrEmpty(_helper.IsOperation) && _helper.IsOperation.Equals("NotRelation", StringComparison.OrdinalIgnoreCase))
-        //                {
-        //                    IsNameView = NodeStruture.Attributes?["alias"]?.Value;
-        //                    PreencherObjeto(objeto, GenerateSelectSql(NodeStruture, _helper.IsTable, false, _helper.IsScope).Trim(), IsNameView);
+            //                if (!string.IsNullOrEmpty(_helper.IsOperation) && _helper.IsOperation.Equals("NotRelation", StringComparison.OrdinalIgnoreCase))
+            //                {
+            //                    IsNameView = NodeStruture.Attributes?["alias"]?.Value;
+            //                    PreencherObjeto(objeto, GenerateSelectSql(NodeStruture, _helper.IsTable, false, _helper.IsScope).Trim(), IsNameView);
 
-        //                }
-        //                else
-        //                {
+            //                }
+            //                else
+            //                {
 
-        //                    IsNameView = NodeStruture.Attributes?["generateviewer"]?.Value;
-        //                    PreencherObjeto(objeto, GenerateSelectSql(NodeStruture, _helper.IsTable, true, _helper.IsScope).Trim(), IsNameView);
-        //                }
-        //                listaObjetos.Add(objeto);
+            //                    IsNameView = NodeStruture.Attributes?["generateviewer"]?.Value;
+            //                    PreencherObjeto(objeto, GenerateSelectSql(NodeStruture, _helper.IsTable, true, _helper.IsScope).Trim(), IsNameView);
+            //                }
+            //                listaObjetos.Add(objeto);
 
 
 
-        //            }
-        //        }
+            //            }
+            //        }
 
 
-        //    }
+            //    }
 
-        //    return listaObjetos;
-        //}
+            //    return listaObjetos;
+            //}
 
 
 
 
 
 
-        //public List<Entid_Query> ScraperXmlContent(string conteudoXML, Entid_LayoutInfo _helper)
-        //{
-        //    string typeConfig = _helper.IsStruture;
-        //    string tableName = _helper.IsTable;
-        //    Entid_Query IsSQL;
-        //    List<Entid_Query> ListQuerys = new List<Entid_Query>();
+            //public List<Entid_Query> ScraperXmlContent(string conteudoXML, Entid_LayoutInfo _helper)
+            //{
+            //    string typeConfig = _helper.IsStruture;
+            //    string tableName = _helper.IsTable;
+            //    Entid_Query IsSQL;
+            //    List<Entid_Query> ListQuerys = new List<Entid_Query>();
 
-        //    xmlDoc = new XmlDocument();
-        //    xmlDoc.LoadXml(conteudoXML);
+            //    xmlDoc = new XmlDocument();
+            //    xmlDoc.LoadXml(conteudoXML);
 
-        //    XmlNode configurationNode = xmlDoc.DocumentElement; // <schema> ou <model>
-        //    if (configurationNode == null)
-        //        return ListQuerys;
+            //    XmlNode configurationNode = xmlDoc.DocumentElement; // <schema> ou <model>
+            //    if (configurationNode == null)
+            //        return ListQuerys;
 
 
-        //    string configuracaoNome = configurationNode.Attributes?["name"]?.Value;
-        //    if (string.IsNullOrEmpty(configuracaoNome))
-        //        return ListQuerys;
+            //    string configuracaoNome = configurationNode.Attributes?["name"]?.Value;
+            //    if (string.IsNullOrEmpty(configuracaoNome))
+            //        return ListQuerys;
 
-        //    if (configuracaoNome.Equals(_helper.IsNameLayout))
-        //    {
+            //    if (configuracaoNome.Equals(_helper.IsNameLayout))
+            //    {
 
-        //        string section = typeConfig?.ToLower();
-        //        if (section != "generate" && section != "model" && section != "schema")
-        //            return ListQuerys;
+            //        string section = typeConfig?.ToLower();
+            //        if (section != "generate" && section != "model" && section != "schema")
+            //            return ListQuerys;
 
 
-        //        // CORREÇÃO: Use diferentes estratégias de XPath
-        //        XmlNodeList tabelas = configurationNode.SelectNodes($"{section}/table[@name='{tableName}']");
-        //        if (tabelas == null || tabelas.Count == 0)
-        //            return ListQuerys;
+            //        // CORREÇÃO: Use diferentes estratégias de XPath
+            //        XmlNodeList tabelas = configurationNode.SelectNodes($"{section}/table[@name='{tableName}']");
+            //        if (tabelas == null || tabelas.Count == 0)
+            //            return ListQuerys;
 
-        //        if (section.Equals("model", StringComparison.OrdinalIgnoreCase))
-        //        {
-        //            foreach (XmlNode tabela in tabelas)
-        //            {
+            //        if (section.Equals("model", StringComparison.OrdinalIgnoreCase))
+            //        {
+            //            foreach (XmlNode tabela in tabelas)
+            //            {
 
 
-        //                if (!string.IsNullOrEmpty(_helper.IsOperation))
-        //                {
-        //                    IsSQL = new Entid_Query();
-        //                    if (_helper.IsOperation.Equals("insert", StringComparison.OrdinalIgnoreCase))
-        //                        IsSQL.IsQuery = InsertTableModelVazio(tabela, tableName, false).Trim();
-        //                    else if (_helper.IsOperation.Equals("insertselect", StringComparison.OrdinalIgnoreCase))
-        //                        IsSQL.IsQuery = InsertTableModelVazio(tabela, tableName, true).Trim();
+            //                if (!string.IsNullOrEmpty(_helper.IsOperation))
+            //                {
+            //                    IsSQL = new Entid_Query();
+            //                    if (_helper.IsOperation.Equals("insert", StringComparison.OrdinalIgnoreCase))
+            //                        IsSQL.IsQuery = InsertTableModelVazio(tabela, tableName, false).Trim();
+            //                    else if (_helper.IsOperation.Equals("insertselect", StringComparison.OrdinalIgnoreCase))
+            //                        IsSQL.IsQuery = InsertTableModelVazio(tabela, tableName, true).Trim();
 
-        //                    else if (_helper.IsOperation.Equals("update", StringComparison.OrdinalIgnoreCase))
-        //                        IsSQL.IsQuery = UpdateTableModelVazio(tabela, tableName);
+            //                    else if (_helper.IsOperation.Equals("update", StringComparison.OrdinalIgnoreCase))
+            //                        IsSQL.IsQuery = UpdateTableModelVazio(tabela, tableName);
 
-        //                    if (!string.IsNullOrEmpty(IsSQL.IsQuery))
-        //                        ListQuerys.Add(IsSQL);
-        //                }
+            //                    if (!string.IsNullOrEmpty(IsSQL.IsQuery))
+            //                        ListQuerys.Add(IsSQL);
+            //                }
 
 
 
-        //            }
-        //        }
-        //        else if (section.Equals("schema", StringComparison.OrdinalIgnoreCase))
-        //        {
-        //            foreach (XmlNode tabela in tabelas)
-        //            {
+            //            }
+            //        }
+            //        else if (section.Equals("schema", StringComparison.OrdinalIgnoreCase))
+            //        {
+            //            foreach (XmlNode tabela in tabelas)
+            //            {
 
-        //                bool create = tabela.Attributes?["Create"]?.Value == "true";
-        //                bool isExists = tabela.Attributes?["IsExists"]?.Value == "true";
+            //                bool create = tabela.Attributes?["Create"]?.Value == "true";
+            //                bool isExists = tabela.Attributes?["IsExists"]?.Value == "true";
 
-        //                if (create)
-        //                {
+            //                if (create)
+            //                {
 
-        //                    IsSQL = new Entid_Query();
-        //                    IsSQL.IsQuery = CreateTableStatement(tabela, tableName, isExists);
-        //                    if (!string.IsNullOrEmpty(IsSQL.IsQuery))
-        //                        ListQuerys.Add(IsSQL);
-        //                }
+            //                    IsSQL = new Entid_Query();
+            //                    IsSQL.IsQuery = CreateTableStatement(tabela, tableName, isExists);
+            //                    if (!string.IsNullOrEmpty(IsSQL.IsQuery))
+            //                        ListQuerys.Add(IsSQL);
+            //                }
 
 
-        //            }
-        //        }
+            //            }
+            //        }
 
-        //        else if (section.Equals("generate", StringComparison.OrdinalIgnoreCase))
-        //        {
-        //            foreach (XmlNode tabela in tabelas)
-        //            {
-        //                bool IsSelect = tabela.Attributes?["generateselect"]?.Value == "true";
+            //        else if (section.Equals("generate", StringComparison.OrdinalIgnoreCase))
+            //        {
+            //            foreach (XmlNode tabela in tabelas)
+            //            {
+            //                bool IsSelect = tabela.Attributes?["generateselect"]?.Value == "true";
 
-        //                if (IsSelect)
-        //                {
-        //                    IsSQL = new Entid_Query();
+            //                if (IsSelect)
+            //                {
+            //                    IsSQL = new Entid_Query();
 
-        //                    if (!string.IsNullOrEmpty(_helper.IsOperation) && _helper.IsOperation.Equals("NotRelation", StringComparison.OrdinalIgnoreCase))
-        //                    {
-        //                        IsSQL.IsNameView = tabela.Attributes?["alias"]?.Value;
-        //                        IsSQL.IsQuery = GenerateSelectSql(tabela, tableName, false, _helper.IsScope).Trim();
-        //                    }
-        //                    else
-        //                    {
+            //                    if (!string.IsNullOrEmpty(_helper.IsOperation) && _helper.IsOperation.Equals("NotRelation", StringComparison.OrdinalIgnoreCase))
+            //                    {
+            //                        IsSQL.IsNameView = tabela.Attributes?["alias"]?.Value;
+            //                        IsSQL.IsQuery = GenerateSelectSql(tabela, tableName, false, _helper.IsScope).Trim();
+            //                    }
+            //                    else
+            //                    {
 
-        //                        IsSQL.IsNameView = tabela.Attributes?["generateviewer"]?.Value;
-        //                        IsSQL.IsQuery = GenerateSelectSql(tabela, tableName, true, _helper.IsScope).Trim();
-        //                    }
+            //                        IsSQL.IsNameView = tabela.Attributes?["generateviewer"]?.Value;
+            //                        IsSQL.IsQuery = GenerateSelectSql(tabela, tableName, true, _helper.IsScope).Trim();
+            //                    }
 
 
-        //                    if (!string.IsNullOrEmpty(IsSQL.IsQuery))
-        //                        ListQuerys.Add(IsSQL);
+            //                    if (!string.IsNullOrEmpty(IsSQL.IsQuery))
+            //                        ListQuerys.Add(IsSQL);
 
-        //                }
+            //                }
 
-        //            }
-        //        }
+            //            }
+            //        }
 
-        //    }
+            //    }
 
 
-        //    return ListQuerys;
-        //}
+            //    return ListQuerys;
+            //}
         public string ScraperXmlSelectQuery(string conteudoXML, string Provider)
         {
             xmlDoc = new XmlDocument();

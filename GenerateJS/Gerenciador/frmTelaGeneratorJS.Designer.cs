@@ -1,6 +1,6 @@
 ﻿namespace GenerateJS
 {
-    partial class frmTelaGerenciadorFluxos
+    partial class frmTelaGeneratorJS
     {
         /// <summary>
         ///  Required designer variable.
