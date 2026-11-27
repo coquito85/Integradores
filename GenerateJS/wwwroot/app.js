@@ -121,12 +121,25 @@ function fmtDate(iso) {
 const nf = n => Number(n).toLocaleString('pt-BR');
 
 function toast(msg, kind = '') {
+    const box = $('#toasts');
+    // não empilha avisos idênticos (ex.: clicar várias vezes em Salvar)
+    if ([...box.children].some(c => c.dataset.msg === msg)) return;
     const t = h('div', {
+        'data-msg': msg,
         class: 'toast ' + kind
     }, icon(kind === 'err' ? 'alert' : kind === 'ok' ? 'check' : 'info'), h('div', {
         text: msg
     }));
-    $('#toasts').appendChild(t);
+    box.appendChild(t);
+    // <dialog> modal fica na camada superior e cobre o resto da página: o contêiner de avisos
+    // também vai para a camada superior (popover) para aparecer por cima do diálogo.
+    try {
+        if (box.showPopover) {
+            if (!box.hasAttribute('popover')) box.setAttribute('popover', 'manual');
+            if (box.matches(':popover-open')) box.hidePopover();
+            box.showPopover();
+        }
+    } catch (e) { /* sem suporte: segue como estava */ }
     setTimeout(() => t.remove(), kind === 'err' ? 8000 : 4200);
 }
 
@@ -1361,8 +1374,11 @@ function renderConnDialog() {
         type: 'text',
         value: D.name,
         placeholder: 'Ex.: Cartório — produção',
+        'data-role': 'connName',
         oninput: () => {
             D.name = nameInp.value;
+            nameInp.classList.remove('invalid');
+            setFormError(null);
         }
     });
 
@@ -1447,6 +1463,10 @@ function renderConnDialog() {
 
     D.testBox = h('div');
     paintTest();
+    D.errBox = h('div', {
+        class: 'dlg-error'
+    });
+    paintFormError();
 
     dlg.replaceChildren(
         h('div', {
@@ -1491,6 +1511,7 @@ function renderConnDialog() {
                 text: 'Este provider está desativado: não é possível usar string completa, testar nem salvar.'
             }) : null,
             D.testBox),
+        D.errBox,   // erro de validação/salvar: fica fixo acima do rodapé, sempre visível
         h('div', {
             class: 'dlg-foot'
         },
@@ -1767,6 +1788,7 @@ function paintTest() {
 
 async function testDraft() {
     if (providerByKey(D.providerKey)?.enabled === false) return;
+    setFormError(null);
     D.test = {
         busy: true
     };
@@ -1784,8 +1806,42 @@ async function testDraft() {
     paintTest();
 }
 
+// Erro mostrado dentro do diálogo (o toast da página fica atrás do fundo escuro do <dialog>)
+function setFormError(msg) {
+    D.formError = msg || null;
+    paintFormError();
+}
+
+function paintFormError() {
+    if (!D || !D.errBox) return;
+    if (!D.formError) return D.errBox.replaceChildren();
+    D.errBox.replaceChildren(h('div', {
+        class: 'testbox bad',
+        role: 'alert'
+    }, icon('alert'), h('div', {}, h('b', {
+        text: 'Não foi possível salvar'
+    }), h('div', {
+        text: D.formError
+    }))));
+}
+
+// Leva o usuário ao campo com problema (o diálogo rola; o nome fica no topo)
+function focusConnName() {
+    const inp = $('#dlgConn input[data-role="connName"]');
+    if (!inp) return;
+    inp.classList.add('invalid');
+    inp.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    inp.focus({ preventScroll: true });
+}
+
 async function saveDraft() {
     if (providerByKey(D.providerKey)?.enabled === false) return;
+    if (!D.name.trim()) {
+        setFormError('Informe um nome para a conexão.');
+        focusConnName();
+        return;
+    }
+    setFormError(null);
     try {
         await call('profiles.save', {
             profile: draftProfile()
@@ -1794,7 +1850,7 @@ async function saveDraft() {
         await loadProfiles();
         toast('Conexão salva.', 'ok');
     } catch (err) {
-        toast(err.message, 'err');
+        setFormError(err.message);
     }
 }
 

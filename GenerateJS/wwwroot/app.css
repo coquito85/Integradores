@@ -1639,3 +1639,32 @@ dialog {
     border-color: var(--primary);
     color: var(--primary);
 }
+
+/* Erro dentro do diálogo de conexão (fixo acima do rodapé) e campo inválido */
+.dlg-error {
+    padding: 0 22px;
+}
+
+    .dlg-error .testbox {
+        margin: 8px 0 0;
+    }
+
+input[type="text"].invalid {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 25%, transparent);
+}
+
+/* Avisos (toast) na camada superior, acima de <dialog> modal */
+.toasts[popover] {
+    inset: auto;
+    right: 20px;
+    bottom: 88px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    overflow: visible;
+    width: auto;
+    height: auto;
+}
