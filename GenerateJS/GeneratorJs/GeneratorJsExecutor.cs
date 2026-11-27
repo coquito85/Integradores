@@ -1,5 +1,5 @@
 
-using ReferenciaFactory.Banco;
+using ReferenciaFactory.Classes;
 using ReferenciaFactory.Gerador;
 using ReferenciaFactory.Layouts;
 using ReferenciaStandard.Entidades;
@@ -49,18 +49,18 @@ namespace GenerateJS.GeneratorJs
 
         /// <summary>Testa a conexao do formulario; campos secretos em branco reaproveitam os da conexao ja salva.</summary>
         public Task<TestResult> TestarConexaoAsync(ConnectionProfile rascunho) =>
-            DbSession.TestAsync(MesclarSegredos(rascunho));
+            DatabaseConnection.TestAsync(MesclarSegredos(rascunho));
 
         public async Task<List<string>> ListarTabelasAsync(string conexaoId)
         {
-            using var s = await DbSession.OpenAsync(_profiles.GetDecrypted(conexaoId));
+            using var s = await DatabaseConnection.OpenAsync(_profiles.GetDecrypted(conexaoId));
             var tabelas = await SchemaReader.ListTablesAsync(s);
             return tabelas.Select(t => t.FullName).ToList();
         }
 
         public async Task<List<ColumnRef>> ListarColunasAsync(string conexaoId, string tabela)
         {
-            using var s = await DbSession.OpenAsync(_profiles.GetDecrypted(conexaoId));
+            using var s = await DatabaseConnection.OpenAsync(_profiles.GetDecrypted(conexaoId));
             var tabelas = await SchemaReader.ListTablesAsync(s);
             var t = tabelas.FirstOrDefault(x => x.FullName.Equals(tabela, StringComparison.OrdinalIgnoreCase))
                     ?? throw new GeneratorException($"Tabela '{tabela}' nao encontrada.");

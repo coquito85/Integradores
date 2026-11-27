@@ -2,7 +2,7 @@ using System.Data;
 
 using ReferenciaStandard.Helpers;
 
-namespace ReferenciaFactory.Banco
+namespace ReferenciaFactory.Classes
 {
 
     public sealed record TableRef(string? Schema, string Name)
@@ -23,7 +23,7 @@ namespace ReferenciaFactory.Banco
     /// <summary>Introspeccao do catalogo para qualquer banco, via dialeto (ou GetSchema no Access).</summary>
     public static class SchemaReader
     {
-        public static async Task<List<TableRef>> ListTablesAsync(DbSession s, CancellationToken ct = default)
+        public static async Task<List<TableRef>> ListTablesAsync(DatabaseConnection s, CancellationToken ct = default)
         {
             var result = new List<TableRef>();
             var d = s.Dialect;
@@ -48,7 +48,7 @@ namespace ReferenciaFactory.Banco
             return result;
         }
 
-        public static async Task<List<ColumnRef>> ListColumnsAsync(DbSession s, TableRef table, CancellationToken ct = default)
+        public static async Task<List<ColumnRef>> ListColumnsAsync(DatabaseConnection s, TableRef table, CancellationToken ct = default)
         {
             var result = new List<ColumnRef>();
             var d = s.Dialect;
@@ -74,7 +74,7 @@ namespace ReferenciaFactory.Banco
         /// Casa o nome da tabela e das colunas do layout com os nomes reais do banco (ignorando maiusculas/minusculas)
         /// e falha ANTES de rodar o SELECT se algo estiver faltando, listando exatamente o que.
         /// </summary>
-        public static async Task<SchemaMap?> ResolveAsync(DbSession s, string requestedTable, IEnumerable<string> layoutColumns, CancellationToken ct = default)
+        public static async Task<SchemaMap?> ResolveAsync(DatabaseConnection s, string requestedTable, IEnumerable<string> layoutColumns, CancellationToken ct = default)
         {
             var tables = await ListTablesAsync(s, ct).ConfigureAwait(false);
             if (tables.Count == 0) return null;

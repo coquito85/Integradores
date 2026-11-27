@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using ReferenciaStandard.Entidades;
 using ReferenciaStandard.Helpers;
-using ReferenciaFactory.Banco;
+using ReferenciaFactory.Classes;
 using ReferenciaFactory.Layouts;
 
 namespace ReferenciaFactory.Gerador
@@ -19,7 +19,7 @@ namespace ReferenciaFactory.Gerador
 
         private sealed record Prepared(LayoutDefinition Layout, BuiltQuery Query, List<string> Warnings);
 
-        private static async Task<Prepared> PrepareAsync(DbSession s, LayoutDefinition layout, GenerateRequest req,
+        private static async Task<Prepared> PrepareAsync(DatabaseConnection s, LayoutDefinition layout, GenerateRequest req,
             int? limit, CancellationToken ct)
         {
             if (layout.ErrorCount > 0)
@@ -71,7 +71,7 @@ namespace ReferenciaFactory.Gerador
         {
             var layout = _layouts.Get(req.LayoutId);
             var profile = _profiles.GetDecrypted(req.ProfileId);
-            using var s = await DbSession.OpenAsync(profile, ct).ConfigureAwait(false);
+            using var s = await DatabaseConnection.OpenAsync(profile, ct).ConfigureAwait(false);
 
             var prep = await PrepareAsync(s, layout, req, rows, ct).ConfigureAwait(false);
             var result = new PreviewResult
@@ -126,7 +126,7 @@ namespace ReferenciaFactory.Gerador
 
                 log.Report(LogEntry.Info($"Layout: {layout.Name} ({layout.Id})"));
                 log.Report(LogEntry.Info($"Conectando em {profile.Name} ({ProviderCatalog.Get(profile.ProviderKey).DisplayName})..."));
-                using var s = await DbSession.OpenAsync(profile, ct).ConfigureAwait(false);
+                using var s = await DatabaseConnection.OpenAsync(profile, ct).ConfigureAwait(false);
                 log.Report(LogEntry.Ok("Conectado."));
 
                 log.Report(LogEntry.Info("Conferindo tabela e colunas do layout no banco..."));

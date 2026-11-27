@@ -1,5 +1,5 @@
 using Microsoft.Web.WebView2.Core;
-using ReferenciaFactory.Banco;
+using ReferenciaFactory.Classes;
 using ReferenciaStandard.Entidades;
 using ReferenciaStandard.Helpers;
 using ReferenciaStandard.Repository;

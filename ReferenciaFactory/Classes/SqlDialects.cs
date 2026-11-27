@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
  
 
-namespace ReferenciaFactory.Banco
+namespace ReferenciaFactory.Classes
 {
 
     /// <summary>

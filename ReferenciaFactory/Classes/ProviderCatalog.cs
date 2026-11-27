@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using ReferenciaStandard.Entidades;
 using ReferenciaStandard.Helpers;
 
-namespace ReferenciaFactory.Banco
+namespace ReferenciaFactory.Classes
 {
 
     public sealed class ProviderField

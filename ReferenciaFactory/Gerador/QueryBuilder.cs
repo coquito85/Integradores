@@ -1,6 +1,6 @@
 using ReferenciaStandard.Entidades;
 using ReferenciaStandard.Helpers;
-using ReferenciaFactory.Banco;
+using ReferenciaFactory.Classes;
 using ReferenciaFactory.Layouts;
 
 namespace ReferenciaFactory.Gerador;

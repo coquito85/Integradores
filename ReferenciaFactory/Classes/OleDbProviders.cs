@@ -1,6 +1,6 @@
 using System.Data.OleDb;
 
-namespace ReferenciaFactory.Banco
+namespace ReferenciaFactory.Classes
 {
     /// <summary>Opcao de provider OLE DB oferecida na tela (o usuario ainda pode digitar qualquer outro).</summary>
     public sealed record OleDbOption(string Value, string Label, bool Installed);
