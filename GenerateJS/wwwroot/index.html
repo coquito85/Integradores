@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="matrix">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GeneratorJS — Integrador</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">{ }</div>
+      <div><b>GeneratorJS</b><span>Integrador · DOI</span></div>
+    </div>
+    <div class="nav-label">Trabalho</div>
+    <button class="nav active" data-view="gerar"></button>
+    <button class="nav" data-view="conexoes"></button>
+    <button class="nav" data-view="layouts"></button>
+    <button class="nav" data-view="historico"></button>
+    <div class="side-foot">
+      <div class="field" style="margin:0">
+        <label for="theme">Tema</label>
+        <select id="theme">
+          <option value="matrix">Matrix (verde)</option>
+          <option value="grafite">Grafite</option>
+          <option value="classico">Clássico</option>
+        </select>
+      </div>
+      <div class="ver"><span>Versão</span><span id="ver">—</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div><h1 id="title"></h1><p id="subtitle"></p></div>
+      <div class="spacer"></div>
+      <div id="topActions" class="row"></div>
+    </header>
+    <div class="content">
+      <section class="view active" id="view-gerar"></section>
+      <section class="view" id="view-conexoes"></section>
+      <section class="view" id="view-layouts"></section>
+      <section class="view" id="view-historico"></section>
+    </div>
+  </main>
+</div>
+
+<dialog id="dlgConn"></dialog>
+<div class="toasts" id="toasts"></div>
+<script src="app.js"></script>
+</body>
+</html>

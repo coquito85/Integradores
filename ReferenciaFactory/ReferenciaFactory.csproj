@@ -5,16 +5,28 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
-
+	  <!-- DPAPI (SecretBox) e OleDb sao so Windows; o aplicativo ja e Windows, entao o aviso de plataforma nao ajuda -->
+	  <NoWarn>$(NoWarn);CA1416</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="AutoItX.NetCore" Version="3.3.16.1" />
     <PackageReference Include="Microsoft.ML" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4370.26" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ReferenciaStandard\ReferenciaStandard.csproj" />
+	  <!-- Gerador de JSON (GeneratorJS): um pacote por familia de banco.
+         Remova o que nao usar (e a linha correspondente em Banco\ProviderCatalog.cs). -->
+	  <PackageReference Include="Microsoft.Data.SqlClient" Version="8.0.0" />
+	  <PackageReference Include="Npgsql" Version="11.0.0" />
+	  <PackageReference Include="MySqlConnector" Version="3.0.0" />
+	  <PackageReference Include="Microsoft.Data.Sqlite" Version="11.0.0" />
+	  <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.26.401" />
+	  <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="10.3.4" />
+	  <PackageReference Include="System.Data.OleDb" Version="11.0.0" />
+	  <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="11.0.0" />
   </ItemGroup>
 
 </Project>

@@ -13,4 +13,11 @@ namespace ReferenciaStandard.Repository
         Arquivos,
         Virtual
     }
+
+    public enum IsFindingLevel
+    { 
+        Info,
+        Warning,
+        Error 
+    }
 }

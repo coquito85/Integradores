@@ -1,3 +1,5 @@
+using GenerateJS.Gerenciador;
+
 namespace GenerateJS
 {
     internal static class Program
@@ -11,6 +13,8 @@ namespace GenerateJS
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
+            Application.ThreadException += (_, e) =>
+                MessageBox.Show(e.Exception.Message, "GeneratorJS", MessageBoxButtons.OK, MessageBoxIcon.Error);
             Application.Run(new frmTelaGeneratorJS());
         }
     }
