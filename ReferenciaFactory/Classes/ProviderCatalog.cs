@@ -47,9 +47,7 @@ namespace ReferenciaFactory.Classes
         public bool IsFile { get; init; }
 
         public required ISqlDialect Dialect { get; init; }
-        public required Func<DbProviderFactory> Factory { get; init; }
         public required List<ProviderField> Fields { get; init; }
-        public required Func<IReadOnlyDictionary<string, string>, string> BuildConnectionString { get; init; }
         /// <summary>Nomes de provider usados no GeneratorJS_Database.xml antigo (migracao).</summary>
         public string[] LegacyNames { get; init; } = Array.Empty<string>();
     }
@@ -63,41 +61,6 @@ namespace ReferenciaFactory.Classes
 
         private static readonly string[] SecretFields = { "password", "dbpassword" };
         public static bool IsSecretField(string id) => SecretFields.Contains(id, StringComparer.OrdinalIgnoreCase);
-
-        // ------------------------------------------------------------ helpers de leitura dos campos
-        private static string F(IReadOnlyDictionary<string, string> f, string key) =>
-            f.TryGetValue(key, out var v) ? v.Trim() : "";
-
-        private static bool B(IReadOnlyDictionary<string, string> f, string key, bool def = false) =>
-            f.TryGetValue(key, out var v) && bool.TryParse(v, out var b) ? b : def;
-
-        /// <summary>Tri-estado (IsBooleanType do DatabaseConnection): ausente = padrao do driver.</summary>
-        private static bool? OptBool(IReadOnlyDictionary<string, string> f, string key) =>
-            f.TryGetValue(key, out var v) && bool.TryParse(v, out var b) ? b : null;
-
-        private static void SetText(DbConnectionStringBuilder b, string key, string value)
-        {
-            if (value.Length > 0) b[key] = value;
-        }
-
-        private static void SetBool(DbConnectionStringBuilder b, string key, bool? value)
-        {
-            if (value.HasValue) b[key] = value.Value ? "true" : "false";
-        }
-
-        /// <summary>So grava numeros &gt; 0 (mesmo criterio do AddIf(... &gt; 0) do DatabaseConnection).</summary>
-        private static void SetPositive(DbConnectionStringBuilder b, IReadOnlyDictionary<string, string> f, string field, string key)
-        {
-            if (int.TryParse(F(f, field), out var n) && n > 0) b[key] = n.ToString();
-        }
-
-        private static DbConnectionStringBuilder Start(IReadOnlyDictionary<string, string> f)
-        {
-            var b = new DbConnectionStringBuilder();
-            var extra = F(f, "extra");
-            if (extra.Length > 0) b.ConnectionString = extra;   // opcoes avancadas vem primeiro; o formulario prevalece
-            return b;
-        }
 
         // ------------------------------------------------------------ campos reutilizados
         private static List<ProviderField> ServerFields(string defaultPort, string serverHint, bool windowsAuth = false)
@@ -189,7 +152,6 @@ namespace ReferenciaFactory.Classes
             Hint = "Titulos ou observacoes antes do cabecalho."
         };
 
-        private static string FileConnectionString(IReadOnlyDictionary<string, string> _) => "Data Source=:memory:";
 
         // ------------------------------------------------------------ catalogo
         public static readonly IReadOnlyList<ProviderInfo> All = new List<ProviderInfo>
@@ -198,7 +160,6 @@ namespace ReferenciaFactory.Classes
         {
             Key = "sqlserver", DisplayName = "SQL Server", Category = CatDatabase, Abbr = "SQL",
             Dialect = new SqlServerDialect(),
-            Factory = () => Microsoft.Data.SqlClient.SqlClientFactory.Instance,
             LegacyNames = new[] { "System.Data.SqlClient", "Microsoft.Data.SqlClient", "SQLOLEDB.1", "SQLNCLI11", "MSOLEDBSQL" },
             Fields = ServerFields("1433", "localhost\\SQLEXPRESS", windowsAuth: true)
                 .Append(new ProviderField { Id = "trustCert", Label = "Confiar no certificado do servidor", Kind = "bool", Default = "true" })
@@ -208,49 +169,20 @@ namespace ReferenciaFactory.Classes
                     TriField("mars", "MultipleActiveResultSets (MARS)"),
                     TriField("persist", "Persist Security Info")))
                 .ToList(),
-            BuildConnectionString = f =>
-            {
-                var b = Start(f);
-                var server = F(f, "server");
-                if (F(f, "port").Length > 0) server += "," + F(f, "port");
-                b["Data Source"] = server;
-                b["Initial Catalog"] = F(f, "database");
-                if (B(f, "integrated")) b["Integrated Security"] = "true";
-                else { b["User ID"] = F(f, "user"); b["Password"] = F(f, "password"); }
-                b["TrustServerCertificate"] = B(f, "trustCert", true) ? "true" : "false";
-                SetBool(b, "Encrypt", OptBool(f, "encrypt"));
-                SetBool(b, "Pooling", OptBool(f, "pooling"));
-                SetBool(b, "MultipleActiveResultSets", OptBool(f, "mars"));
-                SetBool(b, "Persist Security Info", OptBool(f, "persist"));
-                SetPositive(b, f, "connectTimeout", "Connect Timeout");
-                b["Application Name"] = "GeneratorJS";
-                return b.ConnectionString;
-            }
+
         },
         new()
         {
             Key = "postgres", DisplayName = "PostgreSQL", Category = CatDatabase, Abbr = "PG",
             Dialect = new PostgreSqlDialect(),
-            Factory = () => Npgsql.NpgsqlFactory.Instance,
             LegacyNames = new[] { "Npgsql" },
             Fields = ServerFields("5432", "localhost").Concat(Advanced()).ToList(),
-            BuildConnectionString = f =>
-            {
-                var b = Start(f);
-                b["Host"] = F(f, "server");
-                if (F(f, "port").Length > 0) b["Port"] = F(f, "port");
-                b["Database"] = F(f, "database");
-                b["Username"] = F(f, "user");
-                b["Password"] = F(f, "password");
-                SetPositive(b, f, "connectTimeout", "Timeout");
-                return b.ConnectionString;
-            }
+
         },
         new()
         {
             Key = "mysql", DisplayName = "MySQL / MariaDB", Category = CatDatabase, Abbr = "MY",
             Dialect = new MySqlDialect(),
-            Factory = () => MySqlConnector.MySqlConnectorFactory.Instance,
             LegacyNames = new[] { "MySql.Data.MySqlClient", "MySqlConnector" },
             Fields = ServerFields("3306", "localhost")
                 .Concat(Advanced(
@@ -269,28 +201,12 @@ namespace ReferenciaFactory.Classes
                         Hint = "Evita erro ao ler datas zeradas do MySQL."
                     }))
                 .ToList(),
-            BuildConnectionString = f =>
-            {
-                var b = Start(f);
-                b["Server"] = F(f, "server");
-                if (F(f, "port").Length > 0) b["Port"] = F(f, "port");
-                b["Database"] = F(f, "database");
-                b["User ID"] = F(f, "user");
-                b["Password"] = F(f, "password");
-                SetText(b, "SslMode", F(f, "sslMode"));
-                SetText(b, "CharSet", F(f, "charset"));
-                SetBool(b, "AllowPublicKeyRetrieval", OptBool(f, "allowPublicKey"));
-                SetBool(b, "AllowZeroDateTime", OptBool(f, "allowZeroDate"));
-                b["ConvertZeroDateTime"] = B(f, "convertZeroDate", true) ? "true" : "false";
-                SetPositive(b, f, "connectTimeout", "Connection Timeout");
-                return b.ConnectionString;
-            }
+
         },
         new()
         {
             Key = "oracle", DisplayName = "Oracle", Category = CatDatabase, Abbr = "ORA",
             Dialect = new OracleDialect(),
-            Factory = () => Oracle.ManagedDataAccess.Client.OracleClientFactory.Instance,
             LegacyNames = new[] { "Oracle.ManagedDataAccess.Client" },
             Fields = new List<ProviderField>
             {
@@ -300,22 +216,12 @@ namespace ReferenciaFactory.Classes
                 new() { Id = "user", Label = "Usuario" },
                 new() { Id = "password", Label = "Senha", Kind = "password" },
             }.Concat(Advanced()).ToList(),
-            BuildConnectionString = f =>
-            {
-                var b = Start(f);
-                var port = F(f, "port").Length > 0 ? F(f, "port") : "1521";
-                b["Data Source"] = $"//{F(f, "server")}:{port}/{F(f, "database")}";
-                b["User Id"] = F(f, "user");
-                b["Password"] = F(f, "password");
-                SetPositive(b, f, "connectTimeout", "Connection Timeout");
-                return b.ConnectionString;
-            }
+
         },
         new()
         {
             Key = "firebird", DisplayName = "Firebird / InterBase", Category = CatDatabase, Abbr = "FB",
             Dialect = new FirebirdDialect(),
-            Factory = () => FirebirdSql.Data.FirebirdClient.FirebirdClientFactory.Instance,
             LegacyNames = new[] { "FirebirdSql.Data.FirebirdClient", "InterBase.Data.IBClient" },
             Fields = new List<ProviderField>
             {
@@ -327,25 +233,12 @@ namespace ReferenciaFactory.Classes
             }.Concat(Advanced(
                 new ProviderField { Id = "charset", Label = "Charset", Group = "Avançado", Placeholder = "UTF8", Hint = "Vazio = UTF8." }))
             .ToList(),
-            BuildConnectionString = f =>
-            {
-                var b = Start(f);
-                b["DataSource"] = F(f, "server");
-                if (F(f, "port").Length > 0) b["Port"] = F(f, "port");
-                b["Database"] = F(f, "database");
-                b["User"] = F(f, "user");
-                b["Password"] = F(f, "password");
-                if (F(f, "charset").Length > 0) b["Charset"] = F(f, "charset");
-                else if (!b.ContainsKey("Charset")) b["Charset"] = "UTF8";
-                SetPositive(b, f, "connectTimeout", "Connection Timeout");
-                return b.ConnectionString;
-            }
+
         },
         new()
         {
             Key = "sqlite", DisplayName = "SQLite", Category = CatDatabase, Abbr = "LITE",
             Dialect = new SqliteDialect(),
-            Factory = () => Microsoft.Data.Sqlite.SqliteFactory.Instance,
             LegacyNames = new[] { "System.Data.SQLite" },
             Fields = new List<ProviderField>
             {
@@ -358,19 +251,12 @@ namespace ReferenciaFactory.Classes
                 CommandTimeoutField,
                 ExtraField
             },
-            BuildConnectionString = f =>
-            {
-                var b = Start(f);
-                b["Data Source"] = F(f, "file");
-                if (!b.ContainsKey("Mode")) b["Mode"] = "ReadOnly";   // o gerador so le
-                return b.ConnectionString;
-            }
+
         },
         new()
         {
             Key = "access", DisplayName = "Microsoft Access", Category = CatDatabase, Abbr = "ACC",
             Dialect = new AccessDialect(),
-            Factory = () => System.Data.OleDb.OleDbFactory.Instance,
             LegacyNames = new[] { "System.Data.OleDb", "Microsoft.ACE.OLEDB.12.0", "Microsoft.Jet.OLEDB.4.0" },
             Fields = new List<ProviderField>
             {
@@ -384,21 +270,14 @@ namespace ReferenciaFactory.Classes
                 {
                     Id = "oledb", Label = "Provider OLE DB", Kind = "combo",
                     Placeholder = "Automatico",
-                    HintSource = OleDbProviders.Dica,
-                    OptionsSource = OleDbProviders.Opcoes
+                    HintSource = DatabaseConnection.OleDbDica,
+                    OptionsSource = DatabaseConnection.OleDbOpcoes
                 },
                 new() { Id = "dbpassword", Label = "Senha do banco", Kind = "password" },
                 CommandTimeoutField,
                 ExtraField
             },
-            BuildConnectionString = f =>
-            {
-                var b = Start(f);
-                b["Provider"] = F(f, "oledb").Length > 0 ? F(f, "oledb") : OleDbProviders.Automatico();
-                b["Data Source"] = F(f, "file");
-                if (F(f, "dbpassword").Length > 0) b["Jet OLEDB:Database Password"] = F(f, "dbpassword");
-                return b.ConnectionString;
-            }
+
         },
 
         // ---------------------------------------------------------------- arquivos (lidos por FileSourceLoader)
@@ -407,7 +286,6 @@ namespace ReferenciaFactory.Classes
             Key = "excel", DisplayName = "Excel", Category = CatExcel, Abbr = "XLS",
             IsFile = true, SupportsRaw = false,
             Dialect = new SqliteDialect(),
-            Factory = () => Microsoft.Data.Sqlite.SqliteFactory.Instance,
             Fields = new List<ProviderField>
             {
                 new()
@@ -420,14 +298,12 @@ namespace ReferenciaFactory.Classes
                 HeaderField(),
                 SkipRowsField()
             },
-            BuildConnectionString = FileConnectionString
         },
         new()
         {
             Key = "csv", DisplayName = "CSV", Category = CatCsv, Abbr = "CSV",
             IsFile = true, SupportsRaw = false,
             Dialect = new SqliteDialect(),
-            Factory = () => Microsoft.Data.Sqlite.SqliteFactory.Instance,
             Fields = new List<ProviderField>
             {
                 new()
@@ -446,14 +322,12 @@ namespace ReferenciaFactory.Classes
                 HeaderField(),
                 SkipRowsField()
             },
-            BuildConnectionString = FileConnectionString
         },
         new()
         {
             Key = "txt", DisplayName = "TXT", Category = CatTxt, Abbr = "TXT",
             IsFile = true, SupportsRaw = false,
             Dialect = new SqliteDialect(),
-            Factory = () => Microsoft.Data.Sqlite.SqliteFactory.Instance,
             Fields = new List<ProviderField>
             {
                 new()
@@ -478,7 +352,6 @@ namespace ReferenciaFactory.Classes
                 HeaderField(),
                 SkipRowsField()
             },
-            BuildConnectionString = FileConnectionString
         },
     };
 
@@ -506,12 +379,12 @@ namespace ReferenciaFactory.Classes
             if (!p.SupportsRaw) throw new GeneratorException($"{p.DisplayName} nao usa string de conexao.");
             var preenchido = p.Fields.Where(x => x.Required)
                 .Any(x => profile.Fields.TryGetValue(x.Id, out var v) && !string.IsNullOrWhiteSpace(v));
-            return preenchido ? p.BuildConnectionString(profile.Fields) : "";
+            return preenchido ? DatabaseConnection.BuildFromFields(p.Key, profile.Fields) : "";
         }
 
         /// <summary>
         /// String de conexao -> campos do formulario (usado ao desmarcar a opcao). E o inverso de
-        /// <see cref="ProviderInfo.BuildConnectionString"/>: o que o formulario nao reconhece vai para o campo "extra",
+        /// <see cref="DatabaseConnection.BuildFromFields"/>: o que o formulario nao reconhece vai para o campo "extra",
         /// entao nada se perde. Para um banco novo, inclua um case aqui.
         /// </summary>
         public static Dictionary<string, string> ParseConnectionString(string? providerKey, string? raw)
@@ -667,21 +540,6 @@ namespace ReferenciaFactory.Classes
             if (rest.Count > 0) f["extra"] = rest.ConnectionString;
 
             return f;
-        }
-
-        public static string BuildConnectionString(ConnectionProfile profile)
-        {
-            var p = Get(profile.ProviderKey);
-            if (profile.Mode == "raw" && p.SupportsRaw)
-            {
-                if (string.IsNullOrWhiteSpace(profile.RawConnectionString))
-                    throw new GeneratorException("Informe a string de conexao.");
-                return profile.RawConnectionString!;
-            }
-            foreach (var field in p.Fields.Where(x => x.Required))
-                if (!profile.Fields.TryGetValue(field.Id, out var v) || string.IsNullOrWhiteSpace(v))
-                    throw new GeneratorException($"Preencha o campo \"{field.Label}\".");
-            return p.BuildConnectionString(profile.Fields);
         }
     }
 }

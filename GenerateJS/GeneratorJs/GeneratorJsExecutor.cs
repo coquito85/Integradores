@@ -54,17 +54,17 @@ namespace GenerateJS.GeneratorJs
         public async Task<List<string>> ListarTabelasAsync(string conexaoId)
         {
             using var s = await DatabaseConnection.OpenAsync(_profiles.GetDecrypted(conexaoId));
-            var tabelas = await SchemaReader.ListTablesAsync(s);
+            var tabelas = await s.ListTablesAsync();
             return tabelas.Select(t => t.FullName).ToList();
         }
 
         public async Task<List<ColumnRef>> ListarColunasAsync(string conexaoId, string tabela)
         {
             using var s = await DatabaseConnection.OpenAsync(_profiles.GetDecrypted(conexaoId));
-            var tabelas = await SchemaReader.ListTablesAsync(s);
+            var tabelas = await s.ListTablesAsync();
             var t = tabelas.FirstOrDefault(x => x.FullName.Equals(tabela, StringComparison.OrdinalIgnoreCase))
                     ?? throw new GeneratorException($"Tabela '{tabela}' nao encontrada.");
-            return await SchemaReader.ListColumnsAsync(s, t);
+            return await s.ListColumnsAsync(t);
         }
 
         private ConnectionProfile MesclarSegredos(ConnectionProfile rascunho)

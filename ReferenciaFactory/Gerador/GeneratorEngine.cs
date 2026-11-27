@@ -31,7 +31,8 @@ namespace ReferenciaFactory.Gerador
             SchemaMap? map = null;
             try
             {
-                map = await SchemaReader.ResolveAsync(s, table, layout.Columns.Select(c => c.Name), ct).ConfigureAwait(false);
+                map = await s.ResolveAsync(table, layout.Columns.Select(c => c.Name), ct).ConfigureAwait(false);
+               
                 if (map is null) warnings.Add("Catalogo vazio: usando os nomes do layout sem conferir a tabela.");
                 else if (map.Columns is null) warnings.Add("Colunas da tabela nao puderam ser lidas: usando os nomes do layout.");
             }
