@@ -56,11 +56,34 @@ namespace ReferenciaFactory.Banco
         {
             var l = new List<ProviderField>
         {
-            new() { Id = "server", Label = "Servidor", Required = true, Placeholder = serverHint },
-            new() { Id = "port", Label = "Porta", Kind = "number", Placeholder = defaultPort },
-            new() { Id = "database", Label = "Banco de dados", Required = true },
+            new() 
+            { 
+                Id = "server", 
+                Label = "Servidor", 
+                Required = true, 
+                Placeholder = serverHint 
+            },
+            new() 
+            { 
+                Id = "port",
+                Label = "Porta", 
+                Kind = "number",
+                Placeholder = defaultPort 
+            },
+            new() 
+            { 
+                Id = "database", 
+                Label = "Banco de dados",
+                Required = true 
+            },
         };
-            if (windowsAuth) l.Add(new() { Id = "integrated", Label = "Autenticacao do Windows", Kind = "bool", Default = "false" });
+            if (windowsAuth) l.Add(new()
+            { 
+                Id = "integrated",
+                Label = "Autenticacao do Windows", 
+                Kind = "bool", 
+                Default = "false"
+            });
             l.Add(new() { Id = "user", Label = "Usuario" });
             l.Add(new() { Id = "password", Label = "Senha", Kind = "password" });
             return l;
@@ -78,10 +101,16 @@ namespace ReferenciaFactory.Banco
     {
         new()
         {
-            Key = "sqlserver", DisplayName = "SQL Server", Category = "Servidor",
+            Key = "sqlserver", 
+            DisplayName = "SQL Server", 
+            Category = "Servidor",
             Dialect = new SqlServerDialect(),
             Factory = () => Microsoft.Data.SqlClient.SqlClientFactory.Instance,
-            LegacyNames = new[] { "System.Data.SqlClient", "Microsoft.Data.SqlClient", "SQLOLEDB.1", "SQLNCLI11", "MSOLEDBSQL" },
+            LegacyNames = new[] 
+            { "System.Data.SqlClient",
+                "Microsoft.Data.SqlClient",
+                "SQLOLEDB.1", "SQLNCLI11",
+                "MSOLEDBSQL" },
             Fields = ServerFields("1433", "localhost\\SQLEXPRESS", windowsAuth: true)
                 .Append(new ProviderField { Id = "trustCert", Label = "Confiar no certificado do servidor", Kind = "bool", Default = "true" })
                 .Append(ExtraField).ToList(),

@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using ExecutorService.GeneratorJs;
+
 using Microsoft.Web.WebView2.Core;
 
 
@@ -58,7 +58,7 @@ namespace GenerateJS.Gerenciador
             core.NavigationStarting += (_, e) => { if (!e.Uri.StartsWith($"https://{Host}/", StringComparison.OrdinalIgnoreCase)) e.Cancel = true; };
             core.NewWindowRequested += (_, e) => e.Handled = true;
 
-            _bridge = new Bridge(core, this, new GeneratorJsExecutor());
+            _bridge = new Bridge(core, this, new GeneratorJs.GeneratorJsExecutor());
             core.WebMessageReceived += (_, e) => _ = _bridge.HandleAsync(e.WebMessageAsJson);
 
             core.Navigate($"https://{Host}/index.html");

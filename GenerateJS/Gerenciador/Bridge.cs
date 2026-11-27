@@ -1,4 +1,4 @@
-using ExecutorService.GeneratorJs;
+
 using Microsoft.Web.WebView2.Core;
 using ReferenciaStandard.Entidades;
 using ReferenciaStandard.Helpers;
@@ -20,9 +20,9 @@ namespace GenerateJS.Gerenciador
     {
         private readonly CoreWebView2 _core;
         private readonly frmTelaGeneratorJS _ui;
-        private readonly GeneratorJsExecutor _exec;
+        private readonly GeneratorJs.GeneratorJsExecutor _exec;
 
-        public Bridge(CoreWebView2 core, frmTelaGeneratorJS ui, GeneratorJsExecutor exec)
+        public Bridge(CoreWebView2 core, frmTelaGeneratorJS ui, GeneratorJs.GeneratorJsExecutor exec)
         {
             _core = core;
             _ui = ui;

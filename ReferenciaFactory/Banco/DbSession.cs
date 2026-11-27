@@ -1,4 +1,4 @@
-using System.Data;
+
 using System.Data.Common;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -51,8 +51,29 @@ public sealed class DbSession : IDisposable
         catch (Exception ex)
         {
             conn?.Dispose();
-            throw new GeneratorException($"Falha ao conectar em {provider.DisplayName}: {ex.Message}", ex);
+            throw new GeneratorException($"Falha ao conectar em {provider.DisplayName}: {ex.Message}{DriverHint(provider, ex)}", ex);
         }
+    }
+
+    /// <summary>
+    /// Para bancos OLE DB (Access), o erro "provider is not registered" quase sempre e de arquitetura:
+    /// o driver instalado (ACE/Jet) nao e da mesma arquitetura (32/64 bits) do aplicativo.
+    /// </summary>
+    private static string DriverHint(ProviderInfo provider, Exception ex)
+    {
+        if (!provider.Key.Equals("access", StringComparison.OrdinalIgnoreCase)) return "";
+
+        var msg = ex.Message ?? "";
+        if (!msg.Contains("not registered", StringComparison.OrdinalIgnoreCase)) return "";
+
+        var arq = Environment.Is64BitProcess ? "64" : "32";
+        var outra = Environment.Is64BitProcess ? "32" : "64";
+
+        return $"{Environment.NewLine}Dica: o aplicativo esta rodando em {arq} bits, e o driver do Access precisa ter a mesma arquitetura. " +
+               $"Instale o Microsoft Access Database Engine ({arq} bits)" +
+               (Environment.Is64BitProcess
+                   ? ", ou execute o aplicativo em x86 (32 bits). Para arquivos .mdb em 32 bits, tambem da para usar Microsoft.Jet.OLEDB.4.0."
+                   : $". Se o que esta instalado for a versao de {outra} bits, execute o aplicativo em x64 ou instale a versao de {arq} bits.");
     }
 
     public static async Task<TestResult> TestAsync(ConnectionProfile profile, CancellationToken ct = default)

@@ -1,7 +1,7 @@
 using ReferenciaStandard.Entidades;
 using ReferenciaStandard.Helpers;
 
-namespace ExecutorService.GeneratorJs;
+namespace GenerateJS.GeneratorJs;
 
 /// <summary>Historico das ultimas execucoes do GeneratorJS (history.json em %AppData%).</summary>
 internal sealed class HistoricoStore

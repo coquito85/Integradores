@@ -6,7 +6,7 @@ using ReferenciaStandard.Entidades;
 using ReferenciaStandard.Helpers;
 using ReferenciaStandard.Repository;
 
-namespace ExecutorService.GeneratorJs
+namespace GenerateJS.GeneratorJs
 {
     /// <summary>
     /// Ponto unico de entrada do GeneratorJS. A tela (GenerateJS) so conversa com esta classe: ela recebe a ordem,
