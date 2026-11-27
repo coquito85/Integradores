@@ -782,6 +782,9 @@
                     case 'profiles.delete':
                         profiles = profiles.filter(p => p.id !== a.id);
                         return null;
+                    case 'profiles.setDefault':
+                        profiles.forEach(p => p.isDefault = !!a.id && p.id === a.id);
+                        return null;
                     case 'profiles.test':
                         await sleep(500);
                         return a.profile.name.includes('falha') ? {

@@ -35,12 +35,14 @@ namespace ReferenciaFactory.Classes
     public sealed class ProfileStore
     {
         private readonly string _file;
+        private readonly string _defaultFile;
         private readonly object _lock = new();
 
         public ProfileStore(string folder)
         {
             Directory.CreateDirectory(folder);
             _file = Path.Combine(folder, "connections.json");
+            _defaultFile = Path.Combine(folder, "default-connection.txt");
         }
 
         /// <summary>Perfis como gravados (segredos ainda criptografados).</summary>
@@ -106,8 +108,41 @@ namespace ReferenciaFactory.Classes
             lock (_lock)
             {
                 var all = LoadStored();
+                var eraPadrao = GetDefaultId() == id;
                 all.RemoveAll(x => x.Id == id);
                 Gravar(all);
+                if (eraPadrao) SetDefaultId(null);
+            }
+        }
+
+        /// <summary>Id da conexao marcada como padrao (pre-selecionada na tela Gerar JSON) ou null.</summary>
+        public string? GetDefaultId()
+        {
+            lock (_lock)
+            {
+                try
+                {
+                    if (!File.Exists(_defaultFile)) return null;
+                    var id = File.ReadAllText(_defaultFile).Trim();
+                    return id.Length > 0 && LoadStored().Any(x => x.Id == id) ? id : null;
+                }
+                catch { return null; }
+            }
+        }
+
+        /// <summary>Marca a conexao como padrao. id nulo/vazio remove a marcacao.</summary>
+        public void SetDefaultId(string? id)
+        {
+            lock (_lock)
+            {
+                if (string.IsNullOrWhiteSpace(id))
+                {
+                    if (File.Exists(_defaultFile)) File.Delete(_defaultFile);
+                    return;
+                }
+                if (!LoadStored().Any(x => x.Id == id))
+                    throw new GeneratorException("Conexao nao encontrada.");
+                File.WriteAllText(_defaultFile, id);
             }
         }
 

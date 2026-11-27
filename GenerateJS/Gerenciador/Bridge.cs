@@ -144,6 +144,11 @@ namespace GenerateJS.Gerenciador
                     _exec.ExcluirConexao(Str(a, "id"));
                     return null;
 
+                // Marca a conexao padrao (id vazio = remove a marcacao).
+                case "profiles.setDefault":
+                    _exec.DefinirConexaoPadrao(Str(a, "id"));
+                    return null;
+
                 case "profiles.test":
                     return await _exec.TestarConexaoAsync(Arg<ConnectionProfile>(a, "profile"));
 
@@ -301,6 +306,7 @@ namespace GenerateJS.Gerenciador
             {
                 id = p.Id,
                 name = p.Name,
+                isDefault = p.Id == _exec.ConexaoPadraoId,
                 providerKey = p.ProviderKey,
                 mode = p.Mode,
                 fields,

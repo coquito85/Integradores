@@ -54,6 +54,7 @@ const ICONS = {
     upload: '<path d="M12 15V3M7 8l5-5 5 5M5 21h14"/>',
     code: '<path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/>',
     save: '<path d="M5 3h11l4 4v14H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/>',
+    star: '<path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/>',
 };
 
 function icon(name, cls = '') {
@@ -351,14 +352,21 @@ function buildGerar() {
     G.el = {};
     const e = G.el;
 
+    // A conexão é definida em "Conexões" (padrão). O select fica oculto só para guardar o valor
+    // que o restante da tela já lê; o que o usuário vê é a caixa somente leitura (e.profileBox).
     e.profile = h('select', {
         id: 'selProfile',
+        hidden: true,
         onchange: () => {
             prefs.profileId = e.profile.value;
             G.tables = [];
             refreshTableList();
+            renderProfileBox();
             updateGerarMeta();
         }
+    });
+    e.profileBox = h('div', {
+        class: 'conn-pick'
     });
     e.layout = h('select', {
         id: 'selLayout',
@@ -474,7 +482,7 @@ function buildGerar() {
                 class: 'field'
             }, h('label', {
                 text: 'Conexão'
-            }), e.profile),
+            }), e.profileBox, e.profile),
             h('div', {
                 class: 'field'
             }, h('label', {
@@ -608,12 +616,47 @@ function refreshGerarSelects() {
             value: l.id,
             text: `${l.name} (${l.id})`
         })));
-    if (profileById(prefs.profileId)) e.profile.value = prefs.profileId;
+    // quem define a conexão é a tela Conexões: padrão (flag) ou, se houver só uma, ela mesma
+    const padrao = S.profiles.find(p => p.isDefault);
+    if (padrao) e.profile.value = padrao.id;
     else if (S.profiles.length === 1) e.profile.value = S.profiles[0].id;
+    else e.profile.value = '';
+    renderProfileBox();
     if (layoutById(prefs.layoutId)) e.layout.value = prefs.layoutId;
     else if (S.layouts.length === 1) e.layout.value = S.layouts[0].id;
     updateGerarMeta();
     renderFilters();
+}
+
+function renderProfileBox() {
+    const box = G.el.profileBox;
+    if (!box) return;
+    const p = profileById(G.el.profile.value);
+    const irParaConexoes = txt => h('button', {
+        class: 'btn sm',
+        onclick: () => go('conexoes')
+    }, icon('plug', 'sm'), txt);
+    box.classList.toggle('warn', !p);
+    if (p) {
+        const prov = providerByKey(p.providerKey) || { key: p.providerKey };
+        box.replaceChildren(
+            h('div', { class: 'pv sm', text: abbrOf(prov) }),
+            h('div', { class: 'txt' },
+                h('b', { text: p.name, title: p.name }),
+                h('div', { class: 'sub', text: `${provName(p.providerKey)} · ${p.summary || '—'}`, title: p.summary })),
+            irParaConexoes('Alterar'));
+        return;
+    }
+    box.replaceChildren(
+        h('div', { class: 'txt' },
+            h('b', { text: S.profiles.length ? 'Nenhuma conexão padrão' : 'Nenhuma conexão cadastrada' }),
+            h('div', {
+                class: 'sub',
+                text: S.profiles.length
+                    ? 'Marque a estrela (★) de uma conexão em Conexões.'
+                    : 'Cadastre uma fonte de dados em Conexões.'
+            })),
+        irParaConexoes(S.profiles.length ? 'Escolher' : 'Cadastrar'));
 }
 
 function currentLayoutSummary() {
@@ -1221,7 +1264,13 @@ function renderConexoes() {
                     class: 'sub',
                     text: `${provName(p.providerKey)} · ${p.summary || '—'}`,
                     title: p.summary
-                }))),
+                })),
+                h('button', {
+                    class: 'star-btn' + (p.isDefault ? ' on' : ''),
+                    title: p.isDefault ? 'Conexão padrão (clique para remover)' : 'Usar como conexão padrão em Gerar JSON',
+                    'aria-pressed': p.isDefault ? 'true' : 'false',
+                    onclick: () => setDefaultProfile(p)
+                }, icon('star'))),
             st ? h('span', {
                 class: 'chip ' + st.state,
                 title: st.state === 'err' ? st.text + '\n(clique para expandir/recolher)' : null,
@@ -1291,6 +1340,19 @@ async function testSaved(p) {
         };
     }
     renderConexoes();
+}
+
+async function setDefaultProfile(p) {
+    const tornar = !p.isDefault;
+    await call('profiles.setDefault', {
+        id: tornar ? p.id : ''
+    });
+    await loadProfiles();
+    if (tornar && G.el.profile) {   // a tela Gerar já passa a usar a conexão escolhida
+        G.el.profile.value = p.id;
+        G.el.profile.onchange();
+    }
+    toast(tornar ? `“${p.name}” é a conexão padrão.` : 'Conexão padrão removida.', 'ok');
 }
 
 async function delProfile(p) {

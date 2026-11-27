@@ -1,4 +1,3 @@
-
 using ReferenciaFactory.Classes;
 using ReferenciaFactory.Gerador;
 using ReferenciaFactory.Layouts;
@@ -46,6 +45,11 @@ namespace GenerateJS.GeneratorJs
         public ConnectionProfile SalvarConexao(ConnectionProfile conexao) => _profiles.Save(conexao);
 
         public void ExcluirConexao(string id) => _profiles.Delete(id);
+
+        /// <summary>Conexao padrao: ja vem selecionada na tela Gerar JSON.</summary>
+        public string? ConexaoPadraoId => _profiles.GetDefaultId();
+
+        public void DefinirConexaoPadrao(string? id) => _profiles.SetDefaultId(id);
 
         /// <summary>Testa a conexao do formulario; campos secretos em branco reaproveitam os da conexao ja salva.</summary>
         public Task<TestResult> TestarConexaoAsync(ConnectionProfile rascunho) =>
