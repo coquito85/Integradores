@@ -398,3 +398,44 @@ dialog[open] { animation: pop .18s ease both; }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* Campo combo (ex.: Provider OLE DB): sugestões clicáveis */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: inherit; font-size: 11.5px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--text-2); cursor: pointer; }
+.chip.ok { color: var(--text); border-color: var(--success); }
+.chip.miss { color: var(--text-dis); text-decoration: line-through; }
+.chip.on { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); text-decoration: none; }
+.hint.warnline { color: var(--warn); }
+
+/* grupos de campos do provider */
+details.grp {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin: 6px 0 12px;
+    background: var(--surface-alt);
+}
+
+    details.grp > summary {
+        cursor: pointer;
+        padding: 9px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-2);
+        letter-spacing: .4px;
+        list-style: none;
+    }
+
+        details.grp > summary::before {
+            content: "▸";
+            display: inline-block;
+            margin-right: 8px;
+            transition: transform .15s;
+        }
+
+    details.grp[open] > summary::before {
+        transform: rotate(90deg);
+    }
+
+    details.grp > div {
+        padding: 4px 12px 2px;
+    }

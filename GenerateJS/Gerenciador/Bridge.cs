@@ -95,7 +95,18 @@ namespace GenerateJS.Gerenciador
                             _ui.SetTitleBar(dark, System.Drawing.Color.FromArgb(Convert.ToInt32(hex, 16) | unchecked((int)0xFF000000)));
                         return null;
                     }
-
+                case "dialog.file":
+                    {
+                        using var dlg = new OpenFileDialog
+                        {
+                            Title = "Selecionar arquivo",
+                            Filter = Str(a, "filter", "Todos os arquivos (*.*)|*.*"),
+                            CheckFileExists = true
+                        };
+                        var start = Str(a, "path");
+                        if (start.Length > 0 && File.Exists(start)) dlg.FileName = start;
+                        return dlg.ShowDialog(_ui) == DialogResult.OK ? dlg.FileName : null;
+                    }
                 // ---- bancos
                 case "providers.list":
                     return _exec.Provedores.Select(p => new
@@ -103,6 +114,8 @@ namespace GenerateJS.Gerenciador
                         key = p.Key,
                         name = p.DisplayName,
                         category = p.Category,
+                        abbr = p.Abbr,                    // "CSV", "TXT", "XLS"...
+                        supportsRaw = p.SupportsRaw,      // false para arquivos
                         fields = p.Fields.Select(f => new
                         {
                             id = f.Id,
@@ -111,7 +124,10 @@ namespace GenerateJS.Gerenciador
                             required = f.Required,
                             placeholder = f.Placeholder,
                             @default = f.Default,
-                            hint = f.Hint,
+                            group = f.Group,              // null = grupo principal; "Avançado" = recolhido
+                            filter = f.Filter,            // filtro do OpenFileDialog (kind = "file")
+                            hint = f.HintSource?.Invoke() ?? f.Hint,
+                            options = f.OptionsSource?.Invoke().Select(o => new { value = o.Value, label = o.Label, installed = o.Installed }),
                             secret = _exec.EhCampoSecreto(f.Id)
                         })
                     }).ToList();
@@ -227,6 +243,7 @@ namespace GenerateJS.Gerenciador
             string summary;
             if (p.Mode == "raw") summary = "string de conexao personalizada";
             else if (p.Fields.TryGetValue("file", out var file) && file.Length > 0) summary = Path.GetFileName(file);
+            else if (p.Fields.TryGetValue("folder", out var folder) && folder.Length > 0) summary = folder;
             else
             {
                 p.Fields.TryGetValue("server", out var server);

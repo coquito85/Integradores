@@ -69,7 +69,12 @@ public sealed class DbSession : IDisposable
         var arq = Environment.Is64BitProcess ? "64" : "32";
         var outra = Environment.Is64BitProcess ? "32" : "64";
 
-        return $"{Environment.NewLine}Dica: o aplicativo esta rodando em {arq} bits, e o driver do Access precisa ter a mesma arquitetura. " +
+        var achados = OleDbProviders.Instalados().Where(n => n.Contains("ACE.OLEDB", StringComparison.OrdinalIgnoreCase) || n.Contains("Jet.OLEDB", StringComparison.OrdinalIgnoreCase)).ToList();
+        var detectados = achados.Count > 0
+            ? $" Providers detectados neste aplicativo: {string.Join(", ", achados)} (escolha um deles no campo Provider OLE DB)."
+            : " Nenhum provider do Access foi detectado neste aplicativo.";
+
+        return $"{Environment.NewLine}Dica: o aplicativo esta rodando em {arq} bits, e o driver do Access precisa ter a mesma arquitetura.{detectados} " +
                $"Instale o Microsoft Access Database Engine ({arq} bits)" +
                (Environment.Is64BitProcess
                    ? ", ou execute o aplicativo em x86 (32 bits). Para arquivos .mdb em 32 bits, tambem da para usar Microsoft.Jet.OLEDB.4.0."

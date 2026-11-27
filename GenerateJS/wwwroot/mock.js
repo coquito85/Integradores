@@ -2,62 +2,855 @@
 /* Ponte simulada: permite abrir index.html num navegador comum para ver/ajustar a tela sem o WebView2.
    No aplicativo real este arquivo nunca e carregado (a tela detecta window.chrome.webview). */
 (function () {
-  const DATA = {"cols": [{"name": "TpdeServico", "type": "string", "format": null, "description": "TIPO DE SERVÇIO", "orderBy": true}, {"name": "DtAto", "type": "datetime", "format": "yyyy-mm-dd", "description": "DATA DO ATO", "orderBy": false}, {"name": "TipoAto", "type": "string", "format": null, "description": "TIPO DO ATO", "orderBy": false}, {"name": "TipoLivro", "type": "string", "format": null, "description": "TIPO DO LIVRO", "orderBy": false}, {"name": "Folha", "type": "string", "format": null, "description": "FOLHA", "orderBy": false}, {"name": "NrMatricula", "type": "string", "format": null, "description": "NUMERO DA MATRICULA", "orderBy": false}, {"name": "Cnm", "type": "string", "format": null, "description": "CODIGO NACIONAL  FDE MATRICULA - CNM", "orderBy": false}, {"name": "TPOp", "type": "string", "format": null, "description": "TIPO OPERAÇÃO IMOBILIARIA", "orderBy": false}, {"name": "DtJur", "type": "datetime", "format": "yyyy-mm-dd", "description": "DATA NEGOCIO JURIDICO", "orderBy": false}, {"name": "PtTrans", "type": "string", "format": null, "description": "PARTE TRANSACIONADA", "orderBy": false}, {"name": "FormPgto", "type": "string", "format": null, "description": "FORMA PAGAMENTO", "orderBy": false}, {"name": "VlrOp", "type": "string", "format": null, "description": "VALOR OPERAÇÃO", "orderBy": false}, {"name": "VlrBase", "type": "string", "format": null, "description": "VALOR DE CALCUO/ITBI", "orderBy": false}, {"name": "AreaTerreno", "type": "string", "format": null, "description": "(AREA TERRENO(M2)", "orderBy": false}, {"name": "municipio", "type": "string", "format": null, "description": "MUNICIPIO/UF/BAIRRO", "orderBy": false}, {"name": "Cep", "type": "string", "format": null, "description": "CEP", "orderBy": false}, {"name": "TpLogradouro", "type": "string", "format": null, "description": "TIPO DE LOGRADOURO", "orderBy": false}, {"name": "Logradouro", "type": "string", "format": null, "description": "LOGRADOURO", "orderBy": false}, {"name": "TpImovel", "type": "string", "format": null, "description": "TIPO DO IMOVEL", "orderBy": false}, {"name": "Numero", "type": "string", "format": null, "description": "NUMERO", "orderBy": false}, {"name": "CpfAlienante", "type": "string", "format": null, "description": "CPF/CNPJ DO ALIENANTE", "orderBy": false}, {"name": "PossueConjuge", "type": "string", "format": null, "description": "O ALIENANTE POSSUI CONJUGE?", "orderBy": false}, {"name": "CpfConjuge", "type": "string", "format": null, "description": "O ALIENANTE POSSUI CONJUGE?", "orderBy": false}, {"name": "RegimedeBens", "type": "string", "format": null, "description": "REGIME DE BENS", "orderBy": false}, {"name": "conjugeParticiop", "type": "string", "format": null, "description": "O CONJUGE E PARTICIPANTE NA OPERACÃO", "orderBy": false}, {"name": "repAssProAsqCpf", "type": "string", "format": null, "description": "REPRESENTANTE/ASSISTENTE/PROCURADOR DO ADQUIRENTE((CPF/CNPJ)", "orderBy": false}, {"name": "cpfcnpjAdquirente", "type": "string", "format": null, "description": "CPF/CNPJ/ADQUIRENTE", "orderBy": false}, {"name": "PercPart", "type": "string", "format": null, "description": "PERCENTUAL PARTTICIPANTE", "orderBy": false}, {"name": "Adqpossuiconjuge", "type": "string", "format": null, "description": "PERCENTUAL PARTTICIPANTE", "orderBy": false}, {"name": "numeroLivro", "type": "string", "format": null, "description": null, "orderBy": false}], "tree": {"name": "declaracoes", "type": "array", "value": null, "columnRef": null, "format": null, "children": [{"name": "adquirentes", "type": "array", "value": null, "columnRef": null, "format": null, "children": [{"name": "indicadorEspolio", "type": "bool", "value": "false", "columnRef": null, "format": null, "children": []}, {"name": "indicadorEstrangeiro", "type": "bool", "value": "false", "columnRef": null, "format": null, "children": []}, {"name": "indicadorNaoConstaParticipacaoOperacao", "type": "bool", "value": "false", "columnRef": null, "format": null, "children": []}, {"name": "indicadorNiIdentificado", "type": "bool", "value": "true", "columnRef": null, "format": null, "children": []}, {"name": "indicadorRepresentante", "type": "bool", "value": "false", "columnRef": null, "format": null, "children": []}, {"name": "ni", "type": "string", "value": "cpfcnpjAdquirente", "columnRef": null, "format": null, "children": []}, {"name": "representantes", "type": "array", "value": null, "columnRef": null, "format": null, "children": []}, {"name": "indicadorConjuge", "type": "bool", "value": "false", "columnRef": null, "format": null, "children": []}, {"name": "Participacao", "type": "decimal", "value": "100", "columnRef": null, "format": null, "children": []}]}, {"name": "alienantes", "type": "array", "value": null, "columnRef": null, "format": null, "children": [{"name": "indicadorEspolio", "type": "bool", "value": "false", "columnRef": null, "format": null, "children": []}, {"name": "indicadorEstrangeiro", "type": "bool", "value": "false", "columnRef": null, "format": null, "children": []}, {"name": "indicadorNaoConstaParticipacaoOperacao", "type": "bool", "value": "false", "columnRef": null, "format": null, "children": []}, {"name": "indicadorNiIdentificado", "type": "bool", "value": "true", "columnRef": null, "format": null, "children": []}, {"name": "IndicadorRepresentante", "type": "bool", "value": "false", "columnRef": null, "format": null, "children": []}, {"name": "ni", "type": "string", "value": "CpfAlienante", "columnRef": null, "format": null, "children": []}, {"name": "representantes", "type": "array", "value": null, "columnRef": null, "format": null, "children": []}, {"name": "indicadorConjuge", "type": "bool", "value": "false", "columnRef": null, "format": null, "children": []}, {"name": "participacao", "type": "decimal", "value": "100", "columnRef": null, "format": null, "children": []}]}, {"name": "dataLavraturaRegistroAverbacao", "type": "datetime", "value": null, "columnRef": "DtAto", "format": "yyyy-mm-dd", "children": []}, {"name": "dataNegocioJuridico", "type": "datetime", "value": null, "columnRef": "DtJur", "format": "yyyy-mm-dd", "children": []}, {"name": "destinacao", "type": "string", "value": "1", "columnRef": null, "format": null, "children": []}, {"name": "formaPagamento", "type": "string", "value": null, "columnRef": "FormPgto", "format": null, "children": []}, {"name": "matricula", "type": "string", "value": null, "columnRef": "NrMatricula", "format": null, "children": []}, {"name": "tipoAto", "type": "string", "value": null, "columnRef": "TipoAto", "format": null, "children": []}, {"name": "tipoDeclaracao", "type": "string", "value": "0", "columnRef": null, "format": null, "children": []}, {"name": "tipoOperacaoImobiliaria", "type": "string", "value": null, "columnRef": "TPOp", "format": null, "children": []}, {"name": "tipoParteTransacionada", "type": "decimal", "value": "100", "columnRef": null, "format": null, "children": []}, {"name": "tipoServico", "type": "string", "value": null, "columnRef": "TpdeServico", "format": null, "children": []}, {"name": "valorParteTransacionada", "type": "decimal", "value": "100", "columnRef": null, "format": null, "children": []}, {"name": "indicadorNaoConstaValorBaseCalculoItbiItcmd", "type": "bool", "value": "true", "columnRef": null, "format": null, "children": []}, {"name": "indicadorNaoConstaValorOperacaoImobiliaria", "type": "bool", "value": "true", "columnRef": null, "format": null, "children": []}, {"name": "indicadorPermutaBens", "type": "bool", "value": "false", "columnRef": null, "format": null, "children": []}, {"name": "indicadorPagamentoDinheiro", "type": "bool", "value": "false", "columnRef": null, "format": null, "children": []}, {"name": "indicadorImovelPublicoUniao", "type": "bool", "value": "false", "columnRef": null, "format": null, "children": []}, {"name": "folha", "type": "string", "value": null, "columnRef": "Folha", "format": null, "children": []}, {"name": "numeroLivro", "type": "string", "value": null, "columnRef": "numeroLivro", "format": null, "children": []}, {"name": "inscricaoMunicipal", "type": "string", "value": "N/C", "columnRef": null, "format": null, "children": []}, {"name": "codigoIbge", "type": "string", "value": "2708907", "columnRef": null, "format": null, "children": []}, {"name": "indicadorAreaLoteNaoConsta", "type": "bool", "value": "true", "columnRef": null, "format": null, "children": []}, {"name": "indicadorAreaConstruidaNaoConsta", "type": "bool", "value": "true", "columnRef": null, "format": null, "children": []}, {"name": "tipoImovel", "type": "string", "value": null, "columnRef": "TpImovel", "format": null, "children": []}, {"name": "tipoLogradouro", "type": "string", "value": null, "columnRef": "TpLogradouro", "format": null, "children": []}, {"name": "nomeLogradouro", "type": "string", "value": null, "columnRef": "Logradouro", "format": null, "children": []}, {"name": "numeroImovel", "type": "string", "value": null, "columnRef": "Numero", "format": null, "children": []}, {"name": "bairro", "type": "string", "value": null, "columnRef": "municipio", "format": null, "children": []}, {"name": "cep", "type": "string", "value": null, "columnRef": "Cep", "format": null, "children": []}]}, "finds": [{"level": "warning", "code": "VALOR_PARECE_COLUNA", "message": "Campo 'declaracoes → adquirentes → ni' tem value=\"cpfcnpjAdquirente\" (texto fixo), mas 'cpfcnpjAdquirente' e uma coluna da selecao. Se a intencao era ler do banco, use Columnrefe=\"cpfcnpjAdquirente\".", "path": "declaracoes → adquirentes → ni"}, {"level": "warning", "code": "VALOR_PARECE_COLUNA", "message": "Campo 'declaracoes → alienantes → ni' tem value=\"CpfAlienante\" (texto fixo), mas 'CpfAlienante' e uma coluna da selecao. Se a intencao era ler do banco, use Columnrefe=\"CpfAlienante\".", "path": "declaracoes → alienantes → ni"}, {"level": "info", "code": "COLUNA_NAO_USADA", "message": "15 coluna(s) da selecao nao alimentam nenhum campo do JSON: TipoLivro, Cnm, PtTrans, VlrOp, VlrBase, AreaTerreno, CpfAlienante, PossueConjuge, CpfConjuge, RegimedeBens, conjugeParticiop, repAssProAsqCpf, cpfcnpjAdquirente, PercPart, Adqpossuiconjuge.", "path": null}], "xml": "<Layout name=\"CART. SATUBA\" identifier=\"NOV2025009\">\n\n\t<generate name=\"SATUBA 2026\">\n\t\t<table name =\"ComunicaoPrefeitura\"  alias=\"TAB_SATUBA\">\n\t\t\t<!--REGISTRO_IMOBILIARIO-->\n\t\t\t<selection>\n\t\t\t\t<Column name=\"TpdeServico\" orderby=\"true\"  type=\"string\" description=\"TIPO DE SERVÇIO\" />\n\t\t\t\t<Column name=\"DtAto\"  type=\"datetime\" formate=\"yyyy-mm-dd\"  description=\"DATA DO ATO\"/>\n\t\t\t\t<Column name=\"TipoAto\"  type=\"string\" description=\"TIPO DO ATO\"/>\n\t\t\t\t<Column name=\"TipoLivro\"   type=\"string\" description=\"TIPO DO LIVRO\" />\n\t\t\t\t<Column name=\"Folha\"  type=\"string\" description=\"FOLHA\"/>\n\t\t\t\t<Column name=\"NrMatricula\"  type=\"string\" description=\"NUMERO DA MATRICULA\"/>\n\t\t\t\t<Column name=\"Cnm\"  type=\"string\" description=\"CODIGO NACIONAL  FDE MATRICULA - CNM\"/>\n\t\t\t\t<Column name=\"TPOp\"  type=\"string\" description=\"TIPO OPERAÇÃO IMOBILIARIA\"/>\n\t\t\t\t<Column name=\"DtJur\"  type=\"datetime\" formate=\"yyyy-mm-dd\" description=\"DATA NEGOCIO JURIDICO\"/>\n\t\t\t\t<Column name=\"PtTrans\"  type=\"string\" description=\"PARTE TRANSACIONADA\"/>\n\t\t\t\t<Column name=\"FormPgto\"  type=\"string\" description=\"FORMA PAGAMENTO\"/>\n\t\t\t\t<Column name=\"VlrOp\"  type=\"string\" description=\"VALOR OPERAÇÃO\"/>\n\t\t\t\t<Column name=\"VlrBase\"  type=\"string\" description=\"VALOR DE CALCUO/ITBI\"/>\n\t\t\t\t<Column name=\"AreaTerreno\"  type=\"string\" description=\"(AREA TERRENO(M2)\"/>\n\t\t\t\t<Column name=\"municipio\"  type=\"string\" description=\"MUNICIPIO/UF/BAIRRO\"/>\n\t\t\t\t<Column name=\"Cep\"  type=\"string\" description=\"CEP\"/>\n\t\t\t\t<Column name=\"TpLogradouro\"  type=\"string\" description=\"TIPO DE LOGRADOURO\"/>\n\t\t\t\t<Column name=\"Logradouro\"  type=\"string\" description=\"LOGRADOURO\"/>\n\t\t\t\t<Column name=\"TpImovel\"  type=\"string\" description=\"TIPO DO IMOVEL\"/>\n\t\t\t\t<Column name=\"Numero\"  type=\"string\" description=\"NUMERO\"/>\n\t\t\t\t<Column name=\"CpfAlienante\"  type=\"string\" description=\"CPF/CNPJ DO ALIENANTE\"/>\n\t\t\t\t<Column name=\"PossueConjuge\"  type=\"string\" description=\"O ALIENANTE POSSUI CONJUGE?\"/>\n\t\t\t\t<Column name=\"CpfConjuge\"  type=\"string\" description=\"O ALIENANTE POSSUI CONJUGE?\"/>\n\t\t\t\t<Column name=\"RegimedeBens\"  type=\"string\" description=\"REGIME DE BENS\"/>\n\t\t\t\t<Column name=\"conjugeParticiop\"  type=\"string\" description=\"O CONJUGE E PARTICIPANTE NA OPERACÃO\"/>\n\t\t\t\t<Column name=\"repAssProAsqCpf\"  type=\"string\" description=\"REPRESENTANTE/ASSISTENTE/PROCURADOR DO ADQUIRENTE((CPF/CNPJ)\"/>\n\t\t\t\t<Column name=\"cpfcnpjAdquirente\"  type=\"string\" description=\"CPF/CNPJ/ADQUIRENTE\"/>\n\t\t\t\t<Column name=\"PercPart\"  type=\"string\" description=\"PERCENTUAL PARTTICIPANTE\"/>\n\t\t\t\t<Column name=\"Adqpossuiconjuge\"  type=\"string\" description=\"PERCENTUAL PARTTICIPANTE\"/>\n\t\t\t\t<Column name=\"numeroLivro\"  type=\"string\"/>\n\t\t\t</selection>\n\t\t</table>\n\t</generate>\n\n\n\n\t<Jsonfields name=\"CART. SATUBA 2025/NOV\">\n\n\t\t<Refealias name=\"TAB_SATUBA\">\n\n\t\t\t<field name=\"declaracoes\" type=\"array\">\n\n\t\t\t\t<!-- ALIENANTES -->\n\t\t\t\t<field name=\"adquirentes\" type=\"array\">\n\t\t\t\t\t<field name=\"indicadorEspolio\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"indicadorEstrangeiro\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"indicadorNaoConstaParticipacaoOperacao\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"indicadorNiIdentificado\" type=\"bool\" value=\"true\"/>\n\t\t\t\t\t<field name=\"indicadorRepresentante\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"ni\" type=\"string\" value=\"cpfcnpjAdquirente\"/>\n\t\t\t\t\t<field name=\"representantes\" type=\"array\"/>\n\t\t\t\t\t<field name=\"indicadorConjuge\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"Participacao\" type=\"decimal\" value=\"100\"/>\n\t\t\t\t</field>\n\n\t\t\t\t<!-- ADQUIRENTES -->\n\t\t\t\t<field name=\"alienantes\" type=\"array\">\n\t\t\t\t\t<field name=\"indicadorEspolio\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"indicadorEstrangeiro\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"indicadorNaoConstaParticipacaoOperacao\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"indicadorNiIdentificado\" type=\"bool\" value=\"true\"/>\n\t\t\t\t\t<field name=\"IndicadorRepresentante\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"ni\" type=\"string\" value=\"CpfAlienante\"/>\n\t\t\t\t\t<field name=\"representantes\" type=\"array\"/>\n\t\t\t\t\t<field name=\"indicadorConjuge\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"participacao\" type=\"decimal\" value=\"100\"/>\n\t\t\t\t</field>\n\n\t\t\t\t<!-- CAMPOS PRINCIPAIS -->\n\t\t\t\t<field name=\"dataLavraturaRegistroAverbacao\" type=\"datetime\" formate=\"yyyy-mm-dd\" Columnrefe=\"DtAto\"/>\n\t\t\t\t<field name=\"dataNegocioJuridico\"  type=\"datetime\" formate=\"yyyy-mm-dd\" Columnrefe=\"DtJur\"/>\n\t\t\t\t<field name=\"destinacao\" type=\"string\" value=\"1\"/>\n\t\t\t\t<field name=\"formaPagamento\"  type=\"string\" Columnrefe=\"FormPgto\"/>\n\t\t\t\t<field name=\"matricula\" type=\"string\" Columnrefe=\"NrMatricula\"/>\n\t\t\t\t<!--<field name=\"matriculaNotarialEletronica\"  type=\"string\" Columnrefe=\"NrMatricula\"/> -->\n\n\t\t\t\t<field name=\"tipoAto\"  type=\"string\" Columnrefe=\"TipoAto\"/>\n\t\t\t\t<field name=\"tipoDeclaracao\" type=\"string\" value=\"0\"/>\n\t\t\t\t<field name=\"tipoOperacaoImobiliaria\"  type=\"string\" Columnrefe=\"TPOp\"/>\n\t\t\t\t<field name=\"tipoParteTransacionada\"  type=\"decimal\" value=\"100\"/>\n\t\t\t\t<field name=\"tipoServico\" type=\"string\" Columnrefe=\"TpdeServico\"/>\n\t\t\t\t<!--<field name=\"transcricao\"  type=\"string\" Columnrefe=\"PtTrans\"/> -->\n\t\t\t\t<field name=\"valorParteTransacionada\" type=\"decimal\" value=\"100\"/>\n\t\t\t\t<field name=\"indicadorNaoConstaValorBaseCalculoItbiItcmd\" type=\"bool\" value=\"true\"/>\n\t\t\t\t<field name=\"indicadorNaoConstaValorOperacaoImobiliaria\" type=\"bool\" value=\"true\"/>\n\t\t\t\t<field name=\"indicadorPermutaBens\" type=\"bool\" value=\"false\"/>\n\t\t\t\t<field name=\"indicadorPagamentoDinheiro\" type=\"bool\" value=\"false\"/>\n\t\t\t\t<field name=\"indicadorImovelPublicoUniao\" type=\"bool\" value=\"false\"/>\n\t\t\t\t<field name=\"folha\" type=\"string\" Columnrefe=\"Folha\"/>\n\t\t\t\t<field name=\"numeroLivro\"  type=\"string\" Columnrefe=\"numeroLivro\" />\n\t\t\t\t<field name=\"inscricaoMunicipal\"  type=\"string\" value=\"N/C\"/>\n\t\t\t\t<field name=\"codigoIbge\"  type=\"string\" value=\"2708907\"/>\n\t\t\t\t<field name=\"indicadorAreaLoteNaoConsta\" type=\"bool\" value=\"true\"/>\n\t\t\t\t<field name=\"indicadorAreaConstruidaNaoConsta\" type=\"bool\" value=\"true\"/>\n\t\t\t\t<field name=\"tipoImovel\"  type=\"string\" Columnrefe=\"TpImovel\" />\n\t\t\t\t<field name=\"tipoLogradouro\"  type=\"string\" Columnrefe=\"TpLogradouro\" />\n\t\t\t\t<field name=\"nomeLogradouro\"  type=\"string\" Columnrefe=\"Logradouro\" />\n\t\t\t\t<field name=\"numeroImovel\"  type=\"string\" Columnrefe=\"Numero\" />\n\t\t\t\t<field name=\"bairro\" type=\"string\" Columnrefe=\"municipio\" />\n\t\t\t\t<field name=\"cep\" type=\"string\" Columnrefe=\"Cep\" />\n\t\t\t\t<!--<field name=\"tipoLivro\"  type=\"string\" Columnrefe=\"TipoLivro\" /> -->\n\n\t\t\t</field>\n\t\t</Refealias>\n\n\t</Jsonfields>\n\n\n\n\n\n</Layout>\n\n\n\n\n", "table": "ComunicaoPrefeitura", "alias": "TAB_SATUBA"};
-  const providers = [
-    ['sqlserver','SQL Server','Servidor'],['postgres','PostgreSQL','Servidor'],['mysql','MySQL / MariaDB','Servidor'],['oracle','Oracle','Servidor'],
-    ['firebird','Firebird / InterBase','Servidor'],['sqlite','SQLite','Arquivo'],['access','Microsoft Access','Arquivo']].map(([key,name,category]) => ({
-      key, name, category,
-      fields: category === 'Arquivo'
-        ? [{id:'file',label:'Arquivo do banco',kind:'file',required:true,placeholder:'C:\\dados\\banco.db'},{id:'extra',label:'Opcoes avancadas',kind:'text',placeholder:'chave=valor;chave=valor',hint:'Anexadas a string de conexao.'}]
-        : [{id:'server',label:'Servidor',kind:'text',required:true,placeholder:'localhost'},{id:'port',label:'Porta',kind:'number',placeholder:'1433'},
-           {id:'database',label:'Banco de dados',kind:'text',required:true},{id:'user',label:'Usuario',kind:'text'},{id:'password',label:'Senha',kind:'password',secret:true},
-           ...(key==='sqlserver'?[{id:'trustCert',label:'Confiar no certificado do servidor',kind:'bool','default':'true'}]:[])]
+    const DATA = {
+        "cols": [{
+            "name": "TpdeServico",
+            "type": "string",
+            "format": null,
+            "description": "TIPO DE SERVÇIO",
+            "orderBy": true
+        }, {
+            "name": "DtAto",
+            "type": "datetime",
+            "format": "yyyy-mm-dd",
+            "description": "DATA DO ATO",
+            "orderBy": false
+        }, {
+            "name": "TipoAto",
+            "type": "string",
+            "format": null,
+            "description": "TIPO DO ATO",
+            "orderBy": false
+        }, {
+            "name": "TipoLivro",
+            "type": "string",
+            "format": null,
+            "description": "TIPO DO LIVRO",
+            "orderBy": false
+        }, {
+            "name": "Folha",
+            "type": "string",
+            "format": null,
+            "description": "FOLHA",
+            "orderBy": false
+        }, {
+            "name": "NrMatricula",
+            "type": "string",
+            "format": null,
+            "description": "NUMERO DA MATRICULA",
+            "orderBy": false
+        }, {
+            "name": "Cnm",
+            "type": "string",
+            "format": null,
+            "description": "CODIGO NACIONAL  FDE MATRICULA - CNM",
+            "orderBy": false
+        }, {
+            "name": "TPOp",
+            "type": "string",
+            "format": null,
+            "description": "TIPO OPERAÇÃO IMOBILIARIA",
+            "orderBy": false
+        }, {
+            "name": "DtJur",
+            "type": "datetime",
+            "format": "yyyy-mm-dd",
+            "description": "DATA NEGOCIO JURIDICO",
+            "orderBy": false
+        }, {
+            "name": "PtTrans",
+            "type": "string",
+            "format": null,
+            "description": "PARTE TRANSACIONADA",
+            "orderBy": false
+        }, {
+            "name": "FormPgto",
+            "type": "string",
+            "format": null,
+            "description": "FORMA PAGAMENTO",
+            "orderBy": false
+        }, {
+            "name": "VlrOp",
+            "type": "string",
+            "format": null,
+            "description": "VALOR OPERAÇÃO",
+            "orderBy": false
+        }, {
+            "name": "VlrBase",
+            "type": "string",
+            "format": null,
+            "description": "VALOR DE CALCUO/ITBI",
+            "orderBy": false
+        }, {
+            "name": "AreaTerreno",
+            "type": "string",
+            "format": null,
+            "description": "(AREA TERRENO(M2)",
+            "orderBy": false
+        }, {
+            "name": "municipio",
+            "type": "string",
+            "format": null,
+            "description": "MUNICIPIO/UF/BAIRRO",
+            "orderBy": false
+        }, {
+            "name": "Cep",
+            "type": "string",
+            "format": null,
+            "description": "CEP",
+            "orderBy": false
+        }, {
+            "name": "TpLogradouro",
+            "type": "string",
+            "format": null,
+            "description": "TIPO DE LOGRADOURO",
+            "orderBy": false
+        }, {
+            "name": "Logradouro",
+            "type": "string",
+            "format": null,
+            "description": "LOGRADOURO",
+            "orderBy": false
+        }, {
+            "name": "TpImovel",
+            "type": "string",
+            "format": null,
+            "description": "TIPO DO IMOVEL",
+            "orderBy": false
+        }, {
+            "name": "Numero",
+            "type": "string",
+            "format": null,
+            "description": "NUMERO",
+            "orderBy": false
+        }, {
+            "name": "CpfAlienante",
+            "type": "string",
+            "format": null,
+            "description": "CPF/CNPJ DO ALIENANTE",
+            "orderBy": false
+        }, {
+            "name": "PossueConjuge",
+            "type": "string",
+            "format": null,
+            "description": "O ALIENANTE POSSUI CONJUGE?",
+            "orderBy": false
+        }, {
+            "name": "CpfConjuge",
+            "type": "string",
+            "format": null,
+            "description": "O ALIENANTE POSSUI CONJUGE?",
+            "orderBy": false
+        }, {
+            "name": "RegimedeBens",
+            "type": "string",
+            "format": null,
+            "description": "REGIME DE BENS",
+            "orderBy": false
+        }, {
+            "name": "conjugeParticiop",
+            "type": "string",
+            "format": null,
+            "description": "O CONJUGE E PARTICIPANTE NA OPERACÃO",
+            "orderBy": false
+        }, {
+            "name": "repAssProAsqCpf",
+            "type": "string",
+            "format": null,
+            "description": "REPRESENTANTE/ASSISTENTE/PROCURADOR DO ADQUIRENTE((CPF/CNPJ)",
+            "orderBy": false
+        }, {
+            "name": "cpfcnpjAdquirente",
+            "type": "string",
+            "format": null,
+            "description": "CPF/CNPJ/ADQUIRENTE",
+            "orderBy": false
+        }, {
+            "name": "PercPart",
+            "type": "string",
+            "format": null,
+            "description": "PERCENTUAL PARTTICIPANTE",
+            "orderBy": false
+        }, {
+            "name": "Adqpossuiconjuge",
+            "type": "string",
+            "format": null,
+            "description": "PERCENTUAL PARTTICIPANTE",
+            "orderBy": false
+        }, {
+            "name": "numeroLivro",
+            "type": "string",
+            "format": null,
+            "description": null,
+            "orderBy": false
+        }],
+        "tree": {
+            "name": "declaracoes",
+            "type": "array",
+            "value": null,
+            "columnRef": null,
+            "format": null,
+            "children": [{
+                "name": "adquirentes",
+                "type": "array",
+                "value": null,
+                "columnRef": null,
+                "format": null,
+                "children": [{
+                    "name": "indicadorEspolio",
+                    "type": "bool",
+                    "value": "false",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "indicadorEstrangeiro",
+                    "type": "bool",
+                    "value": "false",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "indicadorNaoConstaParticipacaoOperacao",
+                    "type": "bool",
+                    "value": "false",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "indicadorNiIdentificado",
+                    "type": "bool",
+                    "value": "true",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "indicadorRepresentante",
+                    "type": "bool",
+                    "value": "false",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "ni",
+                    "type": "string",
+                    "value": "cpfcnpjAdquirente",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "representantes",
+                    "type": "array",
+                    "value": null,
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "indicadorConjuge",
+                    "type": "bool",
+                    "value": "false",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "Participacao",
+                    "type": "decimal",
+                    "value": "100",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }]
+            }, {
+                "name": "alienantes",
+                "type": "array",
+                "value": null,
+                "columnRef": null,
+                "format": null,
+                "children": [{
+                    "name": "indicadorEspolio",
+                    "type": "bool",
+                    "value": "false",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "indicadorEstrangeiro",
+                    "type": "bool",
+                    "value": "false",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "indicadorNaoConstaParticipacaoOperacao",
+                    "type": "bool",
+                    "value": "false",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "indicadorNiIdentificado",
+                    "type": "bool",
+                    "value": "true",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "IndicadorRepresentante",
+                    "type": "bool",
+                    "value": "false",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "ni",
+                    "type": "string",
+                    "value": "CpfAlienante",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "representantes",
+                    "type": "array",
+                    "value": null,
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "indicadorConjuge",
+                    "type": "bool",
+                    "value": "false",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }, {
+                    "name": "participacao",
+                    "type": "decimal",
+                    "value": "100",
+                    "columnRef": null,
+                    "format": null,
+                    "children": []
+                }]
+            }, {
+                "name": "dataLavraturaRegistroAverbacao",
+                "type": "datetime",
+                "value": null,
+                "columnRef": "DtAto",
+                "format": "yyyy-mm-dd",
+                "children": []
+            }, {
+                "name": "dataNegocioJuridico",
+                "type": "datetime",
+                "value": null,
+                "columnRef": "DtJur",
+                "format": "yyyy-mm-dd",
+                "children": []
+            }, {
+                "name": "destinacao",
+                "type": "string",
+                "value": "1",
+                "columnRef": null,
+                "format": null,
+                "children": []
+            }, {
+                "name": "formaPagamento",
+                "type": "string",
+                "value": null,
+                "columnRef": "FormPgto",
+                "format": null,
+                "children": []
+            }, {
+                "name": "matricula",
+                "type": "string",
+                "value": null,
+                "columnRef": "NrMatricula",
+                "format": null,
+                "children": []
+            }, {
+                "name": "tipoAto",
+                "type": "string",
+                "value": null,
+                "columnRef": "TipoAto",
+                "format": null,
+                "children": []
+            }, {
+                "name": "tipoDeclaracao",
+                "type": "string",
+                "value": "0",
+                "columnRef": null,
+                "format": null,
+                "children": []
+            }, {
+                "name": "tipoOperacaoImobiliaria",
+                "type": "string",
+                "value": null,
+                "columnRef": "TPOp",
+                "format": null,
+                "children": []
+            }, {
+                "name": "tipoParteTransacionada",
+                "type": "decimal",
+                "value": "100",
+                "columnRef": null,
+                "format": null,
+                "children": []
+            }, {
+                "name": "tipoServico",
+                "type": "string",
+                "value": null,
+                "columnRef": "TpdeServico",
+                "format": null,
+                "children": []
+            }, {
+                "name": "valorParteTransacionada",
+                "type": "decimal",
+                "value": "100",
+                "columnRef": null,
+                "format": null,
+                "children": []
+            }, {
+                "name": "indicadorNaoConstaValorBaseCalculoItbiItcmd",
+                "type": "bool",
+                "value": "true",
+                "columnRef": null,
+                "format": null,
+                "children": []
+            }, {
+                "name": "indicadorNaoConstaValorOperacaoImobiliaria",
+                "type": "bool",
+                "value": "true",
+                "columnRef": null,
+                "format": null,
+                "children": []
+            }, {
+                "name": "indicadorPermutaBens",
+                "type": "bool",
+                "value": "false",
+                "columnRef": null,
+                "format": null,
+                "children": []
+            }, {
+                "name": "indicadorPagamentoDinheiro",
+                "type": "bool",
+                "value": "false",
+                "columnRef": null,
+                "format": null,
+                "children": []
+            }, {
+                "name": "indicadorImovelPublicoUniao",
+                "type": "bool",
+                "value": "false",
+                "columnRef": null,
+                "format": null,
+                "children": []
+            }, {
+                "name": "folha",
+                "type": "string",
+                "value": null,
+                "columnRef": "Folha",
+                "format": null,
+                "children": []
+            }, {
+                "name": "numeroLivro",
+                "type": "string",
+                "value": null,
+                "columnRef": "numeroLivro",
+                "format": null,
+                "children": []
+            }, {
+                "name": "inscricaoMunicipal",
+                "type": "string",
+                "value": "N/C",
+                "columnRef": null,
+                "format": null,
+                "children": []
+            }, {
+                "name": "codigoIbge",
+                "type": "string",
+                "value": "2708907",
+                "columnRef": null,
+                "format": null,
+                "children": []
+            }, {
+                "name": "indicadorAreaLoteNaoConsta",
+                "type": "bool",
+                "value": "true",
+                "columnRef": null,
+                "format": null,
+                "children": []
+            }, {
+                "name": "indicadorAreaConstruidaNaoConsta",
+                "type": "bool",
+                "value": "true",
+                "columnRef": null,
+                "format": null,
+                "children": []
+            }, {
+                "name": "tipoImovel",
+                "type": "string",
+                "value": null,
+                "columnRef": "TpImovel",
+                "format": null,
+                "children": []
+            }, {
+                "name": "tipoLogradouro",
+                "type": "string",
+                "value": null,
+                "columnRef": "TpLogradouro",
+                "format": null,
+                "children": []
+            }, {
+                "name": "nomeLogradouro",
+                "type": "string",
+                "value": null,
+                "columnRef": "Logradouro",
+                "format": null,
+                "children": []
+            }, {
+                "name": "numeroImovel",
+                "type": "string",
+                "value": null,
+                "columnRef": "Numero",
+                "format": null,
+                "children": []
+            }, {
+                "name": "bairro",
+                "type": "string",
+                "value": null,
+                "columnRef": "municipio",
+                "format": null,
+                "children": []
+            }, {
+                "name": "cep",
+                "type": "string",
+                "value": null,
+                "columnRef": "Cep",
+                "format": null,
+                "children": []
+            }]
+        },
+        "finds": [{
+            "level": "warning",
+            "code": "VALOR_PARECE_COLUNA",
+            "message": "Campo 'declaracoes → adquirentes → ni' tem value=\"cpfcnpjAdquirente\" (texto fixo), mas 'cpfcnpjAdquirente' e uma coluna da selecao. Se a intencao era ler do banco, use Columnrefe=\"cpfcnpjAdquirente\".",
+            "path": "declaracoes → adquirentes → ni"
+        }, {
+            "level": "warning",
+            "code": "VALOR_PARECE_COLUNA",
+            "message": "Campo 'declaracoes → alienantes → ni' tem value=\"CpfAlienante\" (texto fixo), mas 'CpfAlienante' e uma coluna da selecao. Se a intencao era ler do banco, use Columnrefe=\"CpfAlienante\".",
+            "path": "declaracoes → alienantes → ni"
+        }, {
+            "level": "info",
+            "code": "COLUNA_NAO_USADA",
+            "message": "15 coluna(s) da selecao nao alimentam nenhum campo do JSON: TipoLivro, Cnm, PtTrans, VlrOp, VlrBase, AreaTerreno, CpfAlienante, PossueConjuge, CpfConjuge, RegimedeBens, conjugeParticiop, repAssProAsqCpf, cpfcnpjAdquirente, PercPart, Adqpossuiconjuge.",
+            "path": null
+        }],
+        "xml": "<Layout name=\"CART. SATUBA\" identifier=\"NOV2025009\">\n\n\t<generate name=\"SATUBA 2026\">\n\t\t<table name =\"ComunicaoPrefeitura\"  alias=\"TAB_SATUBA\">\n\t\t\t<!--REGISTRO_IMOBILIARIO-->\n\t\t\t<selection>\n\t\t\t\t<Column name=\"TpdeServico\" orderby=\"true\"  type=\"string\" description=\"TIPO DE SERVÇIO\" />\n\t\t\t\t<Column name=\"DtAto\"  type=\"datetime\" formate=\"yyyy-mm-dd\"  description=\"DATA DO ATO\"/>\n\t\t\t\t<Column name=\"TipoAto\"  type=\"string\" description=\"TIPO DO ATO\"/>\n\t\t\t\t<Column name=\"TipoLivro\"   type=\"string\" description=\"TIPO DO LIVRO\" />\n\t\t\t\t<Column name=\"Folha\"  type=\"string\" description=\"FOLHA\"/>\n\t\t\t\t<Column name=\"NrMatricula\"  type=\"string\" description=\"NUMERO DA MATRICULA\"/>\n\t\t\t\t<Column name=\"Cnm\"  type=\"string\" description=\"CODIGO NACIONAL  FDE MATRICULA - CNM\"/>\n\t\t\t\t<Column name=\"TPOp\"  type=\"string\" description=\"TIPO OPERAÇÃO IMOBILIARIA\"/>\n\t\t\t\t<Column name=\"DtJur\"  type=\"datetime\" formate=\"yyyy-mm-dd\" description=\"DATA NEGOCIO JURIDICO\"/>\n\t\t\t\t<Column name=\"PtTrans\"  type=\"string\" description=\"PARTE TRANSACIONADA\"/>\n\t\t\t\t<Column name=\"FormPgto\"  type=\"string\" description=\"FORMA PAGAMENTO\"/>\n\t\t\t\t<Column name=\"VlrOp\"  type=\"string\" description=\"VALOR OPERAÇÃO\"/>\n\t\t\t\t<Column name=\"VlrBase\"  type=\"string\" description=\"VALOR DE CALCUO/ITBI\"/>\n\t\t\t\t<Column name=\"AreaTerreno\"  type=\"string\" description=\"(AREA TERRENO(M2)\"/>\n\t\t\t\t<Column name=\"municipio\"  type=\"string\" description=\"MUNICIPIO/UF/BAIRRO\"/>\n\t\t\t\t<Column name=\"Cep\"  type=\"string\" description=\"CEP\"/>\n\t\t\t\t<Column name=\"TpLogradouro\"  type=\"string\" description=\"TIPO DE LOGRADOURO\"/>\n\t\t\t\t<Column name=\"Logradouro\"  type=\"string\" description=\"LOGRADOURO\"/>\n\t\t\t\t<Column name=\"TpImovel\"  type=\"string\" description=\"TIPO DO IMOVEL\"/>\n\t\t\t\t<Column name=\"Numero\"  type=\"string\" description=\"NUMERO\"/>\n\t\t\t\t<Column name=\"CpfAlienante\"  type=\"string\" description=\"CPF/CNPJ DO ALIENANTE\"/>\n\t\t\t\t<Column name=\"PossueConjuge\"  type=\"string\" description=\"O ALIENANTE POSSUI CONJUGE?\"/>\n\t\t\t\t<Column name=\"CpfConjuge\"  type=\"string\" description=\"O ALIENANTE POSSUI CONJUGE?\"/>\n\t\t\t\t<Column name=\"RegimedeBens\"  type=\"string\" description=\"REGIME DE BENS\"/>\n\t\t\t\t<Column name=\"conjugeParticiop\"  type=\"string\" description=\"O CONJUGE E PARTICIPANTE NA OPERACÃO\"/>\n\t\t\t\t<Column name=\"repAssProAsqCpf\"  type=\"string\" description=\"REPRESENTANTE/ASSISTENTE/PROCURADOR DO ADQUIRENTE((CPF/CNPJ)\"/>\n\t\t\t\t<Column name=\"cpfcnpjAdquirente\"  type=\"string\" description=\"CPF/CNPJ/ADQUIRENTE\"/>\n\t\t\t\t<Column name=\"PercPart\"  type=\"string\" description=\"PERCENTUAL PARTTICIPANTE\"/>\n\t\t\t\t<Column name=\"Adqpossuiconjuge\"  type=\"string\" description=\"PERCENTUAL PARTTICIPANTE\"/>\n\t\t\t\t<Column name=\"numeroLivro\"  type=\"string\"/>\n\t\t\t</selection>\n\t\t</table>\n\t</generate>\n\n\n\n\t<Jsonfields name=\"CART. SATUBA 2025/NOV\">\n\n\t\t<Refealias name=\"TAB_SATUBA\">\n\n\t\t\t<field name=\"declaracoes\" type=\"array\">\n\n\t\t\t\t<!-- ALIENANTES -->\n\t\t\t\t<field name=\"adquirentes\" type=\"array\">\n\t\t\t\t\t<field name=\"indicadorEspolio\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"indicadorEstrangeiro\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"indicadorNaoConstaParticipacaoOperacao\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"indicadorNiIdentificado\" type=\"bool\" value=\"true\"/>\n\t\t\t\t\t<field name=\"indicadorRepresentante\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"ni\" type=\"string\" value=\"cpfcnpjAdquirente\"/>\n\t\t\t\t\t<field name=\"representantes\" type=\"array\"/>\n\t\t\t\t\t<field name=\"indicadorConjuge\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"Participacao\" type=\"decimal\" value=\"100\"/>\n\t\t\t\t</field>\n\n\t\t\t\t<!-- ADQUIRENTES -->\n\t\t\t\t<field name=\"alienantes\" type=\"array\">\n\t\t\t\t\t<field name=\"indicadorEspolio\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"indicadorEstrangeiro\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"indicadorNaoConstaParticipacaoOperacao\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"indicadorNiIdentificado\" type=\"bool\" value=\"true\"/>\n\t\t\t\t\t<field name=\"IndicadorRepresentante\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"ni\" type=\"string\" value=\"CpfAlienante\"/>\n\t\t\t\t\t<field name=\"representantes\" type=\"array\"/>\n\t\t\t\t\t<field name=\"indicadorConjuge\" type=\"bool\" value=\"false\"/>\n\t\t\t\t\t<field name=\"participacao\" type=\"decimal\" value=\"100\"/>\n\t\t\t\t</field>\n\n\t\t\t\t<!-- CAMPOS PRINCIPAIS -->\n\t\t\t\t<field name=\"dataLavraturaRegistroAverbacao\" type=\"datetime\" formate=\"yyyy-mm-dd\" Columnrefe=\"DtAto\"/>\n\t\t\t\t<field name=\"dataNegocioJuridico\"  type=\"datetime\" formate=\"yyyy-mm-dd\" Columnrefe=\"DtJur\"/>\n\t\t\t\t<field name=\"destinacao\" type=\"string\" value=\"1\"/>\n\t\t\t\t<field name=\"formaPagamento\"  type=\"string\" Columnrefe=\"FormPgto\"/>\n\t\t\t\t<field name=\"matricula\" type=\"string\" Columnrefe=\"NrMatricula\"/>\n\t\t\t\t<!--<field name=\"matriculaNotarialEletronica\"  type=\"string\" Columnrefe=\"NrMatricula\"/> -->\n\n\t\t\t\t<field name=\"tipoAto\"  type=\"string\" Columnrefe=\"TipoAto\"/>\n\t\t\t\t<field name=\"tipoDeclaracao\" type=\"string\" value=\"0\"/>\n\t\t\t\t<field name=\"tipoOperacaoImobiliaria\"  type=\"string\" Columnrefe=\"TPOp\"/>\n\t\t\t\t<field name=\"tipoParteTransacionada\"  type=\"decimal\" value=\"100\"/>\n\t\t\t\t<field name=\"tipoServico\" type=\"string\" Columnrefe=\"TpdeServico\"/>\n\t\t\t\t<!--<field name=\"transcricao\"  type=\"string\" Columnrefe=\"PtTrans\"/> -->\n\t\t\t\t<field name=\"valorParteTransacionada\" type=\"decimal\" value=\"100\"/>\n\t\t\t\t<field name=\"indicadorNaoConstaValorBaseCalculoItbiItcmd\" type=\"bool\" value=\"true\"/>\n\t\t\t\t<field name=\"indicadorNaoConstaValorOperacaoImobiliaria\" type=\"bool\" value=\"true\"/>\n\t\t\t\t<field name=\"indicadorPermutaBens\" type=\"bool\" value=\"false\"/>\n\t\t\t\t<field name=\"indicadorPagamentoDinheiro\" type=\"bool\" value=\"false\"/>\n\t\t\t\t<field name=\"indicadorImovelPublicoUniao\" type=\"bool\" value=\"false\"/>\n\t\t\t\t<field name=\"folha\" type=\"string\" Columnrefe=\"Folha\"/>\n\t\t\t\t<field name=\"numeroLivro\"  type=\"string\" Columnrefe=\"numeroLivro\" />\n\t\t\t\t<field name=\"inscricaoMunicipal\"  type=\"string\" value=\"N/C\"/>\n\t\t\t\t<field name=\"codigoIbge\"  type=\"string\" value=\"2708907\"/>\n\t\t\t\t<field name=\"indicadorAreaLoteNaoConsta\" type=\"bool\" value=\"true\"/>\n\t\t\t\t<field name=\"indicadorAreaConstruidaNaoConsta\" type=\"bool\" value=\"true\"/>\n\t\t\t\t<field name=\"tipoImovel\"  type=\"string\" Columnrefe=\"TpImovel\" />\n\t\t\t\t<field name=\"tipoLogradouro\"  type=\"string\" Columnrefe=\"TpLogradouro\" />\n\t\t\t\t<field name=\"nomeLogradouro\"  type=\"string\" Columnrefe=\"Logradouro\" />\n\t\t\t\t<field name=\"numeroImovel\"  type=\"string\" Columnrefe=\"Numero\" />\n\t\t\t\t<field name=\"bairro\" type=\"string\" Columnrefe=\"municipio\" />\n\t\t\t\t<field name=\"cep\" type=\"string\" Columnrefe=\"Cep\" />\n\t\t\t\t<!--<field name=\"tipoLivro\"  type=\"string\" Columnrefe=\"TipoLivro\" /> -->\n\n\t\t\t</field>\n\t\t</Refealias>\n\n\t</Jsonfields>\n\n\n\n\n\n</Layout>\n\n\n\n\n",
+        "table": "ComunicaoPrefeitura",
+        "alias": "TAB_SATUBA"
+    };
+    const providers = [
+        ['sqlserver', 'SQL Server', 'Servidor'],
+        ['postgres', 'PostgreSQL', 'Servidor'],
+        ['mysql', 'MySQL / MariaDB', 'Servidor'],
+        ['oracle', 'Oracle', 'Servidor'],
+        ['firebird', 'Firebird / InterBase', 'Servidor'],
+        ['sqlite', 'SQLite', 'Arquivo'],
+        ['access', 'Microsoft Access', 'Arquivo']
+    ].map(([key, name, category]) => ({
+        key,
+        name,
+        category,
+        fields: key === 'access' ?
+            [{
+                id: 'file',
+                label: 'Arquivo (.accdb / .mdb)',
+                kind: 'file',
+                required: true,
+                placeholder: 'C:\\dados\\banco.accdb'
+            }, {
+                id: 'oledb',
+                label: 'Provider OLE DB',
+                kind: 'combo',
+                placeholder: 'Automatico',
+                hint: 'Aplicativo em 64 bits. Detectados: Microsoft.ACE.OLEDB.12.0. Pode digitar outro provider; em branco usa o automatico.',
+                options: [{
+                    value: 'Microsoft.ACE.OLEDB.16.0',
+                    label: 'ACE 16.0 - nao instalado',
+                    installed: false
+                }, {
+                    value: 'Microsoft.ACE.OLEDB.12.0',
+                    label: 'ACE 12.0 - instalado',
+                    installed: true
+                }, {
+                    value: 'Microsoft.Jet.OLEDB.4.0',
+                    label: 'Jet 4.0 - nao instalado',
+                    installed: false
+                }]
+            }, {
+                id: 'dbpassword',
+                label: 'Senha do banco',
+                kind: 'password',
+                secret: true
+            }, {
+                id: 'extra',
+                label: 'Opcoes avancadas',
+                kind: 'text',
+                placeholder: 'chave=valor;chave=valor'
+            }] :
+            category === 'Arquivo' ?
+                [{
+                    id: 'file',
+                    label: 'Arquivo do banco',
+                    kind: 'file',
+                    required: true,
+                    placeholder: 'C:\\dados\\banco.db'
+                }, {
+                    id: 'extra',
+                    label: 'Opcoes avancadas',
+                    kind: 'text',
+                    placeholder: 'chave=valor;chave=valor',
+                    hint: 'Anexadas a string de conexao.'
+                }] :
+                [{
+                    id: 'server',
+                    label: 'Servidor',
+                    kind: 'text',
+                    required: true,
+                    placeholder: 'localhost'
+                }, {
+                    id: 'port',
+                    label: 'Porta',
+                    kind: 'number',
+                    placeholder: '1433'
+                },
+                {
+                    id: 'database',
+                    label: 'Banco de dados',
+                    kind: 'text',
+                    required: true
+                }, {
+                    id: 'user',
+                    label: 'Usuario',
+                    kind: 'text'
+                }, {
+                    id: 'password',
+                    label: 'Senha',
+                    kind: 'password',
+                    secret: true
+                },
+                ...(key === 'sqlserver' ? [{
+                    id: 'trustCert',
+                    label: 'Confiar no certificado do servidor',
+                    kind: 'bool',
+                    'default': 'true'
+                }] : [])
+                ]
     }));
-  let profiles = [{ id:'p1', name:'Cartorio - producao', providerKey:'sqlserver', mode:'fields', fields:{server:'SRV-CART\\SQLEXPRESS',database:'SATUBA',user:'sa',password:''}, hasSecret:true, hasRaw:false, summary:'SRV-CART\\SQLEXPRESS / SATUBA' },
-                   { id:'p2', name:'Base antiga (Access)', providerKey:'access', mode:'fields', fields:{file:'C:\\dados\\cartorio.accdb'}, hasSecret:false, hasRaw:false, summary:'cartorio.accdb' }];
-  const summary = { id:'NOV2025009', name:'CART. SATUBA', source:'padrao', table:DATA.table, alias:DATA.alias, rootName:'declaracoes', columns:DATA.cols.length, errors:0, warnings:2, infos:1 };
-  let history = [{ id:'h1', startedAt:new Date(Date.now()-3600e3).toISOString(), layoutId:'NOV2025009', layoutName:'CART. SATUBA', profileName:'Cartorio - producao', mode:'files', status:'ok', rows:1284, elapsedMs:2310, files:[{path:'C:\\Users\\voce\\Documents\\GeneratorJS\\NOV2025009_20261127_101500.json',rows:1284,bytes:912345}] }];
+    let profiles = [{
+        id: 'p1',
+        name: 'Cartorio - producao',
+        providerKey: 'sqlserver',
+        mode: 'fields',
+        fields: {
+            server: 'SRV-CART\\SQLEXPRESS',
+            database: 'SATUBA',
+            user: 'sa',
+            password: ''
+        },
+        hasSecret: true,
+        hasRaw: false,
+        summary: 'SRV-CART\\SQLEXPRESS / SATUBA'
+    },
+    {
+        id: 'p2',
+        name: 'Base antiga (Access)',
+        providerKey: 'access',
+        mode: 'fields',
+        fields: {
+            file: 'C:\\dados\\cartorio.accdb'
+        },
+        hasSecret: false,
+        hasRaw: false,
+        summary: 'cartorio.accdb'
+    }
+    ];
+    const summary = {
+        id: 'NOV2025009',
+        name: 'CART. SATUBA',
+        source: 'padrao',
+        table: DATA.table,
+        alias: DATA.alias,
+        rootName: 'declaracoes',
+        columns: DATA.cols.length,
+        errors: 0,
+        warnings: 2,
+        infos: 1
+    };
+    let history = [{
+        id: 'h1',
+        startedAt: new Date(Date.now() - 3600e3).toISOString(),
+        layoutId: 'NOV2025009',
+        layoutName: 'CART. SATUBA',
+        profileName: 'Cartorio - producao',
+        mode: 'files',
+        status: 'ok',
+        rows: 1284,
+        elapsedMs: 2310,
+        files: [{
+            path: 'C:\\Users\\voce\\Documents\\GeneratorJS\\NOV2025009_20261127_101500.json',
+            rows: 1284,
+            bytes: 912345
+        }]
+    }];
 
-  const sample = (n) => DATA.cols.map(c => c.type==='datetime' ? '2026-03-1'+(n%9+1) : c.name==='Cep' ? '57000-000' : c.name.startsWith('Cpf')||c.name.startsWith('cpf') ? '123.456.789-0'+n : c.name==='NrMatricula' ? String(1000+n) : c.name==='VlrOp' ? String(150000+n*1000) : c.name+' '+(n+1));
-  const sql = 'SELECT TAB_SATUBA.[TpdeServico], TAB_SATUBA.[DtAto], TAB_SATUBA.[TipoAto], TAB_SATUBA.[NrMatricula] /* ... */ FROM [dbo].[ComunicaoPrefeitura] TAB_SATUBA ORDER BY TAB_SATUBA.[TpdeServico]';
-  const json = JSON.stringify({declaracoes:[{adquirentes:[{indicadorEspolio:false,ni:'cpfcnpjAdquirente',Participacao:100}],dataLavraturaRegistroAverbacao:'2026-03-11',matricula:'1001',tipoAto:'Compra e venda',representantes:null,codigoIbge:'2708907'}]},null,2);
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const sample = (n) => DATA.cols.map(c => c.type === 'datetime' ? '2026-03-1' + (n % 9 + 1) : c.name === 'Cep' ? '57000-000' : c.name.startsWith('Cpf') || c.name.startsWith('cpf') ? '123.456.789-0' + n : c.name === 'NrMatricula' ? String(1000 + n) : c.name === 'VlrOp' ? String(150000 + n * 1000) : c.name + ' ' + (n + 1));
+    const sql = 'SELECT TAB_SATUBA.[TpdeServico], TAB_SATUBA.[DtAto], TAB_SATUBA.[TipoAto], TAB_SATUBA.[NrMatricula] /* ... */ FROM [dbo].[ComunicaoPrefeitura] TAB_SATUBA ORDER BY TAB_SATUBA.[TpdeServico]';
+    const json = JSON.stringify({
+        declaracoes: [{
+            adquirentes: [{
+                indicadorEspolio: false,
+                ni: 'cpfcnpjAdquirente',
+                Participacao: 100
+            }],
+            dataLavraturaRegistroAverbacao: '2026-03-11',
+            matricula: '1001',
+            tipoAto: 'Compra e venda',
+            representantes: null,
+            codigoIbge: '2708907'
+        }]
+    }, null, 2);
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  window.__mockBridge = function (emit) {
-    return { async call(cmd, a = {}) {
-      await sleep(120);
-      switch (cmd) {
-        case 'app.info': return { version:'2.0.0', dataFolder:'C:\\Users\\voce\\AppData\\Roaming\\OrionAutomator\\GeneratorJS', userLayouts:'', defaultOutput:'C:\\Users\\voce\\Documents\\GeneratorJS', layoutErrors:[] };
-        case 'ui.theme': return null;
-        case 'providers.list': return providers;
-        case 'profiles.list': return profiles;
-        case 'profiles.save': { const p = a.profile; const i = profiles.findIndex(x => x.id === p.id); const m = { ...p, hasSecret: !!(p.fields.password), hasRaw:false, summary: p.fields.server || p.fields.file || '' }; if (i<0) profiles.push(m); else profiles[i]=m; return m; }
-        case 'profiles.delete': profiles = profiles.filter(p => p.id !== a.id); return null;
-        case 'profiles.test': await sleep(500); return a.profile.name.includes('falha') ? { ok:false, message:'Falha ao conectar em SQL Server: servidor nao encontrado.', elapsedMs:2100 } : { ok:true, message:'Conexao estabelecida.', serverVersion:'16.00.1000', elapsedMs:48 };
-        case 'schema.tables': return ['dbo.ComunicaoPrefeitura','dbo.Clientes','dbo.Livros','dbo.Matriculas'];
-        case 'layouts.list': case 'layouts.reload': return [summary];
-        case 'layouts.get': return { ...summary, file:'C:\\Program Files\\GeneratorJS\\Layouts\\SATUBA_DOI2026.xml', columns:DATA.cols, tree:DATA.tree, findings:DATA.finds, xml:DATA.xml };
-        case 'layouts.import': return null;
-        case 'generate.preview': await sleep(500); return { sql, parameters:a.request.filters.map((f,i)=>'@p'+i+' = '+f.value), columns:DATA.cols.map(c=>c.name), rows:[0,1,2,3,4].map(sample), json, totalRows:1284, warnings:['Catalogo lido: 30 colunas conferidas.'] };
-        case 'generate.start': {
-          const runId = 'r' + Date.now(); const t0 = Date.now();
-          const L = (level, message, percent) => emit('log', { runId, entry:{ time:new Date().toISOString(), level, message, percent } });
-          (async () => {
-            L('info','Layout: CART. SATUBA (NOV2025009)'); await sleep(300); L('info','Conectando em Cartorio - producao (SQL Server)...'); await sleep(400); L('ok','Conectado.');
-            await sleep(300); L('info','Conferindo tabela e colunas do layout no banco...'); await sleep(300); L('info','SQL: '+sql); L('info','1.284 registro(s) a processar.');
-            for (let p = 20; p <= 90; p += 25) { await sleep(450); L('info', Math.round(1284*p/100).toLocaleString('pt-BR')+' registro(s) processado(s)...', p); }
-            await sleep(400); L('ok','Arquivo gerado: C:\\Users\\voce\\Documents\\GeneratorJS\\NOV2025009_20261127_101500.json (1.284 registro(s), 890,9 KB)'); L('warn','2 valor(es) nao puderam ser convertidos e foram gravados como null.'); L('ok','Concluido em 2,3s.',100);
-            emit('done', { runId, result:{ success:true, cancelled:false, rows:1284, elapsedMs:Date.now()-t0, files:[{path:'C:\\Users\\voce\\Documents\\GeneratorJS\\NOV2025009_20261127_101500.json',rows:1284,bytes:912345}], json:null,
-              emptyByColumn:{Cnm:1284,RegimedeBens:310,CpfConjuge:97}, issues:['Linha 12, campo \'valorOperacao\' (coluna VlrOp): \'abc\' nao e numerico.'], issueCount:2 } });
-          })();
-          return { runId };
-        }
-        case 'generate.cancel': return null;
-        case 'history.list': return history;
-        case 'history.clear': history = []; return null;
-        case 'dialog.folder': return 'C:\\Users\\voce\\Documents\\GeneratorJS';
-        default: return null;
-      }
-    } };
-  };
+    window.__mockBridge = function (emit) {
+        return {
+            async call(cmd, a = {}) {
+                await sleep(120);
+                switch (cmd) {
+                    case 'app.info':
+                        return {
+                            version: '2.0.0', dataFolder: 'C:\\Users\\voce\\AppData\\Roaming\\OrionAutomator\\GeneratorJS', userLayouts: '', defaultOutput: 'C:\\Users\\voce\\Documents\\GeneratorJS', layoutErrors: []
+                        };
+                    case 'ui.theme':
+                        return null;
+                    case 'providers.list':
+                        return providers;
+                    case 'profiles.list':
+                        return profiles;
+                    case 'profiles.save': {
+                        const p = a.profile;
+                        const i = profiles.findIndex(x => x.id === p.id);
+                        const m = {
+                            ...p,
+                            hasSecret: !!(p.fields.password),
+                            hasRaw: false,
+                            summary: p.fields.server || p.fields.file || ''
+                        };
+                        if (i < 0) profiles.push(m);
+                        else profiles[i] = m;
+                        return m;
+                    }
+                    case 'profiles.delete':
+                        profiles = profiles.filter(p => p.id !== a.id);
+                        return null;
+                    case 'profiles.test':
+                        await sleep(500);
+                        return a.profile.name.includes('falha') ? {
+                            ok: false,
+                            message: 'Falha ao conectar em SQL Server: servidor nao encontrado.',
+                            elapsedMs: 2100
+                        } : {
+                            ok: true,
+                            message: 'Conexao estabelecida.',
+                            serverVersion: '16.00.1000',
+                            elapsedMs: 48
+                        };
+                    case 'schema.tables':
+                        return ['dbo.ComunicaoPrefeitura', 'dbo.Clientes', 'dbo.Livros', 'dbo.Matriculas'];
+                    case 'layouts.list':
+                    case 'layouts.reload':
+                        return [summary];
+                    case 'layouts.get':
+                        return {
+                            ...summary, file: 'C:\\Program Files\\GeneratorJS\\Layouts\\SATUBA_DOI2026.xml', columns: DATA.cols, tree: DATA.tree, findings: DATA.finds, xml: DATA.xml
+                        };
+                    case 'layouts.import':
+                        return null;
+                    case 'generate.preview':
+                        await sleep(500);
+                        return {
+                            sql, parameters: a.request.filters.map((f, i) => '@p' + i + ' = ' + f.value), columns: DATA.cols.map(c => c.name), rows: [0, 1, 2, 3, 4].map(sample), json, totalRows: 1284, warnings: ['Catalogo lido: 30 colunas conferidas.']
+                        };
+                    case 'generate.start': {
+                        const runId = 'r' + Date.now();
+                        const t0 = Date.now();
+                        const L = (level, message, percent) => emit('log', {
+                            runId,
+                            entry: {
+                                time: new Date().toISOString(),
+                                level,
+                                message,
+                                percent
+                            }
+                        });
+                        (async () => {
+                            L('info', 'Layout: CART. SATUBA (NOV2025009)');
+                            await sleep(300);
+                            L('info', 'Conectando em Cartorio - producao (SQL Server)...');
+                            await sleep(400);
+                            L('ok', 'Conectado.');
+                            await sleep(300);
+                            L('info', 'Conferindo tabela e colunas do layout no banco...');
+                            await sleep(300);
+                            L('info', 'SQL: ' + sql);
+                            L('info', '1.284 registro(s) a processar.');
+                            for (let p = 20; p <= 90; p += 25) {
+                                await sleep(450);
+                                L('info', Math.round(1284 * p / 100).toLocaleString('pt-BR') + ' registro(s) processado(s)...', p);
+                            }
+                            await sleep(400);
+                            L('ok', 'Arquivo gerado: C:\\Users\\voce\\Documents\\GeneratorJS\\NOV2025009_20261127_101500.json (1.284 registro(s), 890,9 KB)');
+                            L('warn', '2 valor(es) nao puderam ser convertidos e foram gravados como null.');
+                            L('ok', 'Concluido em 2,3s.', 100);
+                            emit('done', {
+                                runId,
+                                result: {
+                                    success: true,
+                                    cancelled: false,
+                                    rows: 1284,
+                                    elapsedMs: Date.now() - t0,
+                                    files: [{
+                                        path: 'C:\\Users\\voce\\Documents\\GeneratorJS\\NOV2025009_20261127_101500.json',
+                                        rows: 1284,
+                                        bytes: 912345
+                                    }],
+                                    json: null,
+                                    emptyByColumn: {
+                                        Cnm: 1284,
+                                        RegimedeBens: 310,
+                                        CpfConjuge: 97
+                                    },
+                                    issues: ['Linha 12, campo \'valorOperacao\' (coluna VlrOp): \'abc\' nao e numerico.'],
+                                    issueCount: 2
+                                }
+                            });
+                        })();
+                        return {
+                            runId
+                        };
+                    }
+                    case 'generate.cancel':
+                        return null;
+                    case 'history.list':
+                        return history;
+                    case 'history.clear':
+                        history = [];
+                        return null;
+                    case 'dialog.folder':
+                        return 'C:\\Users\\voce\\Documents\\GeneratorJS';
+                    default:
+                        return null;
+                }
+            }
+        };
+    };
 })();
