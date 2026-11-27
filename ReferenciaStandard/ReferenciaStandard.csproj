@@ -5,25 +5,28 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <None Remove="Resources\ReferenciaFactory\Configuracoes\Tema_Classico.xml" />
-	  <None Remove="Resources\ReferenciaFactory\Configuracoes\Tema_Grafite.xml" />
-	  <None Remove="Resources\ReferenciaFactory\Configuracoes\Tema_Matrix.xml" />
-	  <None Remove="Resources\ReferenciaFactory\Regras.xml" />
-	  <None Remove="Resources\ReferenciaFactory\UiConfig.xml" />
+		<None Remove="Resources\ReferenciaFactory\Configuracoes\Tema_Classico.xml" />
+		<None Remove="Resources\ReferenciaFactory\Configuracoes\Tema_Grafite.xml" />
+		<None Remove="Resources\ReferenciaFactory\Configuracoes\Tema_Matrix.xml" />
+		<None Remove="Resources\ReferenciaFactory\Regras.xml" />
+		<None Remove="Resources\ReferenciaFactory\UiConfig.xml" />
+		<None Remove="Resources\GeneratorJS\Layouts\*.xml" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\Regras.xml" />
-	  <EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\Tema_Classico.xml" />
-	  <EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\Tema_Grafite.xml" />
-	  <EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\Tema_Matrix.xml" />
-	  <EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\UiConfig.xml" />
+		<EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\Regras.xml" />
+		<EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\Tema_Classico.xml" />
+		<EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\Tema_Grafite.xml" />
+		<EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\Tema_Matrix.xml" />
+		<EmbeddedResource Include="Resources\ReferenciaFactory\Configuracoes\UiConfig.xml" />
+		<!-- Layouts XML padrao do GeneratorJS: qualquer .xml colocado nesta pasta entra na DLL automaticamente -->
+		<EmbeddedResource Include="Resources\GeneratorJS\Layouts\*.xml" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-	  <PackageReference Include="Microsoft.NETCore.Platforms" Version="7.0.4" />
-	  <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+		<PackageReference Include="Microsoft.NETCore.Platforms" Version="7.0.4" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 	</ItemGroup>
 
 </Project>

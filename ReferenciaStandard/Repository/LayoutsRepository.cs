@@ -1,4 +1,3 @@
-
 using ReferenciaStandard.Entidades;
 using ReferenciaStandard.Helpers;
 using System;
@@ -44,7 +43,7 @@ namespace ReferenciaStandard.Repository
         public static List<LayoutArquivo> ListarUsuario()
         {
             try { Directory.CreateDirectory(AppPaths.LayoutsUsuario); } catch { /* sem pasta: lista vazia */ }
-            return (List<LayoutArquivo>)LerPasta(AppPaths.LayoutsUsuario, OrigemImportado);
+            return LerPasta(AppPaths.LayoutsUsuario, OrigemImportado);
         }
 
         /// <summary>Le um XML qualquer escolhido pelo usuario (para importar).</summary>
@@ -79,7 +78,7 @@ namespace ReferenciaStandard.Repository
             }
         }
 
-        private static IEnumerable<LayoutArquivo> LerPasta(string pasta, string origem)
+        private static List<LayoutArquivo> LerPasta(string pasta, string origem)
         {
             var lista = new List<LayoutArquivo>();
             if (!Directory.Exists(pasta)) return lista;
