@@ -1,0 +1,269 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Layout name="DOI MASTER" identifier="DOI-MASTER-2027">
+
+	<!-- ============================================================
+       1. GERAÇÃO — FONTE DE ORIGEM (VIEWS)
+       ============================================================ -->
+	<generate name="MASTER 2027">
+
+		<!-- TABELA BASE — DECLARAÇÕES -->
+		<table name="DOIWEB_DECLARACOES">
+			<selection>
+				<Column name="CODI_DECL" type="string"  description="Código da declaração" orderby="true" />
+				<Column name="TIPO_DECL" type="string"  description="Tipo de declaração" />
+				<Column name="TIPO_SERV" type="string"  description="Tipo de serviço" />
+				<Column name="DATA_DECL" type="datetime" formate="yyyy-mm-dd" description="Data da lavratura/registro/averbação" />
+				<Column name="TIPO_ATOS" type="string"  description="Tipo de ato" />
+				<Column name="TIPO_LIVR" type="string"  description="Tipo de livro" />
+				<Column name="NUME_DECL" type="string"  description="Número do livro" />
+				<Column name="FOLH_DECL" type="string"  description="Folha" />
+				<Column name="MATR_DECL" type="string"  description="Matrícula" />
+				<Column name="TRAN_DECL" type="string"  description="Transcrição" />
+				<Column name="CODN_DECL" type="string"  description="CNM" />
+				<Column name="MATR_NOTA" type="string"  description="Matrícula Notarial Eletrônica" />
+				<Column name="NUMR_DECL" type="string"  description="Número do registro/averbação" />
+				<Column name="NATU_DECL" type="string"  description="Natureza do título" />
+				<Column name="NUMR_REGI" type="string"  description="Número do registro" />
+				<Column name="EXIS_DECL" type="string"  description="Indicador DOI anterior" />
+				<Column name="DATA_NEGO" type="datetime" formate="yyyy-mm-dd" description="Data do negócio jurídico" />
+				<Column name="TIPO_OPER" type="string"  description="Tipo de operação imobiliária" />
+				<Column name="DESC_OPER" type="string"  description="Descrição de outras operações" />
+				<Column name="VALO_OPER" type="string"  description="Valor da operação" />
+				<Column name="INDV_OPER" type="string"  description="Indicador ausência valor operação" />
+				<Column name="VALB_DECL" type="string"  description="Valor base ITBI/ITCMD" />
+				<Column name="INDB_DECL" type="string"  description="Indicador ausência valor base" />
+				<Column name="FORM_PGTO" type="string"  description="Forma de pagamento" />
+				<Column name="ALIF_DECL" type="string"  description="Indicador alienação fiduciária" />
+				<Column name="MESE_PARC" type="string"  description="Mês/ano última parcela" />
+				<Column name="VALO_PAGO" type="string"  description="Valor pago até data do ato" />
+				<Column name="PERM_DECL" type="string"  description="Indicador permuta de bens" />
+				<Column name="INDP_DINH" type="string"  description="Indicador pagamento em dinheiro" />
+				<Column name="VALO_MOED" type="string"  description="Valor pago em moeda corrente" />
+				<Column name="TPTR_DECL" type="string"  description="Tipo da parte transacionada" />
+				<Column name="VALT_DECL" type="string"  description="Valor da parte transacionada" />
+			</selection>
+		</table>
+
+		<!-- TABELA — IMÓVEIS -->
+		<table name="DOIWEB_IMOVEIS">
+			<selection>
+				<Column name="CODI_IMOV" type="string" description="Código interno do imóvel" />
+				<Column name="CODI_DECL" type="string" description="Código da declaração" />
+				<Column name="CIBI_IMOV" type="string" description="CIB" />
+				<Column name="DEST_IMOV" type="string" description="Destinação do imóvel" />
+				<Column name="INDP_IMOV" type="string" description="Indicador imóvel público da União" />
+				<Column name="REGI_IMOV" type="string" description="Registro Imobiliário Patrimonial" />
+				<Column name="CERT_IMOV" type="string" description="Certidão autorização transferência" />
+				<Column name="INSC_IMOV" type="string" description="Inscrição municipal" />
+				<Column name="CODI_IBGE" type="string" description="Código IBGE" />
+				<Column name="AREA_IMOV" type="string" description="Área do imóvel" />
+				<Column name="INDA_IMOV" type="string" description="Indicador área lote não informada" />
+				<Column name="AREA_CONS" type="string" description="Área construída" />
+				<Column name="INDC_IMOV" type="string" description="Indicador área construída não informada" />
+				<Column name="TIPO_IMOV" type="string" description="Tipo do imóvel" />
+				<Column name="TIPO_LOGR" type="string" description="Tipo de logradouro" />
+				<Column name="NOME_LOGR" type="string" description="Logradouro" />
+				<Column name="NUME_IMOV" type="string" description="Número" />
+				<Column name="COMP_NUME" type="string" description="Complemento do número" />
+				<Column name="COMP_ENDR" type="string" description="Complemento do endereço" />
+				<Column name="BAIR_IMOV" type="string" description="Bairro" />
+				<Column name="CEPI_IMOV" type="string" description="CEP" />
+				<Column name="CODI_INCR" type="string" description="Código INCRA" />
+				<Column name="DENO_IMOV" type="string" description="Denominação imóvel rural" />
+				<Column name="LOCA_IMOV" type="string" description="Localização do imóvel" />
+			</selection>
+		</table>
+
+		<!-- TABELA — PARTES (A=adquirente / L=alienante) -->
+		<table name="DOIWEB_PARTES">
+			<selection>
+				<Column name="CODI_PART" type="string" description="Código interno da parte" />
+				<Column name="CODI_DECL" type="string" description="Código da declaração" />
+				<Column name="TIPO_PART" type="string" description="A=adquirente / L=alienante" />
+				<Column name="NIID_PART" type="string" description="NI (CPF/CNPJ)" />
+				<Column name="NOME_PART" type="string" description="Nome da parte" />
+				<Column name="IDNI_PART" type="string" description="Indicador NI identificado" />
+				<Column name="MOTI_PART" type="string" description="Motivo não identificação NI" />
+				<Column name="PART_PART" type="string" description="Participação" />
+				<Column name="IDNP_PART" type="string" description="Indicador não consta participação" />
+				<Column name="ESTR_PART" type="string" description="Indicador estrangeiro" />
+				<Column name="ESPO_PART" type="string" description="Indicador espólio" />
+				<Column name="CPFI_PART" type="string" description="CPF do inventariante" />
+				<Column name="NOMI_PART" type="string" description="Nome do inventariante" />
+				<Column name="CONJ_PART" type="string" description="Indicador cônjuge" />
+				<Column name="CPAR_PART" type="string" description="Indicador cônjuge participa" />
+				<Column name="IDCP_PART" type="string" description="Indicador CPF cônjuge identificado" />
+				<Column name="CPFC_PART" type="string" description="CPF do cônjuge" />
+				<Column name="NOMC_PART" type="string" description="Nome do cônjuge" />
+				<Column name="REGI_PART" type="string" description="Regime de bens" />
+				<Column name="REPR_PART" type="string" description="Indicador representante" />
+			</selection>
+		</table>
+
+		<!-- TABELA — REPRESENTANTES -->
+		<table name="DOIWEB_REPRESENTANTES">
+			<selection>
+				<Column name="CODI_REPR" type="string" description="Código interno do representante" />
+				<Column name="CODI_DECL" type="string" description="Código da declaração" />
+				<Column name="CODI_PART" type="string" description="Código da parte representada" />
+				<Column name="NIID_REPR" type="string" description="CPF/CNPJ do representante" />
+				<Column name="NOME_REPR" type="string" description="Nome do representante" />
+			</selection>
+		</table>
+
+		<!-- TABELA — MUNICÍPIOS DO IMÓVEL (opcional) -->
+		<table name="DOIWEB_MUNICIPIOS" optional="true">
+			<selection>
+				<Column name="CODI_IMOV" type="string" description="Código interno do imóvel" />
+				<Column name="CODI_IBGE" type="string" description="Código IBGE do município" />
+			</selection>
+		</table>
+
+	</generate>
+
+	<!-- ============================================================
+       2. JSONFIELDS — MAPEAMENTO PARA O JSON FINAL
+       ============================================================ -->
+	<Jsonfields name="DOI SATUBA 2027">
+
+		<!-- Sem alias: referencia o name da tabela diretamente -->
+		<Refealias name="DOIWEB_DECLARACOES">
+
+			<field name="declaracoes" type="array">
+
+				<!-- ====================================================
+             ADQUIRENTES  (TIPO_PART = 'A')
+             ==================================================== -->
+				<field name="adquirentes" type="array" source="DOIWEB_PARTES" filter="TIPO_PART = 'A'">
+					<field name="ni"                          type="string"  Columnrefe="NIID_PART" />
+					<field name="nome"                        type="string"  Columnrefe="NOME_PART" />
+					<field name="indicadorNiIdentificado"     type="bool"    Columnrefe="IDNI_PART" default="true" />
+					<field name="motivoNaoIdentificacaoNi"    type="string"  Columnrefe="MOTI_PART" />
+					<field name="participacao"                type="decimal" Columnrefe="PART_PART" />
+					<field name="indicadorNaoConstaParticipacaoOperacao" type="bool" Columnrefe="IDNP_PART" default="false" />
+					<field name="indicadorEstrangeiro"        type="bool"    Columnrefe="ESTR_PART" default="false" />
+					<field name="indicadorEspolio"            type="bool"    Columnrefe="ESPO_PART" default="false" />
+					<field name="cpfInventariante"            type="string"  Columnrefe="CPFI_PART" />
+					<field name="nomeInventariante"           type="string"  Columnrefe="NOMI_PART" />
+					<field name="indicadorConjuge"            type="bool"    Columnrefe="CONJ_PART" default="false" />
+					<field name="indicadorConjugeParticipa"   type="bool"    Columnrefe="CPAR_PART" />
+					<field name="indicadorCpfConjugeIdentificado" type="bool" Columnrefe="IDCP_PART" />
+					<field name="cpfConjuge"                  type="string"  Columnrefe="CPFC_PART" />
+					<field name="nomeConjuge"                 type="string"  Columnrefe="NOMC_PART" />
+					<field name="regimeBens"                  type="string"  Columnrefe="REGI_PART" />
+					<field name="indicadorRepresentante"      type="bool"    Columnrefe="REPR_PART" default="false" />
+
+					<!-- Representantes do adquirente (1:N) -->
+					<field name="representantes" type="array" source="DOIWEB_REPRESENTANTES"
+						   fk="CODI_PART" ref="CODI_PART">
+						<field name="ni"   type="string" Columnrefe="NIID_REPR" />
+						<field name="nome" type="string" Columnrefe="NOME_REPR" />
+					</field>
+				</field>
+
+				<!-- ====================================================
+             ALIENANTES  (TIPO_PART = 'L')
+             ==================================================== -->
+				<field name="alienantes" type="array" source="DOIWEB_PARTES" filter="TIPO_PART = 'L'">
+					<field name="ni"                          type="string"  Columnrefe="NIID_PART" />
+					<field name="nome"                        type="string"  Columnrefe="NOME_PART" />
+					<field name="indicadorNiIdentificado"     type="bool"    Columnrefe="IDNI_PART" default="true" />
+					<field name="motivoNaoIdentificacaoNi"    type="string"  Columnrefe="MOTI_PART" />
+					<field name="participacao"                type="decimal" Columnrefe="PART_PART" />
+					<field name="indicadorNaoConstaParticipacaoOperacao" type="bool" Columnrefe="IDNP_PART" default="false" />
+					<field name="indicadorEstrangeiro"        type="bool"    Columnrefe="ESTR_PART" default="false" />
+					<field name="indicadorEspolio"            type="bool"    Columnrefe="ESPO_PART" default="false" />
+					<field name="cpfInventariante"            type="string"  Columnrefe="CPFI_PART" />
+					<field name="nomeInventariante"           type="string"  Columnrefe="NOMI_PART" />
+					<field name="indicadorConjuge"            type="bool"    Columnrefe="CONJ_PART" default="false" />
+					<field name="indicadorConjugeParticipa"   type="bool"    Columnrefe="CPAR_PART" />
+					<field name="indicadorCpfConjugeIdentificado" type="bool" Columnrefe="IDCP_PART" />
+					<field name="cpfConjuge"                  type="string"  Columnrefe="CPFC_PART" />
+					<field name="nomeConjuge"                 type="string"  Columnrefe="NOMC_PART" />
+					<field name="regimeBens"                  type="string"  Columnrefe="REGI_PART" />
+					<field name="indicadorRepresentante"      type="bool"    Columnrefe="REPR_PART" default="false" />
+
+					<!-- Representantes do alienante (1:N) -->
+					<field name="representantes" type="array" source="DOIWEB_REPRESENTANTES"
+						   fk="CODI_PART" ref="CODI_PART">
+						<field name="ni"   type="string" Columnrefe="NIID_REPR" />
+						<field name="nome" type="string" Columnrefe="NOME_REPR" />
+					</field>
+				</field>
+
+				<!-- ====================================================
+             IMÓVEIS (1:N)
+             ==================================================== -->
+				<field name="imoveis" type="array" source="DOIWEB_IMOVEIS"
+					   fk="CODI_DECL" ref="CODI_DECL">
+					<field name="cib"                              type="string"  Columnrefe="CIBI_IMOV" />
+					<field name="destinacao"                       type="string"  Columnrefe="DEST_IMOV" />
+					<field name="indicadorImovelPublicoUniao"      type="bool"    Columnrefe="INDP_IMOV" default="false" />
+					<field name="registroImobiliarioPatrimonial"   type="string"  Columnrefe="REGI_IMOV" />
+					<field name="certidaoAutorizacaoTransferencia" type="string"  Columnrefe="CERT_IMOV" />
+					<field name="inscricaoMunicipal"               type="string"  Columnrefe="INSC_IMOV" />
+					<field name="codigoIbge"                       type="string"  Columnrefe="CODI_IBGE" />
+					<field name="areaImovel"                       type="decimal" Columnrefe="AREA_IMOV" />
+					<field name="indicadorAreaLoteNaoConsta"       type="bool"    Columnrefe="INDA_IMOV" default="false" />
+					<field name="areaConstruida"                   type="decimal" Columnrefe="AREA_CONS" />
+					<field name="indicadorAreaConstruidaNaoConsta" type="bool"    Columnrefe="INDC_IMOV" default="false" />
+					<field name="tipoImovel"                       type="string"  Columnrefe="TIPO_IMOV" />
+					<field name="tipoLogradouro"                   type="string"  Columnrefe="TIPO_LOGR" />
+					<field name="nomeLogradouro"                   type="string"  Columnrefe="NOME_LOGR" />
+					<field name="numeroImovel"                     type="string"  Columnrefe="NUME_IMOV" />
+					<field name="complementoNumero"                type="string"  Columnrefe="COMP_NUME" />
+					<field name="complementoEndereco"              type="string"  Columnrefe="COMP_ENDR" />
+					<field name="bairro"                           type="string"  Columnrefe="BAIR_IMOV" />
+					<field name="cep"                              type="string"  Columnrefe="CEPI_IMOV" />
+					<field name="codigoIncra"                      type="string"  Columnrefe="CODI_INCR" />
+					<field name="denominacaoImovelRural"           type="string"  Columnrefe="DENO_IMOV" />
+					<field name="localizacaoImovel"                type="string"  Columnrefe="LOCA_IMOV" />
+
+					<!-- Municípios do imóvel (opcional, 1:N) -->
+					<field name="municipios" type="array" source="DOIWEB_MUNICIPIOS"
+						   fk="CODI_IMOV" ref="CODI_IMOV" optional="true">
+						<field name="codigoIbge" type="string" Columnrefe="CODI_IBGE" />
+					</field>
+				</field>
+
+				<!-- ====================================================
+             CABEÇALHO DA DECLARAÇÃO
+             ==================================================== -->
+				<field name="codigoDeclaracao"                       type="string"  Columnrefe="CODI_DECL" />
+				<field name="tipoDeclaracao"                         type="string"  Columnrefe="TIPO_DECL" />
+				<field name="tipoServico"                            type="string"  Columnrefe="TIPO_SERV" />
+				<field name="dataLavraturaRegistroAverbacao"         type="datetime" formate="yyyy-mm-dd" Columnrefe="DATA_DECL" />
+				<field name="tipoAto"                                type="string"  Columnrefe="TIPO_ATOS" />
+				<field name="tipoLivro"                              type="string"  Columnrefe="TIPO_LIVR" />
+				<field name="numeroLivro"                            type="string"  Columnrefe="NUME_DECL" />
+				<field name="folha"                                  type="string"  Columnrefe="FOLH_DECL" />
+				<field name="matricula"                              type="string"  Columnrefe="MATR_DECL" />
+				<field name="transcricao"                            type="string"  Columnrefe="TRAN_DECL" />
+				<field name="cnm"                                    type="string"  Columnrefe="CODN_DECL" />
+				<field name="matriculaNotarialEletronica"            type="string"  Columnrefe="MATR_NOTA" />
+				<field name="numeroRegistroAverbacao"                type="string"  Columnrefe="NUMR_DECL" />
+				<field name="naturezaTitulo"                         type="string"  Columnrefe="NATU_DECL" />
+				<field name="numeroRegistro"                         type="string"  Columnrefe="NUMR_REGI" />
+				<field name="indicadorExisteDoiAnterior"             type="bool"    Columnrefe="EXIS_DECL" default="false" />
+				<field name="dataNegocioJuridico"                    type="datetime" formate="yyyy-mm-dd" Columnrefe="DATA_NEGO" />
+				<field name="tipoOperacaoImobiliaria"                type="string"  Columnrefe="TIPO_OPER" />
+				<field name="descricaoOutrasOperacoes"               type="string"  Columnrefe="DESC_OPER" />
+				<field name="valorOperacao"                          type="decimal" Columnrefe="VALO_OPER" />
+				<field name="indicadorNaoConstaValorOperacaoImobiliaria" type="bool" Columnrefe="INDV_OPER" default="false" />
+				<field name="valorBaseCalculoItbiItcmd"              type="decimal" Columnrefe="VALB_DECL" />
+				<field name="indicadorNaoConstaValorBaseCalculoItbiItcmd" type="bool" Columnrefe="INDB_DECL" default="false" />
+				<field name="formaPagamento"                         type="string"  Columnrefe="FORM_PGTO" />
+				<field name="indicadorAlienacaoFiduciaria"           type="bool"    Columnrefe="ALIF_DECL" default="false" />
+				<field name="mesAnoUltimaParcela"                    type="string"  Columnrefe="MESE_PARC" />
+				<field name="valorPagoAteDataAto"                    type="decimal" Columnrefe="VALO_PAGO" />
+				<field name="indicadorPermutaBens"                   type="bool"    Columnrefe="PERM_DECL" default="false" />
+				<field name="indicadorPagamentoDinheiro"             type="bool"    Columnrefe="INDP_DINH" default="false" />
+				<field name="valorPagoMoedaCorrente"                 type="decimal" Columnrefe="VALO_MOED" />
+				<field name="tipoParteTransacionada"                 type="string"  Columnrefe="TPTR_DECL" />
+				<field name="valorParteTransacionada"                type="decimal" Columnrefe="VALT_DECL" />
+
+			</field>
+		</Refealias>
+	</Jsonfields>
+
+</Layout>

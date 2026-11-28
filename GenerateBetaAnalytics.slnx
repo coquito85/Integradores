@@ -4,9 +4,9 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="EmissorLicencas/EmissorLicencas.csproj" />
   <Project Path="ExecutorService/ExecutorService.csproj" Id="7423b428-8ed8-40a7-b35f-cb967d20603b" />
   <Project Path="GenerateJS/GenerateJS.csproj" Id="8b3b1dcb-cbc0-4351-a651-a1b1be226ea6" />
-  <Project Path="LicenseTool/LicenseTool.csproj" />
   <Project Path="OrionAutomator/OrionAutomator.csproj" Id="8dee4a75-25f0-46f5-b3a3-794eb0f2abdb" />
   <Project Path="ReferenciaFactory/ReferenciaFactory.csproj" Id="6ab600fe-7ee7-42e6-adc6-b9e9a6e448dd" />
   <Project Path="ReferenciaStandard/ReferenciaStandard.csproj" Id="84fc2885-9e90-46c3-b3df-0e0a6f167320" />

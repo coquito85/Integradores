@@ -2131,7 +2131,12 @@ function licenseCard() {
     if (linha) info.push(h('div', { class: 'sub', text: linha }));
     if (L.responsavel && L.responsavel.nome)
         info.push(h('div', { class: 'sub', text: `Responsável: ${L.responsavel.nome}${L.responsavel.cargo ? ' (' + L.responsavel.cargo + ')' : ''}` }));
-    if (L.validade) info.push(h('div', { class: 'sub', text: `Validade: ${L.validade.split('-').reverse().join('/')}` }));
+    const br = d => d.split('-').reverse().join('/');
+    const periodo = L.validoDe && L.validade ? `Válida de ${br(L.validoDe)} até ${br(L.validade)}`
+        : L.validade ? `Válida até ${br(L.validade)}`
+            : L.validoDe ? `Válida a partir de ${br(L.validoDe)}`
+                : L.nome ? 'Sem prazo de validade' : '';
+    if (periodo) info.push(h('div', { class: 'sub', text: periodo }));
     if (!ok) info.push(h('div', { class: 'sub', text: L.message }));
     return h('div', { class: 'card lic' },
         h('div', { class: 'pv sm' }, icon('shield')),

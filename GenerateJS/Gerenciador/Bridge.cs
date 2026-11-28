@@ -338,6 +338,7 @@ namespace GenerateJS.Gerenciador
             codigoIbge = st.License?.CodigoIbge,
             responsavel = st.License is null ? null : new { nome = st.License.ResponsavelNome, cargo = st.License.ResponsavelCargo, email = st.License.ResponsavelEmail },
             emitidoEm = st.License?.EmitidoEm,
+            validoDe = st.License?.ValidoDe,
             validade = st.License?.Validade,
             layouts = st.License?.Layouts ?? new List<string>()
         };

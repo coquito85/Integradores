@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- mesmo framework do ReferenciaFactory/GenerateJS, com -windows -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PlatformTarget>x86</PlatformTarget>
+    <AssemblyName>EmissorLicencas</AssemblyName>
+    <RootNamespace>EmissorLicencas</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- usa CartorioLicense e LayoutCatalog do próprio aplicativo (assinatura e lista de modelos nunca divergem).
+         Ajuste o caminho se o projeto ficar em outra pasta. -->
+    <ProjectReference Include="..\ReferenciaFactory\ReferenciaFactory.csproj" />
+  </ItemGroup>
+
+</Project>
