@@ -799,6 +799,13 @@
                         };
                     case 'schema.tables':
                         return ['dbo.ComunicaoPrefeitura', 'dbo.Clientes', 'dbo.Livros', 'dbo.Matriculas'];
+                    case 'license.get':
+                    case 'license.import':
+                        return {
+                            valid: true, bypass: false, message: 'Licença válida.', cartorioId: 'SATUBA', nome: 'Cartório de Satuba',
+                            cns: '00.000-0', codigoIbge: '2704302', responsavel: { nome: 'Fulano de Tal', cargo: 'Tabelião', email: 'fulano@cartorio.com' },
+                            emitidoEm: '2026-11-27', validade: '2027-11-27', layouts: ['NOV2025009']
+                        };
                     case 'layouts.list':
                     case 'layouts.reload':
                         return [summary];

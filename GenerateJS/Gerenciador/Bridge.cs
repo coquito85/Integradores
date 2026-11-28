@@ -195,6 +195,17 @@ namespace GenerateJS.Gerenciador
                         return cols.Select(c => new { name = c.Name, type = c.Type }).ToList();
                     }
 
+                // ---- licenca do cartorio
+                case "license.get":
+                    return LicenseInfo(_exec.Licenca());
+
+                case "license.import":
+                    {
+                        using var dlg = new OpenFileDialog { Title = "Importar licenca do cartorio", Filter = "Licenca (*.lic)|*.lic|Todos os arquivos (*.*)|*.*", CheckFileExists = true };
+                        if (dlg.ShowDialog(_ui) != DialogResult.OK) return null;
+                        return LicenseInfo(_exec.ImportarLicenca(dlg.FileName));
+                    }
+
                 // ---- layouts
                 case "layouts.list":
                     return _exec.ListarLayouts().Select(LayoutSummary).ToList();
@@ -315,6 +326,21 @@ namespace GenerateJS.Gerenciador
                 summary
             };
         }
+
+        private static object LicenseInfo(ReferenciaFactory.Layouts.LicenseStatus st) => new
+        {
+            valid = st.Valid,
+            bypass = st.Bypass,
+            message = st.Message,
+            cartorioId = st.License?.CartorioId,
+            nome = st.License?.Nome,
+            cns = st.License?.Cns,
+            codigoIbge = st.License?.CodigoIbge,
+            responsavel = st.License is null ? null : new { nome = st.License.ResponsavelNome, cargo = st.License.ResponsavelCargo, email = st.License.ResponsavelEmail },
+            emitidoEm = st.License?.EmitidoEm,
+            validade = st.License?.Validade,
+            layouts = st.License?.Layouts ?? new List<string>()
+        };
 
         private static object LayoutSummary(LayoutDefinition l) => new
         {

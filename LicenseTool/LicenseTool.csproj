@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- mesmo arquivo do aplicativo: assinatura e verificação nunca divergem. Ajuste o caminho se necessário. -->
+    <Compile Include="..\ReferenciaFactory\Layouts\CartorioLicense.cs" Link="CartorioLicense.cs" />
+  </ItemGroup>
+</Project>

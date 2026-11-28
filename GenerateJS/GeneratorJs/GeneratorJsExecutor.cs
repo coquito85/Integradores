@@ -14,6 +14,7 @@ namespace GenerateJS.GeneratorJs
     /// </summary>
     public sealed class GeneratorJsExecutor
     {
+        private readonly CartorioStore _cartorio;
         private readonly LayoutCatalog _layouts;
         private readonly ProfileStore _profiles;
         private readonly GeneratorEngine _engine;
@@ -23,7 +24,8 @@ namespace GenerateJS.GeneratorJs
         public GeneratorJsExecutor()
         {
             Directory.CreateDirectory(AppPaths.GeneratorJs);
-            _layouts = new LayoutCatalog();
+            _cartorio = new CartorioStore(AppPaths.GeneratorJs);
+            _layouts = new LayoutCatalog(_cartorio);
             _profiles = new ProfileStore(AppPaths.GeneratorJs);
             _engine = new GeneratorEngine(_layouts, _profiles);
             _historico = new HistoricoStore(AppPaths.GeneratorJs);
@@ -87,6 +89,12 @@ namespace GenerateJS.GeneratorJs
             }
             return rascunho;
         }
+
+        // ------------------------------------------------------------------ licenca do cartorio
+        public LicenseStatus Licenca() => _cartorio.Status;
+
+        /// <summary>Confere a assinatura e, se valida, passa a usar esta licenca (define quais layouts aparecem).</summary>
+        public LicenseStatus ImportarLicenca(string arquivo) => _cartorio.Import(arquivo);
 
         // ------------------------------------------------------------------ layouts (XML vem do ReferenciaStandard)
         public IReadOnlyList<LayoutDefinition> ListarLayouts() => _layouts.All;

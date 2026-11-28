@@ -1776,3 +1776,36 @@ input[type="text"].invalid {
 #selProfile[hidden] {
     display: none;
 }
+
+/* Licença do cartório (tela Layouts) */
+.lic {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+}
+
+    .lic .txt {
+        flex: 1 1 260px;
+        min-width: 0;
+    }
+
+    .lic .sub {
+        color: var(--text-2);
+        font-size: 12px;
+        margin-top: 2px;
+    }
+
+    .lic .badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .lic > .btn {
+        flex: none;
+        margin-left: auto;
+    }

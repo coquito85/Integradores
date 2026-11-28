@@ -35,6 +35,7 @@ for (const m of ['append', 'prepend', 'replaceChildren']) {
 const ICONS = {
     play: '<polygon points="6 4 20 12 6 20 6 4"/>',
     plug: '<path d="M9 2v6M15 2v6M7 8h10v4a5 5 0 0 1-10 0V8zM12 17v5"/>',
+    shield: '<path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/>',
     layout: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>',
     history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
@@ -1919,14 +1920,18 @@ async function saveDraft() {
 // ============================================================ LAYOUTS
 async function renderLayouts() {
     const root = $('#view-layouts');
+    const lic = licenseCard();
     if (!S.layouts.length) {
-        root.replaceChildren(h('div', {
+        const semLicenca = !S.license || (!S.license.valid && !S.license.bypass);
+        root.replaceChildren(lic, h('div', {
             class: 'empty card'
-        }, icon('layout', 'lg'), h('h2', {
-            text: 'Nenhum layout encontrado'
+        }, icon(semLicenca ? 'shield' : 'layout', 'lg'), h('h2', {
+            text: semLicenca ? 'Nenhum modelo liberado' : 'Nenhum layout encontrado'
         }),
             h('p', {
-                text: 'Coloque um XML na pasta Layouts ou use “Importar XML”.'
+                text: semLicenca
+                    ? 'Importe a licença do cartório (.lic) enviada pelo fornecedor para liberar os modelos contratados.'
+                    : 'Coloque um XML na pasta Layouts ou use “Importar XML”.'
             })));
         return;
     }
@@ -2064,7 +2069,7 @@ async function renderLayouts() {
                 return pre;
             })());
     }
-    root.replaceChildren(h('div', {
+    root.replaceChildren(lic, h('div', {
         class: 'lay'
     }, list, h('div', {}, d ? h('div', {
         class: 'row',
@@ -2113,6 +2118,44 @@ function renderTree(d) {
     return h('div', {
         class: 'tree'
     }, h('ul', {}, walk(d.tree, '')));
+}
+
+function licenseCard() {
+    const L = S.license;
+    if (!L) return h('div');
+    const ok = L.valid;
+    const estado = ok ? ['badge ok', 'licença válida'] : L.bypass ? ['badge warn', 'modo desenvolvimento'] : ['badge err', 'sem licença válida'];
+    const info = [];
+    if (L.nome) info.push(h('b', { text: L.nome }));
+    const linha = [L.cns && `CNS ${L.cns}`, L.codigoIbge && `IBGE ${L.codigoIbge}`].filter(Boolean).join(' · ');
+    if (linha) info.push(h('div', { class: 'sub', text: linha }));
+    if (L.responsavel && L.responsavel.nome)
+        info.push(h('div', { class: 'sub', text: `Responsável: ${L.responsavel.nome}${L.responsavel.cargo ? ' (' + L.responsavel.cargo + ')' : ''}` }));
+    if (L.validade) info.push(h('div', { class: 'sub', text: `Validade: ${L.validade.split('-').reverse().join('/')}` }));
+    if (!ok) info.push(h('div', { class: 'sub', text: L.message }));
+    return h('div', { class: 'card lic' },
+        h('div', { class: 'pv sm' }, icon('shield')),
+        h('div', { class: 'txt' }, ...info.length ? info : [h('b', { text: 'Licença do cartório' }), h('div', { class: 'sub', text: L.message })],
+            h('div', { class: 'badges' }, h('span', { class: estado[0], text: estado[1] }),
+                ...(L.layouts || []).map(id => h('span', { class: 'badge', text: id })))),
+        h('button', { class: 'btn sm', onclick: importLicense }, icon('save', 'sm'), 'Importar licença'));
+}
+
+async function importLicense() {
+    try {
+        const r = await call('license.import');
+        if (!r) return;
+        S.license = r;
+        S.layouts = await call('layouts.list');
+        S.layoutId = null;
+        S.layoutDetail = null;
+        buildNav();
+        refreshGerarSelects();
+        renderLayouts();
+        toast(`Licença de “${r.nome}” importada: ${S.layouts.length} modelo(s) liberado(s).`, 'ok');
+    } catch (err) {
+        toast(err.message, 'err');
+    }
 }
 
 async function reloadLayouts() {
@@ -2227,6 +2270,7 @@ async function init() {
     S.info = await call('app.info');
     $('#ver').textContent = S.info.version;
     S.providers = await call('providers.list');
+    S.license = await call('license.get');
     S.layouts = await call('layouts.list');
     S.profiles = await call('profiles.list');
     $('#theme').onchange = e => applyTheme(e.target.value);
