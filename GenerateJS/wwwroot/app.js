@@ -2138,41 +2138,141 @@ function applyLicenseLock() {
     lockMostrar(el, 'inicio');
 }
 
-function lockMostrar(el, tela) {
+// Contato do suporte (WhatsApp). O QR abre a conversa com uma mensagem pronta.
+const CONTATO = { exibicao: '(31) 99720-0734', numero: '31997200734' };
+const CONTATO_QR = [
+    '11111110000110001010110100100001101111111',
+    '10000010011110001010100000010100001000001',
+    '10111010101000001000111000100000001011101',
+    '10111010111100000010000001111100001011101',
+    '10111010110001000001100111100011001011101',
+    '10000010111111001010110001111100001000001',
+    '11111110101010101010101010101010101111111',
+    '00000000111100010010111000110000100000000',
+    '10111110001000110110100001010101101111100',
+    '10111000110001111001011110100011111110101',
+    '01001011110101011110000000011000101010010',
+    '01100001100010000000010010111001101111000',
+    '01010010110010011100000001010001010101100',
+    '00110001110010000010101000001010111111111',
+    '11100010111101111011001010010000010011110',
+    '10011001011010010001110110000000001001001',
+    '11000010000110001111000111111100110101101',
+    '01000001011111001101000100000011001111001',
+    '01110010011110000100101000111000000011010',
+    '11001000111000001111010110011001010010010',
+    '01110111000010110000010011110100010001100',
+    '11000100011000001011100110011011101110011',
+    '01010110011110011100010000111010100010100',
+    '11111000001111001001011110111001100110010',
+    '01111010111001100110100001010111010001100',
+    '10101001011110001101011110101011011111011',
+    '10110110100110001010010000111110100010010',
+    '01000100010001101001010110111001100011000',
+    '01010111000110001100101011001111110101110',
+    '11100000101111101000011001101101001111011',
+    '10101111111101001100111010111000011110000',
+    '10011000010101100000011110011001011111001',
+    '10000010000100001100111011110100111110110',
+    '00000000110001010011000101000111100010001',
+    '11111110001110001010101001111101101010110',
+    '10000010101110110001000010110010100010001',
+    '10111010110101101010111111110100111111110',
+    '10111010110011111001110000100111010100011',
+    '10111010101101010110001010111101011110000',
+    '10000010000000001100011110100010001011010',
+    '11111110110110011000100001010101000110100'
+];
+
+function qrSvg(rows, px) {
+    const q = 4, n = rows.length, t = n + q * 2;
+    let d = '';
+    rows.forEach((linha, y) => {
+        let x = 0;
+        while (x < n) {
+            if (linha[x] === '1') {
+                let w = 1;
+                while (x + w < n && linha[x + w] === '1') w++;
+                d += `M${x + q} ${y + q}h${w}v1h-${w}z`;
+                x += w;
+            } else x++;
+        }
+    });
+    const wrap = h('div', { class: 'qr', title: 'QR code do WhatsApp do suporte' });
+    wrap.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${t} ${t}" width="${px}" height="${px}" shape-rendering="crispEdges" role="img" aria-label="QR code do WhatsApp do suporte"><rect width="${t}" height="${t}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+    return wrap;
+}
+
+async function copiarTexto(texto) {
+    try {
+        await navigator.clipboard.writeText(texto);
+    } catch (e) {
+        const t = document.createElement('textarea');
+        t.value = texto;
+        document.body.appendChild(t);
+        t.select();
+        document.execCommand('copy');
+        t.remove();
+    }
+}
+
+function contatoBloco(comQr) {
+    return h('div', { class: 'lock-contato' },
+        comQr ? qrSvg(CONTATO_QR, 112) : null,
+        h('div', { class: 'lock-contato-txt' },
+            h('b', { text: 'Suporte pelo WhatsApp' }),
+            h('span', { class: 'mono', text: CONTATO.exibicao }),
+            h('button', {
+                class: 'btn sm',
+                onclick: async () => { await copiarTexto(CONTATO.numero); toast('Número copiado.', 'ok'); }
+            }, 'Copiar número'),
+            comQr ? h('small', { text: 'Escaneie o QR code ou salve o número e envie o código acima.' }) : null));
+}
+
+const lockDados = { nome: '', cns: '', responsavel: '', email: '' };
+
+function lockMostrar(el, tela, codigo) {
     const L = S.license;
-    const voltar = h('button', { class: 'btn', onclick: () => lockMostrar(el, 'inicio') }, 'Voltar');
 
     if (tela === 'solicitar') {
         const campos = {};
-        const campo = (id, rotulo, dica) => {
-            campos[id] = h('input', { type: 'text', placeholder: dica || '' });
-            return h('div', { class: 'field' }, h('label', { text: rotulo }), campos[id]);
+        let gerar;
+        // Já existe licença (vencida, de outro computador…)? Os dados dela entram e ficam bloqueados.
+        // Sem licença, tudo fica liberado para digitar. Campo que a licença não tem continua editável.
+        const atual = L && L.nome ? L : null;
+        if (atual) {
+            const r = atual.responsavel || {};
+            if (atual.nome) lockDados.nome = atual.nome;
+            if (atual.cns) lockDados.cns = atual.cns;
+            if (r.nome) lockDados.responsavel = r.nome;
+            if (r.email) lockDados.email = r.email;
+        }
+        const daLicenca = {
+            nome: atual && atual.nome, cns: atual && atual.cns,
+            responsavel: atual && atual.responsavel && atual.responsavel.nome,
+            email: atual && atual.responsavel && atual.responsavel.email
         };
-        const saida = h('textarea', { rows: 5, class: 'mono' });
-        saida.readOnly = true;
-        const resultado = h('div', { class: 'lock-result', hidden: true },
-            h('label', { text: 'Código de solicitação' }), saida,
-            h('div', { class: 'row', style: 'justify-content:center;gap:8px' },
-                h('button', {
-                    class: 'btn sm',
-                    onclick: async () => {
-                        saida.select();
-                        try { await navigator.clipboard.writeText(saida.value); } catch (e) { document.execCommand('copy'); }
-                        toast('Código copiado. Envie ao fornecedor.', 'ok');
-                    }
-                }, icon('save', 'sm'), 'Copiar código')),
-            h('p', { class: 'muted', text: 'Envie este código ao fornecedor. Ao receber o arquivo .lic, volte e use “Importar licença”.' }));
-        const gerar = h('button', {
+        const campo = (id, rotulo) => {
+            const inp = h('input', { type: 'text' });
+            inp.value = lockDados[id] || '';
+            if (daLicenca[id]) {
+                inp.readOnly = true;
+                inp.title = 'Dado da licença atual';
+            }
+            inp.oninput = () => { lockDados[id] = inp.value; };
+            inp.onkeydown = e => { if (e.key === 'Enter' && gerar) gerar.click(); };
+            campos[id] = inp;
+            return h('div', { class: 'field' }, h('label', { text: rotulo }), inp);
+        };
+        gerar = h('button', {
             class: 'btn primary',
             onclick: async () => {
                 try {
                     const r = await call('license.request', {
-                        nome: campos.nome.value, cns: campos.cns.value,
-                        responsavel: campos.responsavel.value, email: campos.email.value
+                        nome: lockDados.nome, cns: lockDados.cns,
+                        responsavel: lockDados.responsavel, email: lockDados.email
                     });
-                    saida.value = r.code;
-                    resultado.hidden = false;
-                    saida.select();
+                    lockMostrar(el, 'codigo', r.code);
                 } catch (err) {
                     toast(err.message, 'err');
                 }
@@ -2180,14 +2280,43 @@ function lockMostrar(el, tela) {
         }, icon('shield', 'sm'), 'Gerar código');
         el.replaceChildren(h('div', { class: 'lock-card lock-form' },
             h('h2', { text: 'Solicitar licença' }),
-            h('p', { text: 'Informe os dados do cartório. O código gerado identifica este computador e deve ser enviado ao fornecedor.' }),
+            h('p', {
+                text: atual
+                    ? 'Os dados abaixo vêm da licença atual e não podem ser alterados. O código gerado identifica este computador e deve ser enviado ao fornecedor.'
+                    : 'Informe os dados do cartório. O código gerado identifica este computador e deve ser enviado ao fornecedor.'
+            }),
             campo('nome', 'Nome do cartório *'),
-            campo('cns', 'CNS'),
-            campo('responsavel', 'Responsável'),
+            h('div', { class: 'lock-grid' }, campo('cns', 'CNS'), campo('responsavel', 'Responsável')),
             campo('email', 'E-mail ou telefone de contato'),
-            h('div', { class: 'row', style: 'justify-content:center;gap:8px;margin-top:4px' }, voltar, gerar),
-            resultado));
-        campos.nome.focus();
+            h('div', { class: 'lock-actions' },
+                h('button', { class: 'btn', onclick: () => lockMostrar(el, 'inicio') }, 'Voltar'), gerar)));
+        (daLicenca.nome ? campos.email : campos.nome).focus();
+        return;
+    }
+
+    if (tela === 'codigo') {
+        const saida = h('textarea', { rows: 5, class: 'mono' });
+        saida.readOnly = true;
+        saida.value = codigo;
+        el.replaceChildren(h('div', { class: 'lock-card lock-form' },
+            h('h2', { text: 'Código de solicitação' }),
+            h('p', { text: 'Copie o código e envie ao fornecedor pelo WhatsApp. Quando receber o arquivo .lic, volte aqui e use “Importar licença”.' }),
+            saida,
+            h('div', { class: 'lock-actions' },
+                h('button', {
+                    class: 'btn primary',
+                    onclick: async () => {
+                        saida.select();
+                        try { await navigator.clipboard.writeText(saida.value); } catch (e) { document.execCommand('copy'); }
+                        toast('Código copiado.', 'ok');
+                    }
+                }, icon('save', 'sm'), 'Copiar código')),
+            h('div', { class: 'lock-actions' },
+                h('button', { class: 'btn sm', onclick: () => lockMostrar(el, 'solicitar') }, 'Editar dados'),
+                h('button', { class: 'btn sm', onclick: () => lockMostrar(el, 'inicio') }, 'Já tenho a licença')),
+            contatoBloco(true)));
+        saida.focus();
+        saida.select();
         return;
     }
 
@@ -2198,14 +2327,15 @@ function lockMostrar(el, tela) {
         h('p', { class: 'muted', text: 'Importe o arquivo .lic enviado pelo fornecedor ou gere um código de solicitação para pedir uma nova licença. Até lá, nenhuma tela pode ser usada ou editada.' }),
         h('div', { class: 'lock-actions' },
             h('button', { class: 'btn primary', onclick: importLicense }, icon('save', 'sm'), 'Importar licença'),
-            h('button', { class: 'btn', onclick: () => lockMostrar(el, 'solicitar') }, icon('shield', 'sm'), 'Gerar código de solicitação'))));
+            h('button', { class: 'btn', onclick: () => lockMostrar(el, 'solicitar') }, icon('shield', 'sm'), 'Gerar código de solicitação')),
+        contatoBloco(false)));
 }
 
 function licenseCard() {
     const L = S.license;
     if (!L) return h('div');
     const ok = L.valid;
-    const estado = ok ? ['badge ok', 'licença válida'] : L.bypass ? ['badge warn', 'modo desenvolvimento'] : ['badge err', 'sem licença válida'];
+    const estado = L.bypass ? ['badge warn', 'modo desenvolvimento'] : ok ? ['badge ok', 'licença válida'] : ['badge err', 'sem licença válida'];
     const info = [];
     if (L.nome) info.push(h('b', { text: L.nome }));
     const linha = [L.cns && `CNS ${L.cns}`, L.codigoIbge && `IBGE ${L.codigoIbge}`].filter(Boolean).join(' · ');
@@ -2218,7 +2348,7 @@ function licenseCard() {
             : L.validoDe ? `Válida a partir de ${br(L.validoDe)}`
                 : L.nome ? 'Sem prazo de validade' : '';
     if (periodo) info.push(h('div', { class: 'sub', text: periodo }));
-    if (!ok) info.push(h('div', { class: 'sub', text: L.message }));
+    if (!ok || L.bypass) info.push(h('div', { class: 'sub', text: L.message }));
     return h('div', { class: 'card lic' },
         h('div', { class: 'pv sm' }, icon('shield')),
         h('div', { class: 'txt' }, ...info.length ? info : [h('b', { text: 'Licença do cartório' }), h('div', { class: 'sub', text: L.message })],

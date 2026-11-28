@@ -6,7 +6,7 @@ namespace ReferenciaFactory.Layouts;
 public sealed record LicenseStatus(bool Valid, bool Bypass, string Message, CartorioLicense? License)
 {
     /// <summary>Layouts liberados para uso: os da licença válida (ou todos, só em modo de desenvolvimento).</summary>
-    public bool Permite(string? layoutId) => Valid ? License!.TemLayout(layoutId) : Bypass;
+    public bool Permite(string? layoutId) => Bypass || (Valid && License!.TemLayout(layoutId));
 }
 
 /// <summary>
@@ -51,6 +51,12 @@ public sealed class CartorioStore
     public LicenseStatus Reload()
     {
         var s = Evaluate(_file);
+#if DEBUG
+        // MODO DESENVOLVIMENTO: só existe em build Debug (não é compilado no Release) e só liga com a variável
+        // de ambiente GENERATORJS_DEV=1. Sem ela, mesmo no Debug o aplicativo exige licença.
+        if (!s.Valid && Environment.GetEnvironmentVariable("GENERATORJS_DEV") == "1")
+            s = new LicenseStatus(true, true, "Modo desenvolvimento ativo (GENERATORJS_DEV=1): licença não exigida.", null);
+#endif
         lock (_lock) _status = s;
         return s;
     }

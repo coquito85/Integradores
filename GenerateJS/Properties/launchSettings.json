@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "GenerateJS": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "GENERATORJS_DEV": "0"
+      }
+    }
+  }
+}
+
