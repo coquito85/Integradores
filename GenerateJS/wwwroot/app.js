@@ -2120,6 +2120,87 @@ function renderTree(d) {
     }, h('ul', {}, walk(d.tree, '')));
 }
 
+/** Sem licença válida a tela inteira fica inerte (nada clicável/editável) e só resta importar o .lic ou pedir uma licença. */
+function applyLicenseLock() {
+    const L = S.license;
+    const bloqueado = !L || !L.valid;
+    const app = document.querySelector('.app');
+    if (app) app.inert = bloqueado;
+    let el = document.getElementById('lockScreen');
+    if (!bloqueado) {
+        if (el) el.remove();
+        return;
+    }
+    if (!el) {
+        el = h('div', { id: 'lockScreen', class: 'lock', role: 'alertdialog', 'aria-modal': 'true' });
+        document.body.appendChild(el);
+    }
+    lockMostrar(el, 'inicio');
+}
+
+function lockMostrar(el, tela) {
+    const L = S.license;
+    const voltar = h('button', { class: 'btn', onclick: () => lockMostrar(el, 'inicio') }, 'Voltar');
+
+    if (tela === 'solicitar') {
+        const campos = {};
+        const campo = (id, rotulo, dica) => {
+            campos[id] = h('input', { type: 'text', placeholder: dica || '' });
+            return h('div', { class: 'field' }, h('label', { text: rotulo }), campos[id]);
+        };
+        const saida = h('textarea', { rows: 5, class: 'mono' });
+        saida.readOnly = true;
+        const resultado = h('div', { class: 'lock-result', hidden: true },
+            h('label', { text: 'Código de solicitação' }), saida,
+            h('div', { class: 'row', style: 'justify-content:center;gap:8px' },
+                h('button', {
+                    class: 'btn sm',
+                    onclick: async () => {
+                        saida.select();
+                        try { await navigator.clipboard.writeText(saida.value); } catch (e) { document.execCommand('copy'); }
+                        toast('Código copiado. Envie ao fornecedor.', 'ok');
+                    }
+                }, icon('save', 'sm'), 'Copiar código')),
+            h('p', { class: 'muted', text: 'Envie este código ao fornecedor. Ao receber o arquivo .lic, volte e use “Importar licença”.' }));
+        const gerar = h('button', {
+            class: 'btn primary',
+            onclick: async () => {
+                try {
+                    const r = await call('license.request', {
+                        nome: campos.nome.value, cns: campos.cns.value,
+                        responsavel: campos.responsavel.value, email: campos.email.value
+                    });
+                    saida.value = r.code;
+                    resultado.hidden = false;
+                    saida.select();
+                } catch (err) {
+                    toast(err.message, 'err');
+                }
+            }
+        }, icon('shield', 'sm'), 'Gerar código');
+        el.replaceChildren(h('div', { class: 'lock-card lock-form' },
+            h('h2', { text: 'Solicitar licença' }),
+            h('p', { text: 'Informe os dados do cartório. O código gerado identifica este computador e deve ser enviado ao fornecedor.' }),
+            campo('nome', 'Nome do cartório *'),
+            campo('cns', 'CNS'),
+            campo('responsavel', 'Responsável'),
+            campo('email', 'E-mail ou telefone de contato'),
+            h('div', { class: 'row', style: 'justify-content:center;gap:8px;margin-top:4px' }, voltar, gerar),
+            resultado));
+        campos.nome.focus();
+        return;
+    }
+
+    el.replaceChildren(h('div', { class: 'lock-card' },
+        h('div', { class: 'lock-ico' }, icon('shield', 'lg')),
+        h('h2', { text: 'Licença do cartório necessária' }),
+        h('p', { text: (L && L.message) || 'Nenhuma licença do cartório importada.' }),
+        h('p', { class: 'muted', text: 'Importe o arquivo .lic enviado pelo fornecedor ou gere um código de solicitação para pedir uma nova licença. Até lá, nenhuma tela pode ser usada ou editada.' }),
+        h('div', { class: 'lock-actions' },
+            h('button', { class: 'btn primary', onclick: importLicense }, icon('save', 'sm'), 'Importar licença'),
+            h('button', { class: 'btn', onclick: () => lockMostrar(el, 'solicitar') }, icon('shield', 'sm'), 'Gerar código de solicitação'))));
+}
+
 function licenseCard() {
     const L = S.license;
     if (!L) return h('div');
@@ -2152,11 +2233,15 @@ async function importLicense() {
         if (!r) return;
         S.license = r;
         S.layouts = await call('layouts.list');
+        S.profiles = await call('profiles.list');
         S.layoutId = null;
         S.layoutDetail = null;
+        applyLicenseLock();
         buildNav();
         refreshGerarSelects();
+        renderConexoes();
         renderLayouts();
+        if (r.valid) go('gerar');
         toast(`Licença de “${r.nome}” importada: ${S.layouts.length} modelo(s) liberado(s).`, 'ok');
     } catch (err) {
         toast(err.message, 'err');
@@ -2276,8 +2361,9 @@ async function init() {
     $('#ver').textContent = S.info.version;
     S.providers = await call('providers.list');
     S.license = await call('license.get');
-    S.layouts = await call('layouts.list');
-    S.profiles = await call('profiles.list');
+    const liberado = !!(S.license && S.license.valid);
+    S.layouts = liberado ? await call('layouts.list') : [];
+    S.profiles = liberado ? await call('profiles.list') : [];
     $('#theme').onchange = e => applyTheme(e.target.value);
     applyTheme(prefs.theme || 'matrix');
     buildNav();
@@ -2286,12 +2372,13 @@ async function init() {
     renderConexoes();
     renderLayouts();
     go(prefs.view && VIEWS[prefs.view] ? prefs.view : 'gerar');
-    if (G.el.layout.value) refreshFilterColumns();
-    if (S.info.layoutErrors && S.info.layoutErrors.length) toast('Layouts ignorados: ' + S.info.layoutErrors.join(' | '), 'err');
+    applyLicenseLock();
+    if (liberado && G.el.layout.value) refreshFilterColumns();
+    if (liberado && S.info.layoutErrors && S.info.layoutErrors.length) toast('Layouts ignorados: ' + S.info.layoutErrors.join(' | '), 'err');
 }
 
 document.addEventListener('keydown', e => {
-    if (e.ctrlKey && e.key === 'Enter' && S.view === 'gerar' && !G.running) doRun();
+    if (e.ctrlKey && e.key === 'Enter' && S.view === 'gerar' && !G.running && S.license && S.license.valid) doRun();
 });
 
 init().catch(err => {

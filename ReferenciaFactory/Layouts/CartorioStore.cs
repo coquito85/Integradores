@@ -35,15 +35,22 @@ public sealed class CartorioStore
         Reload();
     }
 
-    public LicenseStatus Status { get { lock (_lock) return _status; } }
+    /// <summary>Estado atual. Se a licença venceu com o aplicativo aberto, é reavaliada na hora.</summary>
+    public LicenseStatus Status
+    {
+        get
+        {
+            lock (_lock)
+            {
+                if (_status.Valid && _status.License?.ValidadeData() is { } fim && DateTime.Today > fim) Reload();
+                return _status;
+            }
+        }
+    }
 
     public LicenseStatus Reload()
     {
         var s = Evaluate(_file);
-#if DEBUG
-        // Só em desenvolvimento: sem licença válida, libera todos os layouts para você poder trabalhar.
-        if (!s.Valid) s = s with { Bypass = true, Message = s.Message + " (modo desenvolvimento: licença não exigida)" };
-#endif
         lock (_lock) _status = s;
         return s;
     }
@@ -66,11 +73,15 @@ public sealed class CartorioStore
         try { lic = CartorioLicense.Read(path); }
         catch (Exception ex) { return new(false, false, "Arquivo de licença ilegível: " + ex.Message, null); }
 
-        if (PublicKeyXml == "<RSAKeyValue><Modulus>5GB5k3v2WxZ2ON5GL9On9nZSLweM3RxONLtYBjpRfJMws+fZCmn56AesGkpbG4EAAcBDeVu8khT0SWUWwz2qS8t++6hbY/spDGkpZ8dt0jVvEq74jdwE5uVdGMctqG57e5lUl7jOSJzWsoIklQyMLxO7aGREpaBu2XzznKVBqQkYT4+oM12KafOWp/nNox7rZWqDA679phWKcYkh6S2L9j7HK2917wNDNW+1MHHPjyVFCqwwknTQTi8BEKaWld24gKFyxtpjx1NJUbErqfus57zgAyODbKeY5x0obQ2MHq7Xh+6HeFMgO+FvZLLPEkgX4TpgNblruZNtuLVyrbKutQhxlnJbNZHfunsvWvDI6POWOhqSMIxe4JdaxPYuTg5VijFd84x57GrBQ58HlNlNOZuPjLwueHOOVUPkmN+bwrir7dsL9Qj7ru9whNIF6CcjtMKby+evE+4NJ67w5AMhDcCtLOJwq21Mbk4XIsyjswE5RnZGoC7jXlKSLw8fZeh5</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>")
+        if (PublicKeyXml == "COLE_AQUI")
             return new(false, false, "Chave pública do fornecedor não configurada no aplicativo (CartorioStore.PublicKeyXml).", lic);
 
         if (!lic.Verify(PublicKeyXml))
             return new(false, false, "Licença inválida: a assinatura não confere (arquivo alterado ou de outro emissor).", lic);
+
+        if (!string.IsNullOrWhiteSpace(lic.Maquina) &&
+            !lic.Maquina.Trim().Equals(LicenseRequest.MachineId(), StringComparison.OrdinalIgnoreCase))
+            return new(false, false, "Esta licença foi emitida para outro computador. Gere um código de solicitação neste computador e peça uma nova licença.", lic);
 
         var inicio = lic.ValidoDeData();
         if (!string.IsNullOrWhiteSpace(lic.ValidoDe) && inicio is null)

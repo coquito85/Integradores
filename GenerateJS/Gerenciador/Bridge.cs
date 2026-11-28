@@ -1,5 +1,4 @@
 using Microsoft.Web.WebView2.Core;
-
 using ReferenciaStandard.Entidades;
 using ReferenciaStandard.Helpers;
 using ReferenciaStandard.Repository;
@@ -74,8 +73,16 @@ namespace GenerateJS.Gerenciador
         }
 
         // ------------------------------------------------------------------ comandos
+        /// <summary>Comandos liberados mesmo sem licença válida (para mostrar o bloqueio e permitir importar a licença).</summary>
+        private static bool LivreSemLicenca(string cmd) =>
+            cmd is "app.info" or "providers.list" or "license.get" or "license.import" or "license.request";
+
         private async Task<object?> DispatchAsync(string cmd, JObject a)
         {
+            // Sem licença válida do cartório o aplicativo fica bloqueado: nada é lido, editado ou gerado.
+            if (!LivreSemLicenca(cmd) && !_exec.Licenca().Valid)
+                throw new GeneratorException("Aplicativo bloqueado: importe a licenca do cartorio (.lic) para continuar.");
+
             switch (cmd)
             {
                 case "app.info":
@@ -198,6 +205,23 @@ namespace GenerateJS.Gerenciador
                 // ---- licenca do cartorio
                 case "license.get":
                     return LicenseInfo(_exec.Licenca());
+
+                // Código para o cartório pedir uma licença ao fornecedor (funciona mesmo bloqueado).
+                case "license.request":
+                    {
+                        var req = new ReferenciaFactory.Layouts.LicenseRequest
+                        {
+                            Nome = (Str(a, "nome") ?? "").Trim(),
+                            Cns = (Str(a, "cns") ?? "").Trim(),
+                            Responsavel = (Str(a, "responsavel") ?? "").Trim(),
+                            Email = (Str(a, "email") ?? "").Trim(),
+                            Maquina = ReferenciaFactory.Layouts.LicenseRequest.MachineId(),
+                            Versao = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "",
+                            GeradoEm = DateTime.Now.ToString("yyyy-MM-dd"),
+                        };
+                        if (req.Nome.Length == 0) throw new GeneratorException("Informe o nome do cartorio.");
+                        return new { code = req.Encode(), maquina = req.Maquina };
+                    }
 
                 case "license.import":
                     {

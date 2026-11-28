@@ -30,6 +30,9 @@ public sealed class CartorioLicense
     /// <summary>yyyy-MM-dd. Fim da vigência. Vazio = sem validade.</summary>
     public string Validade { get; set; } = "";
 
+    /// <summary>Identificação da máquina (LicenseRequest.MachineId). Vazio = vale em qualquer máquina.</summary>
+    public string Maquina { get; set; } = "";
+
     /// <summary>Ids dos layouts contratados (comparação sem diferenciar maiúsculas).</summary>
     public List<string> Layouts { get; set; } = new();
 
@@ -58,6 +61,7 @@ public sealed class CartorioLicense
         });
         // data inicial só entra no texto assinado quando existe: licenças antigas (sem ela) continuam válidas
         if (ValidoDe.Trim().Length > 0) texto += "\nDE:" + ValidoDe.Trim();
+        if (Maquina.Trim().Length > 0) texto += "\nMAQ:" + Maquina.Trim().ToUpperInvariant();
         return texto;
     }
 

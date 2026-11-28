@@ -799,7 +799,13 @@
                         };
                     case 'schema.tables':
                         return ['dbo.ComunicaoPrefeitura', 'dbo.Clientes', 'dbo.Livros', 'dbo.Matriculas'];
+                    case 'license.request':
+                        return { code: 'GJS1-eyJub21lIjoiQ2FydMOzcmlvIGRlIEV4ZW1wbG8ifQ', maquina: 'ABCD-1234-EF56-7890-ABCD' };
                     case 'license.get':
+                        // abra o index.html com ?lock para ver a tela de bloqueio no navegador
+                        if (/lock/.test(location.search))
+                            return { valid: false, bypass: false, message: 'Nenhuma licença do cartório importada.', layouts: [] };
+                    // eslint-disable-next-line no-fallthrough
                     case 'license.import':
                         return {
                             valid: true, bypass: false, message: 'Licença válida.', cartorioId: 'SATUBA', nome: 'Cartório de Satuba',

@@ -29,6 +29,9 @@ public sealed partial class EmissorForm : Form
     /// <summary>Id interno do cartório em edição (gerado do nome na primeira vez; não aparece na tela).</summary>
     private string? _idAtual;
 
+    /// <summary>Identificação do computador vinda da solicitação (só preenchida ao ler um código).</summary>
+    private string _maquina = "";
+
     public EmissorForm()
     {
         InitializeComponent();
@@ -118,6 +121,8 @@ public sealed partial class EmissorForm : Form
     private void Preencher(CartorioLicense c)
     {
         _idAtual = string.IsNullOrWhiteSpace(c.CartorioId) ? null : c.CartorioId;
+        _maquina = c.Maquina ?? "";
+        AtualizarVinculo();
         txtNome.Text = c.Nome;
         txtCns.Text = c.Cns;
         txtIbge.Text = c.CodigoIbge;
@@ -136,6 +141,16 @@ public sealed partial class EmissorForm : Form
                 clbModelos.Items.Add(new LayoutItem(id, "(sem XML nesta máquina)"), false);
         for (int i = 0; i < clbModelos.Items.Count; i++)
             clbModelos.SetItemChecked(i, c.TemLayout(((LayoutItem)clbModelos.Items[i]).Id));
+    }
+
+    private void AtualizarVinculo()
+    {
+        var tem = _maquina.Length > 0;
+        chkVincular.Enabled = tem;
+        chkVincular.Checked = tem;
+        chkVincular.Text = tem
+            ? $"Vincular ao computador da solicitação ({_maquina[..Math.Min(9, _maquina.Length)]}…)"
+            : "Vincular a um computador (use “Ler solicitação…”)";
     }
 
     private static void PreencherData(DateTimePicker dtp, string valor, DateTime sugerida, bool marcarSeVazio)
@@ -174,6 +189,7 @@ public sealed partial class EmissorForm : Form
         ResponsavelNome = txtRespNome.Text.Trim(),
         ResponsavelCargo = txtRespCargo.Text.Trim(),
         ResponsavelEmail = txtRespEmail.Text.Trim(),
+        Maquina = chkVincular.Checked ? _maquina : "",
         ValidoDe = DataTexto(dtpInicio),
         Validade = DataTexto(dtpFim),
         Layouts = clbModelos.CheckedItems.Cast<LayoutItem>().Select(i => i.Id).ToList(),
@@ -266,7 +282,7 @@ public sealed partial class EmissorForm : Form
 
             Status($"Licença emitida: {dlg.FileName}");
             MessageBox.Show(this,
-                $"Licença emitida para {c.Nome}.\n\nModelos: {string.Join(", ", c.Layouts)}\nValidade: {Periodo(c)}\n\nEnvie o arquivo ao cartório: no GeneratorJS, em Layouts > Importar licença.",
+                $"Licença emitida para {c.Nome}.\n\nModelos: {string.Join(", ", c.Layouts)}\nValidade: {Periodo(c)}{(c.Maquina.Length > 0 ? "\nVinculada ao computador da solicitação." : "")}\n\nEnvie o arquivo ao cartório: no GeneratorJS, em Layouts > Importar licença.",
                 Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (Exception ex)
@@ -332,11 +348,67 @@ public sealed partial class EmissorForm : Form
     private void btnGerarChaves_Click(object? sender, EventArgs e) => GerarChaves();
     private void btnCopiarPublica_Click(object? sender, EventArgs e) => CopiarChavePublica();
     private void btnNovo_Click(object? sender, EventArgs e) => NovoCadastro();
+    private void btnSolicitacao_Click(object? sender, EventArgs e) => LerSolicitacao();
     private void btnExcluir_Click(object? sender, EventArgs e) => Excluir();
     private void btnSalvar_Click(object? sender, EventArgs e) => SalvarCadastro(mostrarMensagem: true);
     private void btnEmitir_Click(object? sender, EventArgs e) => Emitir();
     private void lstCartorios_SelectedIndexChanged(object? sender, EventArgs e) => AoSelecionar();
 
+
+    // ------------------------------------------------------------------ solicitação do cartório
+    private void LerSolicitacao()
+    {
+        var codigo = PedirCodigo();
+        if (codigo is null) return;
+        if (!LicenseRequest.TryDecode(codigo, out var r))
+        {
+            MessageBox.Show(this, "Código inválido. Cole o código completo enviado pelo cartório (começa com GJS1-).", Text,
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        NovoCadastro();
+        txtNome.Text = r.Nome;
+        txtCns.Text = r.Cns;
+        txtRespNome.Text = r.Responsavel;
+        txtRespEmail.Text = r.Email;
+        _maquina = r.Maquina;
+        AtualizarVinculo();
+        Status($"Solicitação de “{r.Nome}” lida. Confira os dados, marque os modelos e emita a licença.");
+    }
+
+    private string? PedirCodigo()
+    {
+        using var f = new Form
+        {
+            Text = "Código de solicitação",
+            StartPosition = FormStartPosition.CenterParent,
+            FormBorderStyle = FormBorderStyle.FixedDialog,
+            MaximizeBox = false,
+            MinimizeBox = false,
+            ClientSize = new Size(640, 300),
+            Font = Font,
+        };
+        var caixa = new TextBox { Multiline = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, Margin = new Padding(12) };
+        var ler = new Button { Text = "Ler solicitação", DialogResult = DialogResult.OK, AutoSize = true, MinimumSize = new Size(140, 34), Margin = new Padding(12, 3, 3, 3) };
+        var cancelar = new Button { Text = "Cancelar", DialogResult = DialogResult.Cancel, AutoSize = true, MinimumSize = new Size(100, 34) };
+        var rodape = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Height = 56, Padding = new Padding(12, 8, 12, 8) };
+        rodape.Controls.Add(ler);
+        rodape.Controls.Add(cancelar);
+        var aviso = new System.Windows.Forms.Label
+        {
+            Text = "Cole o código de solicitação enviado pelo cartório (começa com GJS1-):",
+            Dock = DockStyle.Top, Height = 40, Padding = new Padding(12, 12, 12, 0),
+        };
+        var miolo = new Panel { Dock = DockStyle.Fill, Padding = new Padding(12, 4, 12, 4) };
+        miolo.Controls.Add(caixa);
+        f.Controls.Add(miolo);
+        f.Controls.Add(rodape);
+        f.Controls.Add(aviso);
+        f.AcceptButton = null;
+        f.CancelButton = cancelar;
+        return f.ShowDialog(this) == DialogResult.OK ? caixa.Text : null;
+    }
 
     private static string Periodo(CartorioLicense c)
     {

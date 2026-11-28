@@ -1809,3 +1809,104 @@ input[type="text"].invalid {
         flex: none;
         margin-left: auto;
     }
+
+/* Bloqueio por falta de licença: cobre o aplicativo inteiro */
+.lock {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+    backdrop-filter: blur(6px);
+}
+
+.lock-card {
+    width: min(480px, 100%);
+    display: grid;
+    gap: 12px;
+    justify-items: center;
+    text-align: center;
+    padding: 34px 30px;
+    background: var(--surface, var(--bg));
+    border: 1px solid color-mix(in srgb, var(--primary) 45%, var(--border));
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+}
+
+    .lock-card h2 {
+        margin: 0;
+        font-size: 20px;
+    }
+
+    .lock-card p {
+        margin: 0;
+        color: var(--text-2);
+        line-height: 1.5;
+    }
+
+    .lock-card .btn {
+        margin-top: 10px;
+        min-width: 190px;
+        justify-content: center;
+    }
+
+.lock-ico {
+    width: 56px;
+    height: 56px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.lock-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+    .lock-actions .btn {
+        margin-top: 0;
+        min-width: 0;
+    }
+
+.lock-form {
+    justify-items: stretch;
+    text-align: left;
+}
+
+    .lock-form h2, .lock-form > p {
+        text-align: center;
+    }
+
+    .lock-form .field {
+        margin-bottom: 0;
+    }
+
+    .lock-form textarea {
+        width: 100%;
+        resize: none;
+        font-size: 12px;
+    }
+
+.lock-result {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+    .lock-result[hidden] {
+        display: none;
+    }
+
+    .lock-result p {
+        text-align: center;
+        font-size: 12px;
+    }
