@@ -6,8 +6,11 @@
        ============================================================ -->
 	<generate name="MASTER 2027">
 
-		<!-- TABELA BASE — DECLARAÇÕES -->
-		<table name="DOIWEB_DECLARACOES">
+		<!-- ========================================================
+         TABELA BASE — DECLARAÇÕES
+         alias: TAB_DECL
+         ======================================================== -->
+		<table name="DOIWEB_DECLARACOES" alias="TAB_DECL">
 			<selection>
 				<Column name="CODI_DECL" type="string"  description="Código da declaração" orderby="true" />
 				<Column name="TIPO_DECL" type="string"  description="Tipo de declaração" />
@@ -44,8 +47,11 @@
 			</selection>
 		</table>
 
-		<!-- TABELA — IMÓVEIS -->
-		<table name="DOIWEB_IMOVEIS">
+		<!-- ========================================================
+         TABELA — IMÓVEIS
+         alias: TAB_IMOV
+         ======================================================== -->
+		<table name="DOIWEB_IMOVEIS" alias="TAB_IMOV">
 			<selection>
 				<Column name="CODI_IMOV" type="string" description="Código interno do imóvel" />
 				<Column name="CODI_DECL" type="string" description="Código da declaração" />
@@ -55,7 +61,7 @@
 				<Column name="REGI_IMOV" type="string" description="Registro Imobiliário Patrimonial" />
 				<Column name="CERT_IMOV" type="string" description="Certidão autorização transferência" />
 				<Column name="INSC_IMOV" type="string" description="Inscrição municipal" />
-				<Column name="CODI_IBGE" type="string" description="Código IBGE" />
+				<Column name="CODI_IBGE" type="string" description="Código IBGE do município" />
 				<Column name="AREA_IMOV" type="string" description="Área do imóvel" />
 				<Column name="INDA_IMOV" type="string" description="Indicador área lote não informada" />
 				<Column name="AREA_CONS" type="string" description="Área construída" />
@@ -74,8 +80,11 @@
 			</selection>
 		</table>
 
-		<!-- TABELA — PARTES (A=adquirente / L=alienante) -->
-		<table name="DOIWEB_PARTES">
+		<!-- ========================================================
+         TABELA — PARTES (A=adquirente / L=alienante)
+         alias: TAB_PART
+         ======================================================== -->
+		<table name="DOIWEB_PARTES" alias="TAB_PART">
 			<selection>
 				<Column name="CODI_PART" type="string" description="Código interno da parte" />
 				<Column name="CODI_DECL" type="string" description="Código da declaração" />
@@ -100,22 +109,17 @@
 			</selection>
 		</table>
 
-		<!-- TABELA — REPRESENTANTES -->
-		<table name="DOIWEB_REPRESENTANTES">
+		<!-- ========================================================
+         TABELA — REPRESENTANTES
+         alias: TAB_REPR
+         ======================================================== -->
+		<table name="DOIWEB_REPRESENTANTES" alias="TAB_REPR">
 			<selection>
 				<Column name="CODI_REPR" type="string" description="Código interno do representante" />
 				<Column name="CODI_DECL" type="string" description="Código da declaração" />
 				<Column name="CODI_PART" type="string" description="Código da parte representada" />
 				<Column name="NIID_REPR" type="string" description="CPF/CNPJ do representante" />
 				<Column name="NOME_REPR" type="string" description="Nome do representante" />
-			</selection>
-		</table>
-
-		<!-- TABELA — MUNICÍPIOS DO IMÓVEL (opcional) -->
-		<table name="DOIWEB_MUNICIPIOS" optional="true">
-			<selection>
-				<Column name="CODI_IMOV" type="string" description="Código interno do imóvel" />
-				<Column name="CODI_IBGE" type="string" description="Código IBGE do município" />
 			</selection>
 		</table>
 
@@ -126,15 +130,14 @@
        ============================================================ -->
 	<Jsonfields name="DOI SATUBA 2027">
 
-		<!-- Sem alias: referencia o name da tabela diretamente -->
-		<Refealias name="DOIWEB_DECLARACOES">
+		<Refealias name="TAB_DECL">
 
 			<field name="declaracoes" type="array">
 
 				<!-- ====================================================
              ADQUIRENTES  (TIPO_PART = 'A')
              ==================================================== -->
-				<field name="adquirentes" type="array" source="DOIWEB_PARTES" filter="TIPO_PART = 'A'">
+				<field name="adquirentes" type="array" source="TAB_PART" filter="TIPO_PART = 'A'">
 					<field name="ni"                          type="string"  Columnrefe="NIID_PART" />
 					<field name="nome"                        type="string"  Columnrefe="NOME_PART" />
 					<field name="indicadorNiIdentificado"     type="bool"    Columnrefe="IDNI_PART" default="true" />
@@ -154,7 +157,7 @@
 					<field name="indicadorRepresentante"      type="bool"    Columnrefe="REPR_PART" default="false" />
 
 					<!-- Representantes do adquirente (1:N) -->
-					<field name="representantes" type="array" source="DOIWEB_REPRESENTANTES"
+					<field name="representantes" type="array" source="TAB_REPR"
 						   fk="CODI_PART" ref="CODI_PART">
 						<field name="ni"   type="string" Columnrefe="NIID_REPR" />
 						<field name="nome" type="string" Columnrefe="NOME_REPR" />
@@ -164,7 +167,7 @@
 				<!-- ====================================================
              ALIENANTES  (TIPO_PART = 'L')
              ==================================================== -->
-				<field name="alienantes" type="array" source="DOIWEB_PARTES" filter="TIPO_PART = 'L'">
+				<field name="alienantes" type="array" source="TAB_PART" filter="TIPO_PART = 'L'">
 					<field name="ni"                          type="string"  Columnrefe="NIID_PART" />
 					<field name="nome"                        type="string"  Columnrefe="NOME_PART" />
 					<field name="indicadorNiIdentificado"     type="bool"    Columnrefe="IDNI_PART" default="true" />
@@ -184,7 +187,7 @@
 					<field name="indicadorRepresentante"      type="bool"    Columnrefe="REPR_PART" default="false" />
 
 					<!-- Representantes do alienante (1:N) -->
-					<field name="representantes" type="array" source="DOIWEB_REPRESENTANTES"
+					<field name="representantes" type="array" source="TAB_REPR"
 						   fk="CODI_PART" ref="CODI_PART">
 						<field name="ni"   type="string" Columnrefe="NIID_REPR" />
 						<field name="nome" type="string" Columnrefe="NOME_REPR" />
@@ -192,9 +195,9 @@
 				</field>
 
 				<!-- ====================================================
-             IMÓVEIS (1:N)
+             IMÓVEIS (1:N) — município agora é atributo do imóvel
              ==================================================== -->
-				<field name="imoveis" type="array" source="DOIWEB_IMOVEIS"
+				<field name="imoveis" type="array" source="TAB_IMOV"
 					   fk="CODI_DECL" ref="CODI_DECL">
 					<field name="cib"                              type="string"  Columnrefe="CIBI_IMOV" />
 					<field name="destinacao"                       type="string"  Columnrefe="DEST_IMOV" />
@@ -218,12 +221,6 @@
 					<field name="codigoIncra"                      type="string"  Columnrefe="CODI_INCR" />
 					<field name="denominacaoImovelRural"           type="string"  Columnrefe="DENO_IMOV" />
 					<field name="localizacaoImovel"                type="string"  Columnrefe="LOCA_IMOV" />
-
-					<!-- Municípios do imóvel (opcional, 1:N) -->
-					<field name="municipios" type="array" source="DOIWEB_MUNICIPIOS"
-						   fk="CODI_IMOV" ref="CODI_IMOV" optional="true">
-						<field name="codigoIbge" type="string" Columnrefe="CODI_IBGE" />
-					</field>
 				</field>
 
 				<!-- ====================================================
